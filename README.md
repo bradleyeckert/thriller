@@ -3,7 +3,8 @@ Root-of-trust for any FPGA with hardware bitstream encryption and authentication
 
 `thriller` is vendor-neutral. The only thing it needs from the FPGA is a configuration engine that
 decrypts and authenticates the bitstream before the design runs (see FPGA Requirements).
-Everything above that is plain logic: SHA-256, MAC checks, and I2C to a secure element.
+Everything above that is plain logic: SHA-256, LMS signature verification (which is built from SHA-256),
+MAC checks, and I2C to a secure element.
 
 ## chipset
 
@@ -22,9 +23,9 @@ Everything above that is plain logic: SHA-256, MAC checks, and I2C to a secure e
 | | Platform | Application |
 |---|---|---|
 | What it is | The FPGA bitstream, including the `thriller` loader logic | The code and data the device runs, stored encrypted in SPI NOR flash |
-| Signing key | Platform key | Application key |
+| Signing key | Platform LMS key | Application LMS key |
 | Anti-rollback counter | Secure element counter 0 | Secure element counter 1 |
-| Checked by | FPGA config engine at boot; secure element before install | Secure element before install; loader's authentication tag at boot |
+| Checked by | Loader (LMS) before install; FPGA config engine at boot | Loader (LMS) before install; loader's authentication tag at boot |
 | After an ASIC conversion | Gone: the platform is fixed in silicon | Unchanged |
 
 The two chains share nothing except the secure element. A platform update never touches the application,
@@ -32,6 +33,31 @@ and an application update never touches the bitstream. The application key can b
 party than the platform key, for example a customer who ships their own application on our platform.
 
 The ATECC608B has exactly two monotonic counters, one per chain.
+
+## Signatures: LMS
+
+Update packages are signed with LMS (Leighton-Micali Signatures, RFC 8554 and NIST SP 800-208),
+a hash-based scheme that is secure against quantum computers.
+
+- **Verification needs only SHA-256.** The loader verifies signatures itself with the same SHA-256 core it
+  already has, so it still needs no bignum or elliptic-curve arithmetic. The secure element does not support LMS
+  and is no longer involved in signature checks.
+- **Public keys are small (56 bytes) and must be trusted, not secret.**
+  - The platform public key is built into the bitstream, where Stage 0 authenticates it.
+  - The application public key is held in a locked secure element slot and read over the authenticated
+    (MAC'd) channel, so it can be provisioned by a different party than the platform.
+    On an ASIC it can instead live in ROM if the same party owns both.
+- **Signing is stateful.** Each LMS one-time key may sign exactly once. The signer must never reuse a leaf,
+  including after a crash or a restore from backup, and SP 800-208 expects that state to be kept in a hardware
+  security module. Updates are infrequent, so a single tree of 2^10 to 2^15 signatures per key is plenty.
+
+### Quantum note on Stage 0
+
+The FPGA vendor's bitstream signature (ECDSA or RSA) is not quantum-safe, and it cannot be changed.
+`thriller` therefore also requires the FPGA to accept **only encrypted** bitstreams: a forger then needs
+the AES-256 key as well, and AES-256 remains secure against quantum attack. The pairing key adds a second
+barrier, because a forged bitstream cannot get the application key from the secure element without it.
+On an ASIC, this concern disappears.
 
 ## Stage 0 (immutable)
 
@@ -46,14 +72,14 @@ On the manufacturing side:
 - Program the bitstream key material (public key or its hash, and the encryption key) into the FPGA, then lock it.
 - Lock the device so it accepts only authenticated bitstreams on every configuration port.
 - Configure and lock the secure element (keys, slot policies, counters), using a published slot layout such as Microchip's TrustFLEX as the starting point.
-- Store the platform and application public keys in locked secure element slots.
+- Build the platform LMS public key into the bitstream, and store the application LMS public key in a locked secure element slot.
 - Store the first pairing key in both the bitstream and the secure element.
 - Put the signed, encrypted bitstream and the encrypted application in flash.
 
 In the field:
 
 - The FPGA rejects any bitstream that fails authentication.
-- The FPGA and secure element share a pairing key. All counter reads and verify results are MAC'd
+- The FPGA and secure element share a pairing key. All counter reads and key reads are MAC'd
   over a fresh FPGA-generated nonce, so a device on the I2C bus cannot replay or forge them.
 
 ## Stage 1: the loader (part of the platform)
@@ -64,9 +90,9 @@ and it is what an ASIC conversion would put in silicon.
 
 ### Platform updates (FPGA only)
 
-- The host sends a platform package: a new bitstream, its version, and the next pairing key wrapped under the current one, all signed with the platform key (P-256 ECDSA).
+- The host sends a platform package: a new bitstream, its version, and the next pairing key wrapped under the current one, all signed with the platform LMS key.
   The bitstream also carries the FPGA vendor's own signature, so a platform update is signed twice.
-- The loader hashes the package (SHA-256) and the secure element verifies the signature against the platform public key, returning a MAC'd pass/fail.
+- The loader verifies the LMS signature against the platform public key built into the current bitstream.
 - The version is checked against counter 0. Older versions are refused.
 - The loader writes the bitstream to the inactive flash slot, installs the next pairing key in the secure element, and advances counter 0.
 
@@ -75,8 +101,8 @@ will not give it the application key or the UART authentication key. That is wha
 
 ### Application updates
 
-- The host sends an application package: the application image and its version, signed with the application key (P-256 ECDSA).
-- The loader hashes the package and the secure element verifies the signature against the application public key, returning a MAC'd pass/fail.
+- The host sends an application package: the application image and its version, signed with the application LMS key.
+- The loader reads the application public key from the secure element over the MAC'd channel and verifies the LMS signature against it.
 - The version is checked against counter 1. Older versions are refused.
 - The loader encrypts and authenticates the application (for example AES-GCM) with the device-unique application key from the secure element, writes it to the inactive flash slot, and advances counter 1.
 
@@ -107,6 +133,7 @@ Before porting `thriller` to an FPGA family, answer these from the vendor's secu
 3. **Key storage.** Is the public key (or its hash) and the encryption key held in one-time fuses that cannot be read back or reprogrammed after locking?
 4. **Readback lockout.** Can configuration readback be permanently disabled?
 5. **Tool licensing.** Can the toolchain tier you plan to use generate signed and encrypted bitstreams?
+6. **Encryption enforced.** Can the device be locked to accept only encrypted bitstreams? The vendor signature is not quantum-safe, so AES-256 is what protects Stage 0 against a quantum-capable forger.
 
 ## Supported FPGAs
 
@@ -120,6 +147,7 @@ Before porting `thriller` to an FPGA family, answer these from the vendor's secu
 | 3. Key storage | **Open.** Expected OTP and P-256 | eFuses |
 | 4. Readback lockout | **Open** | **Open** |
 | 5. Tool licensing | **Open.** Confirm the Base license covers security features | **Open** |
+| 6. Encryption enforced | **Open** | **Open** |
 | Notes | ECDSA authentication disables Early I/O Release | Security is unavailable with compressed bitstreams and on W64 packages. Fuse JTAG off as the last manufacturing step |
 | Reference | *Advanced Configuration Security User Guide for Nexus Platform* (FPGA-TN-02176) | Efinix *Titanium Security Feature* application note |
 
