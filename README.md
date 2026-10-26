@@ -109,13 +109,20 @@ Stage 0 is the FPGA's configuration engine. On an ASIC, it is the silicon itself
 
 On the manufacturing side:
 
-- Generate the bitstream and encrypt it (and on Tier A, sign it), using the algorithms the FPGA family supports.
-- Program the FPGA's key material, then lock it. Disable readback, and enforce encrypted-only configuration where the device supports it.
+- Program a unique bitstream encryption key into each FPGA's eFuses (or one key per batch of boards), then lock it.
+  Derive it in the HSM as KDF(bitstream master key, board serial number), so no key database is needed.
+  Disable readback, and enforce encrypted-only configuration where the device supports it.
+- Generate one bitstream per release. For each board, patch that board's own pairing key into the bitstream's
+  block RAM initialization, then encrypt it under that board's key (and on Tier A, sign it).
+  On the ECP5, Project Trellis's `ecpbram` can patch block RAM contents without re-running place and route.
 - Configure and lock the secure element (keys, slot policies, counters), using a published slot layout such as Microchip's TrustFLEX as the starting point.
 - Diversify every secure element key per device, so one compromised unit exposes nothing about another.
 - Build the platform LMS public key into the bitstream, and store the application LMS public key in a locked secure element slot.
-- Store the first pairing key in both the bitstream and the secure element.
+- Store the board's pairing key in its secure element (it is already in that board's bitstream).
 - Put the encrypted bitstream and the encrypted application in flash.
+
+Because each board's bitstream is encrypted under its own key, a bitstream copied from one board will not
+configure another, and extracting one FPGA's key exposes only that board (or that batch).
 
 In the field:
 
@@ -130,7 +137,9 @@ every FPGA, and it is what an ASIC conversion would put in silicon.
 
 ### Platform updates (FPGA only)
 
-- The host sends a platform package: a new bitstream, its version, and the next pairing key wrapped under the current one, all signed with the platform LMS key.
+- The update server builds a platform package for each board (or batch): the new bitstream, carrying that board's
+  next pairing key and encrypted under that board's bitstream key, its version, and the next pairing key wrapped under
+  the current one, all signed with the platform LMS key. The board's serial number selects its package.
   On Tier A, the bitstream also carries the FPGA vendor's own signature, so a platform update is signed twice.
 - The loader verifies the LMS signature against the platform public key built into the current bitstream.
 - The version is checked against counter 0. Older versions are refused.

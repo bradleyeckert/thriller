@@ -106,7 +106,7 @@ Ratings are for the base model (no Code Secrecy Profile) unless a row says other
 | R11 | Bitstream (Tier B, ECP5) | Skilled attacker with physical access | Blind bit-flip edits to the encrypted bitstream, brute-forcing the configuration CRC | No hardware authentication; CBC-style encryption without a MAC | High (code execution on that unit; user data exposed in a later evil-maid session) | Medium (Low if the CRC is 32-bit; see Open Question 9) | Host-authorized data key (a stolen unit still protects data), per-device keys, tamper-evident enclosure |
 | R12 | Bitstream: foreign design | Casual hobbyist with a JTAG pod | Load their own design and talk to the secure element and flash | JTAG configuration open, or plaintext bitstreams accepted | Medium (denial of service, burned counters) | High on Tier B, Low on Tier A | Pairing key gates every secure element key; encrypted-only configuration and JTAG lockout where the FPGA supports them |
 | R13 | Bitstream: configuration readback | Casual hobbyist with a JTAG pod | Read back the running configuration and extract the pairing key | Readback left enabled | Critical | High if enabled, Low once fused | Readback permanently disabled at manufacturing (FPGA Requirement 4) |
-| R14 | FPGA bitstream encryption key | Advanced attacker with a lab | Side-channel or invasive extraction of the AES key from the FPGA, then decryption of the bitstream | Physical access to the configuration engine; the release pairing key is inside the bitstream | Critical (fleet-wide: the release pairing key lets an attacker derive every unit's pairing key, making evil-maid attacks cheap on every unit) | Low | Host-authorized data key keeps user data on stolen units safe even so. Per-device bitstream encryption keys would contain it to one unit, at the cost of one bitstream build per unit (Open Question 11) |
+| R14 | FPGA bitstream encryption key | Advanced attacker with a lab | Side-channel or invasive extraction of the AES key from one FPGA, then decryption of its bitstream | Physical access to the configuration engine | High (that board only, or that batch with per-batch keys) | Low | Per-board (or per-batch) eFuse keys and per-board pairing keys patched into each board's bitstream; host-authorized data key keeps user data on the stolen board safe even so |
 | R15 | Loader: soft CPU debug paths | Casual hobbyist with a JTAG pod | Use a soft CPU debug port or user-JTAG primitive to read keys from internal memory | Debug logic left in a production bitstream | Critical | Medium | No debug ports or user-JTAG primitives in production bitstreams |
 | R16 | Loader: security checks | Advanced attacker with physical access | Voltage or clock glitching to skip the LMS check, the counter check or the tag check | A single check is a single point of failure | Critical | Low | Planned: duplicated checks with independent code paths, and failing closed. Not yet designed |
 | R17 | Loader: AES core | Thief with an oscilloscope | Power or EM side-channel analysis during application decryption | AES core is not masked | Low (High with the Code Secrecy Profile) | Medium | Accepted in the base model. Code Secrecy Profile adds a masked AES core and decrypts once per boot |
@@ -211,7 +211,7 @@ elliptic-curve arithmetic. LMS signatures make this possible, because verifying 
 | Algorithm | Host | Config engine | Loader | Secure element | Used for | ASIC |
 |---|:-:|:-:|:-:|:-:|---|:-:|
 | Bitstream signature (ECDSA P-256 or RSA-4096, per family; Tier A only) | sign | verify | | | Stage 0 bitstream authentication | — |
-| Bitstream encryption (AES-256, mode per family) | encrypt | decrypt | | | Bitstream confidentiality, and quantum-safe Stage 0 | — |
+| Bitstream encryption (AES, mode per family; per-board key) | encrypt | decrypt | | | Bitstream confidentiality, and quantum-safe Stage 0 | — |
 | LMS (RFC 8554), platform key | sign (stateful, HSM) | | **verify** | | Platform package signatures | — |
 | LMS (RFC 8554), application key | sign (stateful, HSM) | | **verify** | | Application package signatures | ✓ |
 | SHA-256 | yes | | **yes** | yes | LMS, package digests, MACs, nonce and key derivation | ✓ |
@@ -239,6 +239,10 @@ under the distribution key (AES-256-GCM), and its version; the LMS signature cov
 Because the loader verifies the platform signature before writing a bitstream to flash, every platform update is signed
 twice: LMS by us, and the vendor's own format checked by the config engine at boot.
 
+Platform packages are built per board (or per batch), because each board's bitstream is encrypted under its own
+eFuse key and carries its own pairing key. Synthesis and place and route still run once per release; only the
+block RAM patch, encryption and signing are repeated per board.
+
 LMS is stateful, and the signing side must be built around that:
 - Each one-time key (leaf) signs exactly once. Reusing a leaf lets an attacker forge signatures.
 - The signer's state (next leaf index) must survive crashes and must never be restored from an older backup.
@@ -256,9 +260,13 @@ their own application on our platform.
 - Configure the data key slot to require authorization by the host authorization key, and make the host
   authorization key non-readable, so it can only be used inside the secure element.
 - The platform LMS public key needs no provisioning: it is built into the bitstream.
-- Diversify every key per device, for example pairing key = KDF(release pairing key, SE serial number).
+- Diversify every key per device, derived in the HSM as KDF(master key, serial number) so no key database is needed.
   This is mandatory: it is what keeps a compromised unit from exposing the rest of the fleet.
   The one exception is the distribution key, which must be the same on every unit so one package installs everywhere.
+- Program a per-board (or per-batch) bitstream encryption key into the FPGA's eFuses. Patch the board's pairing key
+  into its copy of the bitstream (block RAM initialization; `ecpbram` on the ECP5) and encrypt that copy under the board's key.
+  Because the pairing key is in that board's bitstream only, a pairing key no longer needs to be derived from a
+  release key carried in every bitstream.
 - Give the host its copy of the host authorization key (or the means to derive it) over a channel separate from the device.
 - Program and lock the FPGA's key fuses (see the FPGA Requirements in the README).
 
@@ -375,6 +383,7 @@ These are deliberately absent from the loader:
 10. **Code Secrecy Profile.** Whether per-device package keys fit the intended update distribution (one build per unit),
    how much area a masked AES core costs on the smallest target, and whether the application fits in internal RAM
    so it is decrypted only once per boot.
-11. **Containing a bitstream key extraction.** Per-device pairing keys are derived from a release key carried in the bitstream,
-   so extracting the FPGA's AES key exposes every unit's pairing key. Decide whether that is acceptable, or whether to use per-device
-   bitstream encryption keys (one bitstream build per unit) on FPGAs that allow it.
+11. **Per-board or per-batch bitstream keys.** Per-board keys contain a key extraction to one board but need one platform
+   package per board; per-batch keys cut packaging work but widen the blast radius to the batch. Also confirm the eFuse
+   programming flow for unique keys on each target family, and that `ecpbram` patching works on encrypted ECP5 builds
+   (patch first, then encrypt).
