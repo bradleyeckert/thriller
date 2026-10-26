@@ -11,63 +11,92 @@ Everything above that is plain logic: SHA-256, MAC checks, and I2C to a secure e
 - A secure element such as an ATECC608B (or a pin-compatible MODSEMI MOD8ID as second source)
 - Voltage regulators
 - Oscillator module
-- QSPI NOR flash (for bitstream and user)
+- QSPI NOR flash (for bitstream and encrypted application)
 - USB-UART bridge (for connection to host PC or terminal)
 - JTAG port (for connection to ISP tools)
+
+## Two things get updated
+
+`thriller` authenticates two independent kinds of update:
+
+| | Platform | Application |
+|---|---|---|
+| What it is | The FPGA bitstream, including the `thriller` loader logic | The code and data the device runs, stored encrypted in SPI NOR flash |
+| Signing key | Platform key | Application key |
+| Anti-rollback counter | Secure element counter 0 | Secure element counter 1 |
+| Checked by | FPGA config engine at boot; secure element before install | Secure element before install; loader's authentication tag at boot |
+| After an ASIC conversion | Gone: the platform is fixed in silicon | Unchanged |
+
+The two chains share nothing except the secure element. A platform update never touches the application,
+and an application update never touches the bitstream. The application key can belong to a different
+party than the platform key, for example a customer who ships their own application on our platform.
+
+The ATECC608B has exactly two monotonic counters, one per chain.
 
 ## Stage 0 (immutable)
 
 The FPGA authenticates its own bitstream in hardware before the design runs.
 That is the root of trust: the check is done by the configuration engine, not by user logic,
-so a modified or forged bitstream never gets to execute.
+so a modified or forged bitstream never gets to execute. On an ASIC, Stage 0 is the silicon itself.
 
 On the manufacturing side:
 
-- Generate the bitstream, sign it with the manufacturer's bitstream private key, and encrypt it,
+- Generate the bitstream, sign it with the bitstream private key, and encrypt it,
   using whatever algorithms the FPGA family supports.
 - Program the bitstream key material (public key or its hash, and the encryption key) into the FPGA, then lock it.
 - Lock the device so it accepts only authenticated bitstreams on every configuration port.
 - Configure and lock the secure element (keys, slot policies, counters), using a published slot layout such as Microchip's TrustFLEX as the starting point.
+- Store the platform and application public keys in locked secure element slots.
 - Store the first pairing key in both the bitstream and the secure element.
-- Put the signed, encrypted bitstream and the signed firmware image in flash.
+- Put the signed, encrypted bitstream and the encrypted application in flash.
 
 In the field:
 
 - The FPGA rejects any bitstream that fails authentication.
-- The secure element holds the firmware public key in a locked slot.
 - The FPGA and secure element share a pairing key. All counter reads and verify results are MAC'd
   over a fresh FPGA-generated nonce, so a device on the I2C bus cannot replay or forge them.
 
-### Bitstream rollback
+## Stage 1: the loader (part of the platform)
 
-Hardware authentication accepts any correctly signed bitstream, including an older one with a known bug.
-The secure element blocks this:
+The loader is the `thriller` logic in the bitstream: a soft MCU or state machine that talks to the
+secure element, decrypts the application, and accepts updates over the UART. It is the same on every FPGA,
+and it is what an ASIC conversion would put in silicon.
 
-- Each bitstream release carries its own pairing key.
-- When an update is installed, the new bitstream writes the next pairing key into the secure element and advances its monotonic counter.
-- An old bitstream can still configure the FPGA, but it can no longer authenticate to the secure element,
-  so it never receives the firmware key or the UART authentication key.
+### Platform updates (FPGA only)
 
-## Stage 1 (mutable)
+- The host sends a platform package: a new bitstream, its version, and the next pairing key wrapped under the current one, all signed with the platform key (P-256 ECDSA).
+  The bitstream also carries the FPGA vendor's own signature, so a platform update is signed twice.
+- The loader hashes the package (SHA-256) and the secure element verifies the signature against the platform public key, returning a MAC'd pass/fail.
+- The version is checked against counter 0. Older versions are refused.
+- The loader writes the bitstream to the inactive flash slot, installs the next pairing key in the secure element, and advances counter 0.
 
-This stage accepts firmware updates over the UART. It is the same on every FPGA.
+An old bitstream can still configure the FPGA, but it holds a retired pairing key, so the secure element
+will not give it the application key or the UART authentication key. That is what stops platform rollback.
 
-Update:
+### Application updates
 
-- The host sends a firmware image signed with the manufacturer's firmware private key (P-256 ECDSA).
-  This key is independent of the bitstream signing key, which may use a different algorithm.
-- The soft MCU in the FPGA hashes the image (SHA-256) and asks the secure element to verify the signature against the stored firmware public key.
-- The secure element returns a MAC'd pass/fail, so the soft MCU needs only SHA-256 and a MAC check, not an ECDSA implementation.
-- The firmware version is checked against a secure-element monotonic counter. Older versions are refused and the counter advances on success.
-- The firmware is encrypted and authenticated (for example AES-GCM) with a key held in the secure element, and then written to flash.
+- The host sends an application package: the application image and its version, signed with the application key (P-256 ECDSA).
+- The loader hashes the package and the secure element verifies the signature against the application public key, returning a MAC'd pass/fail.
+- The version is checked against counter 1. Older versions are refused.
+- The loader encrypts and authenticates the application (for example AES-GCM) with the device-unique application key from the secure element, writes it to the inactive flash slot, and advances counter 1.
 
-Boot:
+### Boot
 
-- The soft MCU reads the firmware from flash and checks its authentication tag before running it.
-- The device-unique key comes from the secure element, so a flash image copied to another board will not decrypt.
+- The loader reads the application from flash and checks its authentication tag before running it.
+- The application key is device-unique and stays in the secure element, so a flash image copied to another board will not decrypt.
+- The application key survives platform updates: each new bitstream reaches it through its own pairing key.
 
 The UART is the one insecure channel. Access to secure data over the UART requires challenge-response
 authentication against a key in the secure element.
+
+## ASIC conversion
+
+An ASIC removes the platform chain completely: no bitstream, no platform key, no counter 0, no pairing key rotation.
+The application chain, the secure element and the loader carry over unchanged.
+
+One thing does change. A pairing key in mask-programmed logic is identical on every chip and can be recovered
+by reverse engineering one die. An ASIC should instead get a per-device pairing key at provisioning,
+for example in one-time-programmable fuses (see `doc/arch.md`, Open Questions).
 
 ## FPGA Requirements
 
