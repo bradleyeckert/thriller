@@ -260,7 +260,7 @@ their own application on our platform.
 - Configure the data key slot to require authorization by the host authorization key, and make the host
   authorization key non-readable, so it can only be used inside the secure element.
 - The platform LMS public key needs no provisioning: it is built into the bitstream.
-- Diversify every key per device, derived in the HSM as KDF(master key, serial number) so no key database is needed.
+- Diversify every key per device, derived in the HSM as KDF(master key, secure element serial number) so no key database is needed.
   This is mandatory: it is what keeps a compromised unit from exposing the rest of the fleet.
   The one exception is the distribution key, which must be the same on every unit so one package installs everywhere.
 - Program a per-board (or per-batch) bitstream encryption key into the FPGA's eFuses. Patch the board's pairing key

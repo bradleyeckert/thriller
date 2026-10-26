@@ -110,7 +110,7 @@ Stage 0 is the FPGA's configuration engine. On an ASIC, it is the silicon itself
 On the manufacturing side:
 
 - Program a unique bitstream encryption key into each FPGA's eFuses (or one key per batch of boards), then lock it.
-  Derive it in the HSM as KDF(bitstream master key, board serial number), so no key database is needed.
+  Derive it in the HSM as KDF(bitstream master key, secure element serial number), so no key database is needed.
   Disable readback, and enforce encrypted-only configuration where the device supports it.
 - Generate one bitstream per release. For each board, patch that board's own pairing key into the bitstream's
   block RAM initialization, then encrypt it under that board's key (and on Tier A, sign it).
@@ -139,7 +139,7 @@ every FPGA, and it is what an ASIC conversion would put in silicon.
 
 - The update server builds a platform package for each board (or batch): the new bitstream, carrying that board's
   next pairing key and encrypted under that board's bitstream key, its version, and the next pairing key wrapped under
-  the current one, all signed with the platform LMS key. The board's serial number selects its package.
+  the current one, all signed with the platform LMS key. The secure element serial number, reported by the loader, selects its package.
   On Tier A, the bitstream also carries the FPGA vendor's own signature, so a platform update is signed twice.
 - The loader verifies the LMS signature against the platform public key built into the current bitstream.
 - The version is checked against counter 0. Older versions are refused.
