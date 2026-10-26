@@ -13,6 +13,65 @@ provisioning, booting and updating, and where each one runs.
 Each chain has its own LMS signing key, its own secure element counter and its own package format.
 The rows marked "platform only" below disappear in an ASIC conversion; everything else carries over.
 
+## Threat model
+
+### Assets
+
+| Asset | Goal |
+|---|---|
+| User data in flash | Confidentiality and integrity. **The primary asset.** |
+| Application image | Integrity, and only the genuine signed versions run. Keeping the code secret is not a goal. |
+| Device identity | A unit cannot be cloned or impersonated. |
+| Update signing keys | Never exposed. They stay offline in an HSM. |
+| The rest of the fleet | Compromising one unit exposes nothing about another. |
+
+### Attackers
+
+| Attacker | Capability |
+|---|---|
+| Remote | Talks to the device over the UART only. |
+| Bus prober | Can watch and inject traffic on the I2C bus to the secure element. |
+| Thief | Has the device and unlimited time, but the legitimate host never connects to it again. |
+| Evil maid | Has the device for a while, then returns it to the legitimate user, who connects their host. |
+| Quantum-capable | Can break ECDSA and RSA, but not AES-256, SHA-256 or LMS. |
+
+The design assumes the bitstream **may be compromised**: replaced with a foreign design, or a genuine encrypted
+bitstream modified blindly (on Tier B, AES-CBC style encryption without a MAC can allow targeted bit flips).
+It limits what a compromised bitstream can reach rather than relying on preventing it.
+
+### Outcomes
+
+| Asset | Remote | Bus prober | Thief | Evil maid | Quantum-capable |
+|---|---|---|---|---|---|
+| User data | Safe | Safe (MAC'd and encrypted transfers, loader nonce) | **Safe on both tiers**: the data key needs the host | Tier A: safe unless the bitstream is compromised. Tier B: exposed if a bitstream compromise succeeds | Same as without the quantum computer (all symmetric) |
+| Application image | Safe | Safe | Can run modified code on that unit only | Can run modified code on that unit | Same |
+| Device identity | Safe | Safe | Can use the identity while holding the unit, cannot clone it | Same | Same (symmetric keys) |
+| Update signing keys | Safe | Safe | Safe | Safe | Safe (LMS) |
+| Other units | Safe | Safe | Safe (per-device keys) | Safe | Safe |
+
+The difference between the tiers is only the evil-maid column: how expensive it is to plant a compromised
+bitstream that will be running when the user next authenticates.
+
+### Bitstream compromise on Tier B
+
+Without the AES key, an attacker can only flip bits in the encrypted bitstream. In CBC mode each targeted
+edit also turns a whole 16-byte block into unpredictable garbage, and the result must still pass the
+configuration engine's CRC. How hard that is depends on the CRC:
+
+- A 16-bit CRC can be satisfied by brute force in about 65,000 configuration attempts, which is minutes.
+- A 32-bit CRC makes blind edits impractical.
+
+The ECP5's encryption mode and CRC width are open questions. Even a successful edit is targeted at one unit,
+and the attacker must then return it and wait for the user to authenticate.
+
+### Not protected
+
+- User data on a unit while the evil maid's compromised bitstream is running a legitimate session.
+  Mitigation: tamper-evident enclosures and custody of the hardware.
+- Remote attestation. A compromised bitstream that holds the pairing key looks identical to a good one,
+  so a host cannot tell from the protocol alone.
+- Denial of service. A compromised bitstream can burn counter values or erase flash; it cannot roll counters back.
+
 ## Where algorithms run
 
 | Location | What it is | Who provides it |
@@ -29,14 +88,14 @@ elliptic-curve arithmetic. LMS signatures make this possible, because verifying 
 
 | Algorithm | Host | Config engine | Loader | Secure element | Used for | ASIC |
 |---|:-:|:-:|:-:|:-:|---|:-:|
-| Bitstream signature (ECDSA P-256 or RSA-4096, per family) | sign | verify | | | Stage 0 bitstream authentication | — |
+| Bitstream signature (ECDSA P-256 or RSA-4096, per family; Tier A only) | sign | verify | | | Stage 0 bitstream authentication | — |
 | Bitstream encryption (AES-256, mode per family) | encrypt | decrypt | | | Bitstream confidentiality, and quantum-safe Stage 0 | — |
 | LMS (RFC 8554), platform key | sign (stateful, HSM) | | **verify** | | Platform package signatures | — |
 | LMS (RFC 8554), application key | sign (stateful, HSM) | | **verify** | | Application package signatures | ✓ |
 | SHA-256 | yes | | **yes** | yes | LMS, package digests, MACs, nonce and key derivation | ✓ |
 | SE MAC protocol (SHA-256 based) | | | **yes** | yes | Authenticated counter reads and public key reads | ✓ |
-| HMAC-SHA256 | yes | | **yes** | yes | UART challenge-response | ✓ |
-| AES-256-GCM (or AES-CTR + HMAC) | | | **yes** | | Application encryption and authentication in flash | ✓ |
+| SE host authorization (CheckMac, SHA-256 based) | yes | | forwards only | **check** | Host proves itself to the SE; unlocks the data key | ✓ |
+| AES-256-GCM (or AES-CTR + HMAC) | | | **yes** | | Application and user data encryption and authentication in flash | ✓ |
 | Key wrap / encrypted write | wrap | | **yes** | yes | Installing the next pairing key | — |
 | Monotonic counter 0 | | | | yes | Platform anti-rollback | — |
 | Monotonic counter 1 | | | | yes | Application anti-rollback | ✓ |
@@ -49,7 +108,7 @@ elliptic-curve arithmetic. LMS signatures make this possible, because verifying 
 
 **Bitstream signing and encryption (platform only).** Done by the FPGA vendor's tools, so the algorithm depends on the family:
 ECDSA with AES-256 on Lattice Nexus, RSA-4096 with AES-GCM-256 on Efinix Titanium. These signatures are not
-quantum-safe, so the device must also be locked to accept only encrypted bitstreams (README, FPGA Requirements item 6).
+quantum-safe, so the device must also be locked to accept only encrypted bitstreams (README, FPGA Requirements item 5).
 
 **LMS signing (both chains).** Each chain has its own LMS key pair. Platform packages hold a bitstream, its version,
 and the next pairing key wrapped under the current one. Application packages hold the application image and its version.
@@ -68,20 +127,25 @@ their own application on our platform.
 
 **Provisioning.**
 - Write and lock the secure element configuration zone.
-- Write the application LMS public key, the first pairing key, the UART authentication key and the device-unique
-  application encryption key into their slots, then lock the data zone.
+- Write the application LMS public key, the first pairing key, the host authorization key, the device-unique
+  application key and the device-unique data key into their slots, then lock the data zone.
+- Configure the data key slot to require authorization by the host authorization key, and make the host
+  authorization key non-readable, so it can only be used inside the secure element.
 - The platform LMS public key needs no provisioning: it is built into the bitstream.
-- Optional per-device diversification: pairing key = KDF(release pairing key, SE serial number), so extracting one device does not expose the fleet.
+- Diversify every key per device, for example pairing key = KDF(release pairing key, SE serial number).
+  This is mandatory: it is what keeps a compromised unit from exposing the rest of the fleet.
+- Give the host its copy of the host authorization key (or the means to derive it) over a channel separate from the device.
 - Program and lock the FPGA's key fuses (see the FPGA Requirements in the README).
 
-**Field update client.** Sends platform and application packages over the UART and answers the HMAC-SHA256 challenge.
+**Field update client and host session.** Sends platform and application packages over the UART, and answers
+the secure element's challenge with a MAC under the host authorization key to open a data session.
 
 ## Config engine (platform only)
 
 Fixed in silicon; we only choose and lock it.
 
-- Bitstream signature verification (ECDSA or RSA, per family)
-- Bitstream decryption (AES-256)
+- Bitstream signature verification (ECDSA or RSA, per family; Tier A only)
+- Bitstream decryption (AES, per family; both tiers)
 - Key storage in one-time fuses
 - Port and readback lockout, and encrypted-only configuration
 
@@ -136,8 +200,11 @@ The secure element's AES is single-block over I2C and too slow for whole images.
 encrypted under the current one. The loader unwraps it and writes it to the secure element with an
 authorized encrypted write. Sequencing across power failures still needs to be designed (see Open Questions).
 
-**HMAC-SHA256 for UART authentication.** The loader issues a challenge from its nonce source and checks the
-host's response, using a key read from the secure element.
+**Host authorization relay.** The loader does not check the host itself. It asks the secure element for a
+challenge, mixes in its own nonce, passes the challenge to the host, and forwards the host's answer to the
+secure element's CheckMac. Only after a successful CheckMac will the secure element release the data key.
+The loader never sees the host authorization key, so a compromised bitstream cannot learn it.
+The loader must erase the data key when the session ends.
 
 **Support logic (not cryptographic).**
 - I2C master with the secure element's CRC-16 (polynomial 0x8005, initial value 0, LSB first), wake, idle and sleep handling.
@@ -149,7 +216,8 @@ host's response, using a key read from the secure element.
 Fixed in silicon; we only configure and lock it. With LMS, it no longer checks signatures. Its jobs are:
 
 - Two monotonic counters (maximum 2,097,151): counter 0 for the platform, counter 1 for the application
-- Key storage: application LMS public key, pairing key, UART authentication key, device-unique application encryption key
+- Key storage: application LMS public key, pairing key, host authorization key, device-unique application key, device-unique data key
+- Host authorization: CheckMac against the non-readable host authorization key, gating use of the data key slot
 - SHA-256 and the Nonce, GenDig, MAC, CheckMac, EncRead and EncWrite commands for the authenticated channel
 - TRNG
 - Configuration and data zone locks
@@ -171,5 +239,11 @@ These are deliberately absent from the loader:
 3. **AES mode choice.** GCM or CTR plus HMAC, decided by measured fabric area on the smallest target FPGA.
 4. **Nonce source.** Whether a ring-oscillator TRNG is reliable enough across the supported FPGA families and an ASIC process, or whether the counter fallback is acceptable.
 5. **ASIC pairing key.** A pairing key in mask logic is the same on every chip and can be recovered from one die. An ASIC needs a per-device pairing key, written at provisioning into one-time-programmable fuses or another per-device store.
-6. **Separate key owners.** If the application key belongs to a customer, how they provision their LMS public key into the secure element without needing access to the platform key, and whether the application chain needs its own UART authentication key.
+6. **Separate key owners.** If the application key belongs to a customer, how they provision their LMS public key into the secure element without needing access to the platform key.
 7. **LMS parameter set and signing infrastructure.** Final choice of tree height and Winternitz parameter (W = 4 assumed), whether to use SHA-256/192, and which HSM or signing service manages LMS state for each key owner.
+8. **Host authorization on the ATECC608B.** Confirm that a slot can require authorization by another key
+   (the ReqAuth and AuthKey configuration fields in cryptoauthlib), how long the authorization lasts, and how it is cleared
+   at session end. Also decide how to limit attempts if the host key is ever derived from a PIN.
+9. **ECP5 bitstream security.** The ECP5's AES key size and mode, the width of the configuration CRC
+   (Project Trellis documents the bitstream format), whether encrypted-only configuration and readback lockout can be fused,
+   and whether a bitstream built with Yosys and nextpnr can be encrypted, and with which tool.
