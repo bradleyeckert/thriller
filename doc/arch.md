@@ -20,7 +20,7 @@ The rows marked "platform only" below disappear in an ASIC conversion; everythin
 | Asset | Goal |
 |---|---|
 | User data in flash | Confidentiality and integrity. **The primary asset.** |
-| Application image | Integrity, and only the genuine signed versions run. Keeping the code secret is not a goal. |
+| Application image | Integrity, and only the genuine signed versions run. Keeping the code secret is not a goal of the base model; see the optional Code Secrecy Profile. |
 | Device identity | A unit cannot be cloned or impersonated. |
 | Update signing keys | Never exposed. They stay offline in an HSM. |
 | The rest of the fleet | Compromising one unit exposes nothing about another. |
@@ -71,6 +71,82 @@ and the attacker must then return it and wait for the user to authenticate.
 - Remote attestation. A compromised bitstream that holds the pairing key looks identical to a good one,
   so a host cannot tell from the protocol alone.
 - Denial of service. A compromised bitstream can burn counter values or erase flash; it cannot roll counters back.
+- Secrecy of the application code, unless the Code Secrecy Profile is enabled.
+
+## Optional: Code Secrecy Profile
+
+The base model protects the application's integrity, not its secrecy. Some users will also want to keep
+their code secret. This profile lists what that adds and what it costs. Enable it only if code secrecy is a requirement.
+
+### Why code is harder than user data
+
+User data is per device and per user. Application code is the **same plaintext on every unit**, so breaking
+any one unit leaks it for the whole fleet. Per-device key diversification does not help: it stops one unit's key
+from decrypting another unit's flash, but every unit's flash holds the same code.
+
+User data is also gated by the host authorization key. Code cannot be: the loader must decrypt the application
+at boot with no host present, or the device cannot run on its own. A compromised bitstream on any unit
+can therefore reach the code.
+
+### Added asset
+
+| Asset | Goal | Scope |
+|---|---|---|
+| Application confidentiality | The plaintext application never leaves the device | Fleet-wide: one leak exposes every unit |
+
+### Outcomes for application confidentiality
+
+| Tier | Remote | Bus prober | Thief | Evil maid | Quantum-capable |
+|---|---|---|---|---|---|
+| Tier A | Safe | Safe | Safe unless the bitstream is compromised | Same as thief | Reduces to the bitstream encryption mode: still strong with authenticated encryption (Ti60 AES-GCM), unconfirmed for CrossLink-NX |
+| Tier B | Safe | Safe | **Exposed if a blind bitstream modification succeeds** | Same as thief | Same as without the quantum computer |
+| ASIC | Safe | Safe | Safe against bitstream attacks; side channels remain | Same as thief | Safe |
+
+The thief is now the main attacker. For user data, a Tier B bitstream compromise only mattered to an evil maid
+who also had to return the unit and wait for the user. For code, a thief with any unit and unlimited time
+needs only one success, and the reward is the whole fleet's code. The ECP5's configuration CRC (Open Question 9)
+becomes the entire defense of the code on Tier B.
+
+**Recommendation:** use Tier A for code secrecy, preferably an FPGA with an authenticated-encryption bitstream
+format such as the Ti60's, or an ASIC. On Tier B, code secrecy is best effort only.
+
+### Changes the profile requires
+
+**Encrypted update packages.** Without the profile, application packages are LMS-signed but sent in plaintext;
+the loader encrypts them only on install. With the profile, the package must also be encrypted in transit.
+
+| Option | How | Trade-off |
+|---|---|---|
+| Per-device package key (recommended) | Package key = KDF(distribution master key, SE serial number). The master stays in the HSM; the server builds one package per unit. | One compromised unit exposes only the releases it received. Needs a per-unit build step. Symmetric, so quantum-safe. |
+| Fleet-wide distribution key | One key, stored in every secure element; the loader reads it to decrypt packages. | Simple, but a compromised bitstream on one unit can decrypt every future release. |
+
+The package is signed (LMS) over the ciphertext and the plaintext digest, so the loader can reject a forged
+package before decrypting anything.
+
+**Side-channel hardening.** A thief can reboot a unit thousands of times and record power or EM traces while the
+loader's AES core decrypts the application. Recovering one unit's key reveals the fleet's code. Options:
+- A masked or otherwise side-channel-hardened AES core in the loader.
+- Decrypt the application once per boot into internal RAM, never streaming it repeatedly from flash.
+- Optionally, a counter-limited application key in the secure element, which caps how many times it is released, at the cost of a fixed boot budget.
+
+**No in-use readout paths.** These become hard requirements instead of hygiene:
+- No debug port on the soft CPU in production bitstreams.
+- No user-JTAG primitives in the design (for example the ECP5's JTAGG) that can reach internal memory.
+- Configuration readback permanently disabled (already required).
+- Fabric JTAG disabled where the FPGA allows it.
+
+**Separate key owners.** If a customer owns the application and needs it secret from the platform vendor too,
+the profile cannot provide that: the platform's loader decrypts the customer's code, so the customer must trust
+the platform. The profile can only protect the code from everyone else.
+
+### Added algorithms
+
+| Algorithm | Host | Loader | Secure element | Used for |
+|---|:-:|:-:|:-:|---|
+| AES-256-GCM package encryption | encrypt | decrypt | | Application packages in transit |
+| KDF (HMAC-SHA256 based, for example HKDF) | derive from master | | | Per-device package keys |
+| Side-channel-hardened AES core | | yes | | Application decryption at boot |
+| Package key slot | | read over MAC'd channel | store | Per-device package key |
 
 ## Where algorithms run
 
@@ -247,3 +323,6 @@ These are deliberately absent from the loader:
 9. **ECP5 bitstream security.** The ECP5's AES key size and mode, the width of the configuration CRC
    (Project Trellis documents the bitstream format), whether encrypted-only configuration and readback lockout can be fused,
    and whether a bitstream built with Yosys and nextpnr can be encrypted, and with which tool.
+10. **Code Secrecy Profile.** Whether per-device package keys fit the intended update distribution (one build per unit),
+   how much area a masked AES core costs on the smallest target, and whether the application fits in internal RAM
+   so it is decrypted only once per boot.
