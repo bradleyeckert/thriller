@@ -41,6 +41,7 @@ Risk IDs (R1–R22) refer to the Risk Assessment in `doc/arch.md`.
 | HSM | Holds LMS signing keys (with state), KDF master keys, the distribution key | Manufacturer-controlled, highest trust |
 | Manufacturing station | Programs eFuse keys, provisions and locks the secure element, writes flash | Manufacturer-controlled |
 | Distribution channel | Delivers update files to the host (download, email, removable media) | Not manufacturer-controlled |
+| MicroSD card | Removable media for security event logs and offline update packages | Untrusted storage |
 
 ### Diagram
 
@@ -86,6 +87,7 @@ flowchart LR
 | QSPI | Loader ↔ flash | SPI NOR commands | Bitstreams, application, user data | Everything at rest is encrypted and authenticated (AES-256-GCM or vendor format) |
 | UART | Host ↔ loader | Framed messages, CRC-32 | Update packages, session challenges, user data | LMS signatures on packages; CheckMac host authorization in the secure element. CRC is for transport only |
 | JTAG | Factory station ↔ FPGA | IEEE 1149.1 | eFuse programming, initial configuration | Fused off, or limited to non-configuration instructions, after manufacturing where the FPGA supports it; readback disabled |
+| MicroSD | Loader ↔ removable card | SD (SPI mode) | Security event logs out; update packages in | Update packages carry LMS signatures, exactly as over the UART; log records are MAC'd and chained under a per-device log key so removal, reordering or editing is detectable. The loader reads only fixed-format package and log files, never a general filesystem it must trust |
 
 The device has no network interface of its own. Any network exposure comes through the host PC and is the integrator's to document.
 

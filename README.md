@@ -19,6 +19,7 @@ user data is unlocked only with a secret held outside the device. See `doc/arch.
 - QSPI NOR flash (for bitstream, encrypted application and encrypted user data)
 - USB-UART bridge (for connection to host PC or terminal)
 - JTAG port (for connection to ISP tools)
+- MicroSD card socket (for off-device security event logs and offline update packages)
 
 ## FPGA Tiers
 
