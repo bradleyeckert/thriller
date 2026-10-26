@@ -1,5 +1,5 @@
 # It's all about the ROT
-Secure boot for ECP5 FPGAs.
+Root-of-trust for ECP5 FPGAs.
 
 ## chipset
 
