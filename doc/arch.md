@@ -20,7 +20,7 @@ The rows marked "platform only" below disappear in an ASIC conversion; everythin
 | Asset | Goal |
 |---|---|
 | User data in flash | Confidentiality and integrity. **The primary asset.** |
-| Application image | Integrity, and only the genuine signed versions run. Keeping the code secret is not a goal of the base model; see the optional Code Secrecy Profile. |
+| Application image | Integrity, and only the genuine signed versions run. Packages are encrypted in transit so they show no plaintext, but keeping the code secret from a determined attacker is not a goal of the base model; see the optional Code Secrecy Profile. |
 | Device identity | A unit cannot be cloned or impersonated. |
 | Update signing keys | Never exposed. They stay offline in an HSM. |
 | The rest of the fleet | Compromising one unit exposes nothing about another. |
@@ -112,16 +112,18 @@ format such as the Ti60's, or an ASIC. On Tier B, code secrecy is best effort on
 
 ### Changes the profile requires
 
-**Encrypted update packages.** Without the profile, application packages are LMS-signed but sent in plaintext;
-the loader encrypts them only on install. With the profile, the package must also be encrypted in transit.
+**Per-device package keys.** The base model already encrypts application packages in transit, but under a
+fleet-wide distribution key that the loader reads from the secure element. That stops a casual hex dump, not
+an attacker: a compromised bitstream on one unit can decrypt every future release. The profile replaces it:
 
-| Option | How | Trade-off |
+| | Base model | Code Secrecy Profile |
 |---|---|---|
-| Per-device package key (recommended) | Package key = KDF(distribution master key, SE serial number). The master stays in the HSM; the server builds one package per unit. | One compromised unit exposes only the releases it received. Needs a per-unit build step. Symmetric, so quantum-safe. |
-| Fleet-wide distribution key | One key, stored in every secure element; the loader reads it to decrypt packages. | Simple, but a compromised bitstream on one unit can decrypt every future release. |
+| Package key | Fleet-wide distribution key, the same in every secure element | Package key = KDF(distribution master key, SE serial number). The master stays in the HSM |
+| Packages built | One per release | One per unit per release |
+| One compromised unit exposes | Every release, past and future | Only the releases that unit received |
 
-The package is signed (LMS) over the ciphertext and the plaintext digest, so the loader can reject a forged
-package before decrypting anything.
+Both are symmetric, so both are quantum-safe. In both, the package is signed (LMS) over the ciphertext,
+so the loader can reject a forged package before decrypting anything.
 
 **Side-channel hardening.** A thief can reboot a unit thousands of times and record power or EM traces while the
 loader's AES core decrypts the application. Recovering one unit's key reveals the fleet's code. Options:
@@ -143,10 +145,11 @@ the platform. The profile can only protect the code from everyone else.
 
 | Algorithm | Host | Loader | Secure element | Used for |
 |---|:-:|:-:|:-:|---|
-| AES-256-GCM package encryption | encrypt | decrypt | | Application packages in transit |
 | KDF (HMAC-SHA256 based, for example HKDF) | derive from master | | | Per-device package keys |
 | Side-channel-hardened AES core | | yes | | Application decryption at boot |
-| Package key slot | | read over MAC'd channel | store | Per-device package key |
+| Package key slot | | read over MAC'd channel | store | Per-device package key, replacing the fleet-wide distribution key |
+
+Package encryption itself (AES-256-GCM) is already in the base model.
 
 ## Where algorithms run
 
@@ -172,6 +175,7 @@ elliptic-curve arithmetic. LMS signatures make this possible, because verifying 
 | SE MAC protocol (SHA-256 based) | | | **yes** | yes | Authenticated counter reads and public key reads | ✓ |
 | SE host authorization (CheckMac, SHA-256 based) | yes | | forwards only | **check** | Host proves itself to the SE; unlocks the data key | ✓ |
 | AES-256-GCM (or AES-CTR + HMAC) | | | **yes** | | Application and user data encryption and authentication in flash | ✓ |
+| AES-256-GCM, distribution key | encrypt | | **decrypt** | store | Application packages in transit (obfuscation) | ✓ |
 | Key wrap / encrypted write | wrap | | **yes** | yes | Installing the next pairing key | — |
 | Monotonic counter 0 | | | | yes | Platform anti-rollback | — |
 | Monotonic counter 1 | | | | yes | Application anti-rollback | ✓ |
@@ -187,7 +191,8 @@ ECDSA with AES-256 on Lattice Nexus, RSA-4096 with AES-GCM-256 on Efinix Titaniu
 quantum-safe, so the device must also be locked to accept only encrypted bitstreams (README, FPGA Requirements item 5).
 
 **LMS signing (both chains).** Each chain has its own LMS key pair. Platform packages hold a bitstream, its version,
-and the next pairing key wrapped under the current one. Application packages hold the application image and its version.
+and the next pairing key wrapped under the current one. Application packages hold the application image, encrypted
+under the distribution key (AES-256-GCM), and its version; the LMS signature covers the ciphertext.
 Because the loader verifies the platform signature before writing a bitstream to flash, every platform update is signed
 twice: LMS by us, and the vendor's own format checked by the config engine at boot.
 
@@ -203,13 +208,14 @@ their own application on our platform.
 
 **Provisioning.**
 - Write and lock the secure element configuration zone.
-- Write the application LMS public key, the first pairing key, the host authorization key, the device-unique
-  application key and the device-unique data key into their slots, then lock the data zone.
+- Write the application LMS public key, the first pairing key, the host authorization key, the distribution key,
+  the device-unique application key and the device-unique data key into their slots, then lock the data zone.
 - Configure the data key slot to require authorization by the host authorization key, and make the host
   authorization key non-readable, so it can only be used inside the secure element.
 - The platform LMS public key needs no provisioning: it is built into the bitstream.
 - Diversify every key per device, for example pairing key = KDF(release pairing key, SE serial number).
   This is mandatory: it is what keeps a compromised unit from exposing the rest of the fleet.
+  The one exception is the distribution key, which must be the same on every unit so one package installs everywhere.
 - Give the host its copy of the host authorization key (or the means to derive it) over a channel separate from the device.
 - Program and lock the FPGA's key fuses (see the FPGA Requirements in the README).
 
@@ -292,7 +298,7 @@ The loader must erase the data key when the session ends.
 Fixed in silicon; we only configure and lock it. With LMS, it no longer checks signatures. Its jobs are:
 
 - Two monotonic counters (maximum 2,097,151): counter 0 for the platform, counter 1 for the application
-- Key storage: application LMS public key, pairing key, host authorization key, device-unique application key, device-unique data key
+- Key storage: application LMS public key, pairing key, host authorization key, distribution key, device-unique application key, device-unique data key
 - Host authorization: CheckMac against the non-readable host authorization key, gating use of the data key slot
 - SHA-256 and the Nonce, GenDig, MAC, CheckMac, EncRead and EncWrite commands for the authenticated channel
 - TRNG

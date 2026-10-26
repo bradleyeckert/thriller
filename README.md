@@ -42,6 +42,11 @@ Tier B trades protection against targeted tampering for lower cost and an open t
 | Application key | Secure element (per device) | Pairing key | Encryption and integrity of the application image in flash |
 | **Data key** | Secure element (per device) | Pairing key **and** host authorization | Encryption and integrity of user data in flash |
 | Host authorization key | Secure element (non-readable) and the host | Never leaves either | Proving the host is present, and UART access |
+| Distribution key | Secure element (same on every unit) | Pairing key | Encrypting application packages in transit, so a hex dump shows no plaintext |
+
+The distribution key is the one key that is not per device, because one package must install on every unit.
+It is obfuscation, not secrecy: a compromised bitstream on any unit can read it. Users who need real code
+secrecy switch to per-device package keys (see the Code Secrecy Profile in `doc/arch.md`).
 
 The important row is the data key. The secure element releases it only after the host proves knowledge of
 the host authorization key **directly to the secure element** (CheckMac, with the data key slot configured
@@ -136,8 +141,9 @@ will not give it the application key or the data key. That is what stops platfor
 
 ### Application updates
 
-- The host sends an application package: the application image and its version, signed with the application LMS key.
-- The loader reads the application public key from the secure element over the MAC'd channel and verifies the LMS signature against it.
+- The host sends an application package: the application image encrypted under the distribution key (AES-256-GCM), and its version, signed with the application LMS key over the ciphertext.
+- The loader reads the application public key from the secure element over the MAC'd channel and verifies the LMS signature against it, before decrypting anything.
+- The loader decrypts the image with the distribution key, read from the secure element over the MAC'd channel.
 - The version is checked against counter 1. Older versions are refused.
 - The loader encrypts and authenticates the application (for example AES-GCM) with the device-unique application key, writes it to the inactive flash slot, and advances counter 1.
 
