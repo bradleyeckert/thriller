@@ -29,12 +29,12 @@ a protected hardware container that boots securely and generates its own dynamic
 
 ## chipset
 
-An FPGA such as a LFE5U-25F-6BG256C
-Voltage regulators
-Oscillator module
-2 x SPI NOR flash (bitstream and user)
-USB-UART bridge for connection to host PC or terminal
-JTAG port for connection to ISP tools (Lattice, etc.)
+- An FPGA such as a LFE5U-25F-6BG256C
+- Voltage regulators
+- Oscillator module
+- 2 x SPI NOR flash (bitstream and user)
+- USB-UART bridge for connection to host PC or terminal
+- JTAG port for connection to ISP tools (Lattice, etc.)
 
 The PUF acts as a hardware token to encrypt and decrypt data. Plaintext data from a PC is encrypted onto the Flash chip, rendering it secure.
 Only the UART connection is not secure: It would be protected by authentication to control access to secure data.
