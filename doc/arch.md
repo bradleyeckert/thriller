@@ -73,6 +73,49 @@ and the attacker must then return it and wait for the user to authenticate.
 - Denial of service. A compromised bitstream can burn counter values or erase flash; it cannot roll counters back.
 - Secrecy of the application code, unless the Code Secrecy Profile is enabled.
 
+## Risk Assessment
+
+The Outcomes table above summarizes which assets survive each attacker. This table breaks the same ground
+down into individual risks, one per attack, so each can be rated, owned and tracked.
+
+Ratings are for the base model (no Code Secrecy Profile) unless a row says otherwise.
+
+**Impact:**
+- **Critical:** user data exposed or forged, arbitrary code execution, or any fleet-wide compromise.
+- **High:** a single unit compromised or rolled back to a vulnerable version.
+- **Medium:** loss of service, a bricked unit, or a weakened but not broken protection.
+- **Low:** exposure of information the model does not treat as secret.
+
+**Likelihood:**
+- **High:** needs only common tools (flash programmer, logic analyzer, JTAG pod) and public knowledge.
+- **Medium:** needs physical access plus specialist skill, or sustained effort against one unit.
+- **Low:** needs a well-equipped lab, an insider, or capabilities that do not yet exist.
+
+| # | Asset / Component | Threat Actor | Attack Vector / Threat Description | Vulnerability Exploited | Impact | Likelihood | Mitigation / Countermeasure |
+|---|---|---|---|---|---|---|---|
+| R1 | External SPI flash: user data | Thief with a flash programmer | Desolder or clip the flash and read user data offline | Flash is external and readable | Critical | High | AES-256-GCM under a per-device data key that the secure element releases only after host authorization (CheckMac) |
+| R2 | External SPI flash: application image | Casual hobbyist with a flash programmer | Dump the flash and inspect the application | Flash is external and readable | Low | High | AES-256-GCM under a per-device application key; a copied image will not run on another board |
+| R3 | External SPI flash: version state | Insider or thief with physical access | Restore an older, vulnerable bitstream or application image | Flash contents are not bound to a version | High | Medium | Secure element monotonic counters (0: platform, 1: application); pairing key rotation retires old bitstreams |
+| R4 | UART update path | Advanced remote attacker | Send a forged or modified update package | UART accepts update packages from anyone | Critical | Medium | LMS signature verified by the loader over the ciphertext, before decrypting or installing anything |
+| R5 | Update packages in transit | Casual hobbyist | Hex dump an update file or capture it on the UART | Packages travel over open channels | Low | High | AES-256-GCM under the fleet-wide distribution key (obfuscation). For real secrecy, per-device package keys (Code Secrecy Profile) |
+| R6 | Distribution key | Attacker with one compromised unit | Read the distribution key and decrypt all past and future packages | Key is the same on every unit and readable by the loader | Low (High with the Code Secrecy Profile) | Medium | Accepted in the base model. Code Secrecy Profile replaces it with per-device package keys |
+| R7 | I2C bus to the secure element | Casual hobbyist with a logic analyzer | Sniff keys as the loader reads them | Bus is external and unencrypted | High | High | Encrypted key reads (EncRead) under the pairing key; keys never cross the bus in clear |
+| R8 | I2C bus to the secure element | Insider with a bus interposer | Replay or forge counter values and read results | Bus is external; responses could be replayed | High | Medium | Every response MAC'd under the pairing key over a fresh loader-generated nonce |
+| R9 | UART host session | Advanced remote attacker | Guess or brute-force the host authorization to unlock user data | UART is an open channel; the secure element has no retry lockout | Critical | Low (high-entropy key); High (short PIN) | High-entropy host authorization key checked inside the secure element; if a PIN is ever used, a counter-limited key caps attempts |
+| R10 | Bitstream (Tier A) | Advanced attacker with a lab | Forge or modify a bitstream that the FPGA will accept | Requires breaking the vendor signature and the AES key | Critical | Low | Vendor signature plus AES-256 with encrypted-only configuration. Damage limited by the pairing key and host-authorized data key |
+| R11 | Bitstream (Tier B, ECP5) | Skilled attacker with physical access | Blind bit-flip edits to the encrypted bitstream, brute-forcing the configuration CRC | No hardware authentication; CBC-style encryption without a MAC | High (code execution on that unit; user data exposed in a later evil-maid session) | Medium (Low if the CRC is 32-bit; see Open Question 9) | Host-authorized data key (a stolen unit still protects data), per-device keys, tamper-evident enclosure |
+| R12 | Bitstream: foreign design | Casual hobbyist with a JTAG pod | Load their own design and talk to the secure element and flash | JTAG configuration open, or plaintext bitstreams accepted | Medium (denial of service, burned counters) | High on Tier B, Low on Tier A | Pairing key gates every secure element key; encrypted-only configuration and JTAG lockout where the FPGA supports them |
+| R13 | Bitstream: configuration readback | Casual hobbyist with a JTAG pod | Read back the running configuration and extract the pairing key | Readback left enabled | Critical | High if enabled, Low once fused | Readback permanently disabled at manufacturing (FPGA Requirement 4) |
+| R14 | FPGA bitstream encryption key | Advanced attacker with a lab | Side-channel or invasive extraction of the AES key from the FPGA | Physical access to the configuration engine | Critical (every bitstream decryptable; with the same key fleet-wide, every unit's pairing secret is exposed) | Low | Per-device pairing key diversification limits each pairing key to one unit; host-authorized data key keeps stolen-unit data safe |
+| R15 | Loader: soft CPU debug paths | Casual hobbyist with a JTAG pod | Use a soft CPU debug port or user-JTAG primitive to read keys from internal memory | Debug logic left in a production bitstream | Critical | Medium | No debug ports or user-JTAG primitives in production bitstreams |
+| R16 | Loader: security checks | Advanced attacker with physical access | Voltage or clock glitching to skip the LMS check, the counter check or the tag check | A single check is a single point of failure | Critical | Low | Planned: duplicated checks with independent code paths, and failing closed. Not yet designed |
+| R17 | Loader: AES core | Thief with an oscilloscope | Power or EM side-channel analysis during application decryption | AES core is not masked | Low (High with the Code Secrecy Profile) | Medium | Accepted in the base model. Code Secrecy Profile adds a masked AES core and decrypts once per boot |
+| R18 | Secure element | Advanced attacker with a lab | Invasive or side-channel attack on the ATECC608B to extract its keys | Physical access to the secure element | High (one unit only) | Low | Per-device key diversification limits the result to one unit |
+| R19 | Update process | Any user, or an attacker cutting power | Power failure during a platform or application update | Update is not atomic | Medium (bricked unit) | Medium | A/B flash slots. Pairing key rotation sequencing is still open (Open Question 1) |
+| R20 | LMS signing infrastructure | Insider, or an operator error | Reuse an LMS leaf (for example after restoring the signer from backup), enabling forgery | LMS is stateful | Critical (fleet-wide forged updates) | Low | Signing state kept in an HSM that enforces one-time use (SP 800-208); no restores of signer state |
+| R21 | Vendor bitstream signature (Tier A) | Future quantum-capable attacker | Break the vendor's ECDSA or RSA signature with Shor's algorithm | Vendor signature is not quantum-safe | Medium (Tier A falls back to Tier B protection) | Low (today) | Encrypted-only configuration (AES-256), LMS for all of our own signatures, all data protection symmetric |
+| R22 | Remote attestation | Advanced remote attacker controlling a compromised unit | Pass a compromised unit off as genuine to a host or server | A bitstream holding the pairing key is indistinguishable from a good one | High | Low | Accepted. Not protected by this design (see Not protected) |
+
 ## Optional: Code Secrecy Profile
 
 The base model protects the application's integrity, not its secrecy. Some users will also want to keep
