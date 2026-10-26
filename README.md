@@ -31,14 +31,8 @@ In the field:
 ## Stage 1 (mutable)
 
 This stage accepts firmware updates. User firmware is encrypted and stored in external Flash.
-The Stage 0 ROT tests the signature against the public key.
+The Stage 0 ROT tests the signature against the public firmware key, but it does not handle encryption.
 
-
-
-
-The signature is derived from the Stage 0 signature and a Stage 1 public key.
-
-
-
-The PUF acts as a hardware token to encrypt and decrypt data. Plaintext data from a PC is encrypted onto the Flash chip, rendering it secure.
+A PUF (physically unclonable function) acts as a hardware token to encrypt and decrypt data.
+Plaintext data from a PC is encrypted onto the Flash chip, rendering it secure.
 Only the UART connection is not secure: It would be protected by authentication to control access to secure data.
