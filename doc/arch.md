@@ -328,7 +328,7 @@ Options, smallest first:
 
 **AES-256-GCM, or AES-256-CTR with HMAC-SHA256.** Decrypts and authenticates the application read from flash at boot,
 and encrypts it on update. GCM needs an AES core plus a GHASH (GF(2^128) multiply). CTR plus HMAC reuses the
-SHA-256 core and needs only the AES encrypt direction. Either is fine; CTR plus HMAC is likely smaller.
+SHA-256 core and needs only the AES encrypt direction, so it is the recommendation (see Implementation partition).
 The secure element's AES is single-block over I2C and too slow for whole images. AES-256 is quantum-safe.
 
 **Key wrap for pairing key rotation (platform only).** The platform package carries the next release's pairing key,
@@ -345,6 +345,85 @@ The loader must erase the data key when the session ends.
 - I2C master with the secure element's CRC-16 (polynomial 0x8005, initial value 0, LSB first), wake, idle and sleep handling.
 - QSPI flash driver with A/B slots for the bitstream and for the application, so a failed update never leaves the device without a bootable image.
 - UART framing with CRC-32.
+
+## Implementation partition
+
+The loader runs on a LiteForth CPU in the fabric. A hardware LiteForth CPU has no C library behind it: the C API
+calls that a simulated LiteForth uses (`RFcall` and `AFcall`) do not exist in hardware. Every algorithm the
+loader needs must therefore be written in the LiteForth ISA, built in Verilog, or split between the two.
+
+### Crypto ports
+
+The Verilog cores appear to the CPU as I/O ports, reached with `>sys` and `sys>`, the same way LiteForth's
+non-blocking math unit is (`src/iomap.c` in LiteForth). Each port has a C implementation too:
+
+| Platform | Ports implemented by |
+|---|---|
+| FPGA (and ASIC) | Verilog cores |
+| Desktop LiteForth (`vm.c`) | C models, the reference for the Verilog cores (`doc/test.md` section 3) |
+| MCU LiteForth (CH32H417 and others) | C, or the MCU's own crypto hardware where it supports the algorithm |
+
+The loader's Forth code is then identical on every platform, and it never makes a C API call.
+The same port set replaces the C crypto libraries in LiteForth itself.
+
+### Partition
+
+| Function | Verilog | Forth | Why |
+|---|---|---|---|
+| SHA-256 compression | **Core**, iterative, about 65 cycles per 64-byte block | Message padding, block feeding, final digest | Everything depends on it; see the cost estimate below |
+| LMS chain hashing | **Chain sequencer** on the SHA-256 core: runs a Winternitz chain from step a to step b on one 55-byte message without CPU involvement | Parameter parsing, checksum digits, Merkle path, driving the sequencer | About 500 to 1,000 chain steps per verification; one CPU round trip per step would dominate |
+| LMS root comparison | **Comparator** that outputs a 32-bit pass or fail constant | Feeds it the computed and stored roots | Fault-injection countermeasure (`doc/test.md` rules 1 and 2) |
+| HMAC-SHA256 | — | Inner and outer hash on the SHA-256 core | Two extra blocks per MAC; no hardware needed |
+| AES-256 | **Core**, encrypt direction only, S-boxes in block RAM | Counter blocks, framing | Speed, key gating in hardware, and masking for the Code Secrecy Profile |
+| AES key gate | **Hardware**: the AES core loads the application or data key only with its pass token set | Requests the key | Countermeasure rule 3: a skipped software check leaves the key unusable |
+| Authentication tag comparison | **Comparator** | — | Countermeasure rules 1 and 2 |
+| Secure element MAC formats (Nonce, GenDig, MAC, CheckMac, EncRead, EncWrite) | — | Builds each message, uses the SHA-256 core | Fixed short formats; easy to get right in Forth and to test against cryptoauthlib |
+| Secure element MAC comparison | **Comparator** | — | Countermeasure rules 1 and 2 |
+| I2C master | **Byte-level core** (start, stop, bytes, acknowledge, wake pulse) | Command packets, CRC-16, retries, wake, idle and sleep | Timing in hardware, protocol in software |
+| CRC-16 (I2C), CRC-32 (UART) | Optional, inside the I2C and UART cores | Otherwise a short table-free loop | Small either way; not security |
+| QSPI flash | **Core**, with burst reads (the prefetch buffer described in LiteForth's `doc/hdl.md`) | Erase, program, slot management | Throughput for hashing and decrypting whole images |
+| MicroSD (SPI mode) | **SPI shifter** | SD commands, fixed-format file handling | Parsing stays small and in one language for fuzzing |
+| UART | **Core** | Framing | Standard |
+| TRNG | **Ring-oscillator source with health tests** (SP 800-90B repetition count and adaptive proportion) | Conditioning through the SHA-256 core | Entropy and its health checks must be hardware |
+| Glitch detectors, flow counter check | **Hardware** | Feeds the flow counter | Countermeasure rules 5 and 7 |
+| Random delays | — | Delay loops seeded by the TRNG | Countermeasure rule 6 |
+| Key wrap, log chaining, version checks, A/B slot logic | — | All | Control logic |
+
+### Cost estimates
+
+These are rough, to be replaced by Yosys and simulation measurements.
+
+| | Forth on the LiteForth CPU | Verilog core |
+|---|---|---|
+| SHA-256, one block | About 6,000 to 8,000 instructions (the ISA has shifts but no rotate, so each rotate takes several instructions) | About 65 cycles |
+| LMS verification (W = 4) | About 0.2 to 0.4 seconds | A few milliseconds |
+| Hashing a 256 KB application at boot | About 1 to 2 seconds | Limited by flash reads, roughly 10 milliseconds |
+| AES-256, a 256 KB application | Seconds, with large tables | Limited by flash reads |
+| Area | Code space only | SHA-256 and AES-256 each roughly 1,000 to 2,500 LUT4s, against 24K (LFE5U-25) or 17K (LIFCL-17) |
+
+The two crypto cores together are a modest fraction of either target, and they are needed anyway for the key gate
+and the comparators. Software-only crypto would work but makes every boot seconds slower.
+
+### AES mode
+
+With a SHA-256 core already present, **AES-256-CTR with HMAC-SHA256** (encrypt-then-MAC) costs no extra hardware.
+AES-256-GCM would add a GF(2^128) multiplier for GHASH. The recommendation is CTR with HMAC-SHA256 wherever these
+documents say AES-256-GCM, subject to Open Question 3.
+
+### Changes to LiteForth
+
+LiteForth's sealed update format and data logs move to the same algorithms:
+
+| LiteForth today | Used for | Becomes |
+|---|---|---|
+| Ed25519 (Monocypher, with SHA-512) | Package signatures, release key certificates | LMS, with HSS (RFC 8554 multi-level trees) in place of the root-to-release-key certificate |
+| X25519 | Wrapping package content keys to a board's key; data logs to the server's key | Per-device symmetric keys derived in the HSM as KDF(master, serial), which the server can derive too. No public-key step remains, so nothing breaks under quantum attack |
+| BLAKE2s | Package hashes, block hash tables, stage 1 MACs | SHA-256 and HMAC-SHA256 |
+| Poly1305 | Data log record tags | HMAC-SHA256 |
+| AES-128 and SM4 in CTR mode | Package and data log encryption | AES-256 in CTR mode |
+
+The C libraries remain useful on the host and as the C implementations of the crypto ports on MCU targets,
+but none of them is called from Forth code through the C API.
 
 ## Secure element
 
@@ -371,7 +450,7 @@ These are deliberately absent from the loader:
 
 1. **Pairing key rotation sequencing (platform only).** The order of operations for writing a new bitstream, installing the next pairing key and advancing counter 0, such that a power failure at any point leaves a bootable, non-rollbackable device.
 2. **Secure element protocol details.** Confirm that GenDig over the counter zone, authenticated reads of the public key slot, and EncWrite of the pairing key slot all work as expected on the ATECC608B, and separately on the MOD8ID.
-3. **AES mode choice.** GCM or CTR plus HMAC, decided by measured fabric area on the smallest target FPGA.
+3. **AES mode choice.** CTR with HMAC-SHA256 is recommended, because it reuses the SHA-256 core (see Implementation partition). Confirm with measured area on the smallest target FPGA, then replace AES-256-GCM throughout these documents.
 4. **Nonce source.** Whether a ring-oscillator TRNG is reliable enough across the supported FPGA families and an ASIC process, or whether the counter fallback is acceptable.
 5. **ASIC pairing key.** A pairing key in mask logic is the same on every chip and can be recovered from one die. An ASIC needs a per-device pairing key, written at provisioning into one-time-programmable fuses or another per-device store.
 6. **Separate key owners.** If the application key belongs to a customer, how they provision their LMS public key into the secure element without needing access to the platform key.

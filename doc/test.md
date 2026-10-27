@@ -78,6 +78,22 @@ Each RTL core is tested with cocotb on Verilator (or Icarus), in two ways:
 
 This is what lets the C models stand in for the cores in Layer 3.
 
+The same differential tests run against the MCU implementations of the ports (C, or the MCU's crypto hardware),
+on the board, so LiteForth on an MCU is held to the same port behavior as the fabric.
+
+### No C API calls in the loader
+
+A hardware LiteForth CPU has no C library, so the loader must never use `RFcall` or `AFcall` (imm opcodes 14 and 15).
+A static check scans the loader image for those opcodes and fails the build if it finds any. The software platform also
+runs the loader with the API tables empty, so a call that slips past the scan fails at once.
+
+### Fault coverage follows the partition
+
+The partition in `doc/arch.md` decides which campaign sees which decision. Decisions made in Forth (MAC message assembly,
+version checks, flow counter updates) are covered by campaign A on `vm.c`. Decisions made by Verilog comparators, the key gate
+and the TRNG health tests are invisible to `vm.c`, so campaign B must cover them, exhaustively for the comparators' output
+registers and the key gate's token, since those are small.
+
 ### The LiteForth CPU against `vm.c`
 
 LiteForth already compares two implementations of the VM: `unit_tests/vmasm/difftest.c` runs random states and random code
@@ -255,11 +271,8 @@ All open source, to match the Yosys flow:
 
 ## 9. Open questions
 
-1. **Crypto alignment with LiteForth.** LiteForth's sealed update format uses Ed25519, X25519, BLAKE2s, Poly1305 and AES-128,
-   while `thriller` specifies LMS, SHA-256 and AES-256. Decide whether the `thriller` loader uses its own format, or whether LiteForth's
-   sealed format moves to post-quantum signatures and AES-256 and `thriller` adopts it. The test plan applies either way, but
-   the reference models and vectors differ.
-2. **Which loader functions are in RTL and which are Forth.** That decides which faults campaign A can see, and how much
-   of campaign B is needed.
-3. **Physical injection pass threshold.** The number of attempts without a bypass, agreed with the integrator.
-4. **Secure element model coverage.** How much of the ATECC608B to model, and whether a second model is needed for the MOD8ID.
+1. **Physical injection pass threshold.** The number of attempts without a bypass, agreed with the integrator.
+2. **Secure element model coverage.** How much of the ATECC608B to model, and whether a second model is needed for the MOD8ID.
+
+Settled: LiteForth moves to `thriller`'s algorithms (LMS, SHA-256, HMAC-SHA256, AES-256), and the split between Verilog
+and Forth is in `doc/arch.md`, Implementation partition. The reference models in section 2 serve both projects.
