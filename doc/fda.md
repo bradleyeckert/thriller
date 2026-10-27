@@ -336,12 +336,12 @@ Items a premarket submission would need that the platform does not yet provide:
 
 1. **Security event logging.** Detect and record failed signatures, failed host authorizations, rollback attempts and tag failures, and make the log available to the host.
 2. **Device-to-host authentication.** A non-readable identity key in the secure element, used in place (MAC), so the host can confirm it is talking to a genuine unit. This does not detect a compromised bitstream (R22).
-3. **Fault-injection hardening** of the loader's security checks (R16).
+3. **Fault-injection hardening** of the loader's security checks (R16). Countermeasures and test campaigns are planned in `doc/test.md` section 6.
 4. **Pairing key rotation sequencing** under power failure (`doc/arch.md`, Open Question 1).
 5. **Decommissioning procedure.**
 6. **Trusted default configuration recovery** by an authorized user.
 7. **SBOM** for the loader, its RTL cores, the soft CPU, toolchains and the secure element, with support status and end-of-support dates.
-8. **Testing evidence:** security requirements testing, threat mitigation testing, vulnerability testing and independent penetration testing.
+8. **Testing evidence:** security requirements testing, threat mitigation testing, vulnerability testing and independent penetration testing. The plan for the first three is in `doc/test.md`; independent penetration testing is still to be arranged.
 9. **Threat model and risk assessment format.** The Risk Assessment in `doc/arch.md` rates likelihood; FDA asks for an exploitability-based, non-probabilistic approach with scores before and after mitigation. The table needs to be re-scored in that form.
 
 ## Source
