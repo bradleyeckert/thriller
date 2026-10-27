@@ -80,6 +80,13 @@ Options, in order of preference:
 3. **No device secret on the ASIC side.** The I2C channel is then unauthenticated, and R7 and R8 reopen. Putting the secure element in the same
    package as the ASIC (a system in package) makes probing much harder but does not remove the attack. Not recommended.
 
+**Why not a key in ROM or in gate-level constants?** A common zero-flash approach stores a unique wrapped header in external flash and
+hardcodes the unwrapping key in mask ROM or synthesized logic. The headers differ per chip, but the key that opens them is the same on
+every chip, so recovering it from one die (ROM imaging, or netlist extraction for logic constants, which is harder but routine for a lab)
+opens every header in the fleet. That is obfuscation, not a per-device secret. A **public-key hash** in ROM is fine and is what this design
+uses for the root LMS key, because it is not secret. The SRAM PUF keeps the wrapped-header structure but makes the unwrapping key unique to the die.
+A ROM constant can still be mixed into the PUF key derivation, so that an attacker needs both the die's PUF response and the ROM contents.
+
 The PUF does not replace the secure element. The secure element still provides the monotonic counters, the host-authorized data key and key storage.
 The PUF only replaces the per-board bitstream key's role of binding the pairing key to one die.
 
