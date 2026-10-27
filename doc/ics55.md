@@ -107,14 +107,9 @@ FPGAs and MCUs usually lock debug access with a one-time fuse. Without one:
 At 2 to 3 mm2 per Mb, SRAM is expensive: 64 KB (0.5 Mb) takes about 1 to 1.5 mm2, a large share of a 1.5 x 1.5 mm or 2.0 x 2.0 mm block
 if those dimensions are the core area. A whole application cannot be decrypted into SRAM unless it is small. That suggests:
 
-- **Execute in place from QSPI flash, through a small decrypting cache.** AES in CTR mode can decrypt any block independently, which suits
-  a cache. This is another reason to prefer CTR with HMAC over GCM (`doc/arch.md`, Open Question 3).
-- **Authenticate per block, not per image.** Checking a whole-image tag at boot and then executing from external flash is a time-of-check to
-  time-of-use gap: an attacker can swap the flash contents, or use a flash emulator, after the check. Instead, each cache fill is checked
-  against a per-block tag or a hash table whose root is authenticated at boot. LiteForth's sealed format already checks blocks against a hash table
-  this way (`sealed_open_block`), so the design is familiar.
-- **Size the cache to the working set.** Forth code is compact, so a cache of a few 4 KB blocks may be enough. Measure it on the FPGA first,
-  where the same cache can be built and profiled.
+- **Execute in place from QSPI flash, through a small decrypting and authenticating cache.** The design is worked out in `doc/xip.md`:
+  AES-256-GCM per cache line, with a nonce that binds each line to its address, slot and image version, so lines are checked on every fill
+  without a Merkle tree, and the loader plus a 4 KB cache need about 7 to 8 KB of SRAM.
 
 ### Things only silicon can answer
 

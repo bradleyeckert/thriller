@@ -375,6 +375,7 @@ The same port set replaces the C crypto libraries in LiteForth itself.
 | LMS root comparison | **Comparator** that outputs a 32-bit pass or fail constant | Feeds it the computed and stored roots | Fault-injection countermeasure (`doc/test.md` rules 1 and 2) |
 | HMAC-SHA256 | — | Inner and outer hash on the SHA-256 core | Two extra blocks per MAC; no hardware needed |
 | AES-256 | **Core**, encrypt direction only, S-boxes in block RAM | Counter blocks, framing | Speed, key gating in hardware, and masking for the Code Secrecy Profile |
+| GHASH and execute-in-place fill controller | **Hardware** (`doc/xip.md`) | — | Authenticates each cache line as fast as the flash delivers it |
 | AES key gate | **Hardware**: the AES core loads the application or data key only with its pass token set | Requests the key | Countermeasure rule 3: a skipped software check leaves the key unusable |
 | Authentication tag comparison | **Comparator** | — | Countermeasure rules 1 and 2 |
 | Secure element MAC formats (Nonce, GenDig, MAC, CheckMac, EncRead, EncWrite) | — | Builds each message, uses the SHA-256 core | Fixed short formats; easy to get right in Forth and to test against cryptoauthlib |
@@ -406,9 +407,10 @@ and the comparators. Software-only crypto would work but makes every boot second
 
 ### AES mode
 
-With a SHA-256 core already present, **AES-256-CTR with HMAC-SHA256** (encrypt-then-MAC) costs no extra hardware.
-AES-256-GCM would add a GF(2^128) multiplier for GHASH. The recommendation is CTR with HMAC-SHA256 wherever these
-documents say AES-256-GCM, subject to Open Question 3.
+Executing the application in place from flash (`doc/xip.md`) needs each cache line authenticated as fast as the flash delivers it.
+**AES-256-GCM applied per line** does that: its AES work depends only on the address and runs during the flash read, and GHASH
+streams with the data. CTR with HMAC-SHA256 would add no hardware but would more than double the cache miss time.
+The recommendation is therefore AES-256-GCM, which is what these documents already say, at the cost of a GHASH multiplier.
 
 ### Changes to LiteForth
 
@@ -450,7 +452,7 @@ These are deliberately absent from the loader:
 
 1. **Pairing key rotation sequencing (platform only).** The order of operations for writing a new bitstream, installing the next pairing key and advancing counter 0, such that a power failure at any point leaves a bootable, non-rollbackable device.
 2. **Secure element protocol details.** Confirm that GenDig over the counter zone, authenticated reads of the public key slot, and EncWrite of the pairing key slot all work as expected on the ATECC608B, and separately on the MOD8ID.
-3. **AES mode choice.** CTR with HMAC-SHA256 is recommended, because it reuses the SHA-256 core (see Implementation partition). Confirm with measured area on the smallest target FPGA, then replace AES-256-GCM throughout these documents.
+3. **AES mode choice.** AES-256-GCM per cache line is recommended for execute in place (`doc/xip.md`). Confirm the GHASH multiplier's area on the smallest target FPGA.
 4. **Nonce source.** Whether a ring-oscillator TRNG is reliable enough across the supported FPGA families and an ASIC process, or whether the counter fallback is acceptable.
 5. **ASIC pairing key.** A pairing key in mask logic is the same on every chip and can be recovered from one die. An ASIC needs a per-device pairing key, written at provisioning into one-time-programmable fuses or another per-device store.
 6. **Separate key owners.** If the application key belongs to a customer, how they provision their LMS public key into the secure element without needing access to the platform key.
