@@ -123,7 +123,8 @@ CTR with HMAC-SHA256 (`doc/arch.md`, Open Question 3), which was made before XIP
 | Contents | Plaintext, only after the tag passes | Decrypting on every hit would add latency to every fetch |
 | Writes | None: the XIP region is read-only | The application's variables live in SRAM; user data in flash goes through the loader's explicit encrypted routines |
 | Prefetch | Next line on a sequential miss; LiteForth's proposed `touch` instruction for software prefetch | `touch` is described in LiteForth's `doc/hdl.md` |
-| Replacement | Pseudo-LRU | |
+| Replacement | Pseudo-LRU, skipping locked lines | |
+| Locking | One lock bit per line | For flash write routines (see Flash writes while executing) |
 
 The CPU stalls on a miss until the line is checked. It never executes from a line whose tag has not passed, so no speculative execution is needed.
 
@@ -151,12 +152,24 @@ and most of the work even for a hardware one.
 
 ## Flash writes while executing
 
-A NOR flash cannot be read while it is erasing or programming. While the inactive slot is being written, XIP from the same chip stalls. So:
+A NOR flash cannot be read while it is erasing or programming, so code that writes the flash cannot be fetched from it at the same time.
+How the write routine avoids that is left to software, using whatever the platform offers (ROM on the ASIC, block RAM on the FPGA,
+the flash's erase-suspend commands). The hardware only has to make one approach always available: **locking the write routine in the cache.**
 
-- The code that writes flash (installs, user data, logs) must run from somewhere other than the XIP region: on-chip ROM on the ASIC, block RAM on the FPGA.
-- Or the controller can use the flash's erase-suspend and program-suspend commands, which most QSPI NOR parts support, to serve a cache miss mid-write.
+1. The routine prefetches its own lines (with LiteForth's proposed `touch`, or by reading them), so they are fetched and their tags checked as usual.
+2. It sets the lock bit on those lines. Locked lines are never evicted.
+3. It switches the QSPI controller to direct mode and drives erase, program and status polling itself.
+4. It returns the controller to XIP mode and clears the lock bits.
 
-The first is simpler and is the recommendation; suspend support can come later.
+The hardware this needs is small:
+
+- **A lock bit per cache line,** cleared by reset and by the secret-clear input.
+- **A busy interlock.** While the controller is in direct mode, a cache miss raises a programming fault instead of reading the flash.
+  Reading a busy flash would return garbage, the tag would fail, and the device would lock down as if tampered with. The distinct fault
+  keeps a software mistake from looking like an attack.
+
+Locked lines hold plaintext that passed its tag check, like any other line, so locking adds no new path for unchecked code.
+The routine must keep everything it touches in locked lines, including any constants, and must not let the multitasker switch tasks while the flash is busy.
 
 ## RAM budget
 
@@ -190,11 +203,11 @@ The cache memory goes through the memory wrappers (`doc/ics55.md`, migration hoo
 - The fill controller's state machine must not be able to mark a line valid without the comparator's pass constant. Its valid bit is set only
   by that constant, which campaign B checks.
 - Test cases for the catalogue in `doc/test.md`: each attack in the table above (modified, moved, other-slot, older-version line; whole older image;
-  copied flash), a tag failure mid-execution, and a cache miss during a flash write.
+  copied flash), a tag failure mid-execution, a flash write from a locked routine, and a cache miss in direct mode raising the programming fault, not a lockdown.
 
 ## Open questions
 
 1. **Line and cache size,** from hit-rate measurements of real LiteForth applications on the FPGA.
 2. **GHASH multiplier area** for the digit width that keeps pace with the flash, on the smallest target.
 3. **Data reads through the cache.** Constant data in flash can share the cache with code; whether it needs its own region or policy.
-4. **Erase-suspend support,** if running flash writes from ROM or block RAM proves too restrictive.
+4. **Flash write routine placement.** Cache locking is always available; whether a platform also uses ROM, block RAM or erase-suspend is a software choice.
