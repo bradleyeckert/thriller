@@ -89,10 +89,28 @@ runs the loader with the API tables empty, so a call that slips past the scan fa
 
 ### Fault coverage follows the partition
 
-The partition in `doc/arch.md` decides which campaign sees which decision. Decisions made in Forth (MAC message assembly,
-version checks, flow counter updates) are covered by campaign A on `vm.c`. Decisions made by Verilog comparators, the key gate
-and the TRNG health tests are invisible to `vm.c`, so campaign B must cover them, exhaustively for the comparators' output
-registers and the key gate's token, since those are small.
+The partition in `doc/arch.md` puts some security decisions in Forth and some in Verilog. Both kinds are covered by
+campaign A on the software platform, because the small security modules run there as their real Verilog:
+
+| Where the decision is made | How the software platform models it | Fault campaign |
+|---|---|---|
+| Forth (MAC message assembly, version checks, flow counter updates) | `vm.c` | A |
+| Small security modules (comparators, key gate, flow counter check, TRNG health tests) | The real Verilog, compiled by Verilator and linked into the port implementation | A, with B confirming |
+| Large cores (SHA-256, AES-256) | Fast C models | B (a corrupted digest or keystream already fails at a comparator) |
+| Glitch detectors (analog behavior), multi-bit timing faults | Not modeled | B and D |
+
+### Verilated security modules
+
+Verilator turns Verilog into C++. The small security modules are built that way and linked into the software platform's
+port implementations through a thin `extern "C"` wrapper, so the ports that `vm.c` reaches with `>sys` and `sys>` are driven
+by the same Verilog that goes into the bitstream. The C models of the large cores consult them: for example, the AES model
+loads a key only when the Verilated key gate's token is set.
+
+- **No model drift.** There is no hand-written model of these modules to disagree with the RTL.
+- **Speed.** The modules are a few hundred flip-flops, so simulating them costs little next to `vm.c` itself.
+- **Clocking.** `vm.c` is instruction-accurate, not cycle-accurate. The Verilated modules advance a fixed number of clocks per
+  VM instruction, matching the ratio in the RTL, so faults land between instructions. Finer timing is campaign B's job.
+- **Fault access.** The modules' flip-flops are exposed with Verilator's public signal access, so the fault hook can flip any of them.
 
 ### The LiteForth CPU against `vm.c`
 
@@ -187,10 +205,21 @@ Faults are described at the level of the LiteForth ISA, so the same model applie
 
 ### Campaigns
 
-**A. Software platform: exhaustive single faults.** `vm.c` gets a fault hook, compiled in only for this test (in the style of
-LiteForth's other build options). The hook runs before each instruction and can apply any fault from the model at
-instruction count n. For each security decision, the campaign runs a scenario that should fail (a forged package, an old version,
-a modified image, a forged response), and applies every fault type at every instruction in the decision's window, one fault per run.
+**A. Software platform: exhaustive single faults.** `vm.c` gets a fault hook, compiled in only for this test. The hook runs
+before each instruction and can apply any fault at instruction count n: any fault from the ISA-level model above, or a flip of any
+flip-flop in the Verilated security modules. For each security decision, the campaign runs a scenario that should fail
+(a forged package, an old version, a modified image, a forged response), and applies every fault at every instruction in the
+decision's window, one fault per run.
+
+The search space is practical. For example, 300 module flip-flops plus the CPU faults, over a 2,000-instruction window,
+is about a million runs, each a fast `vm.c` run.
+
+The fault hook must never change normal behavior. Following LiteForth's existing practice:
+- **Separate build option.** Everything is behind one build option (`VM_FAULT`), set only by the fault-campaign build.
+  MCU builds and the normal desktop build never set it, and never link the Verilated modules.
+- **Identical normal build.** With `VM_FAULT` off, the object files and `bin/lf` must be byte-identical to a build without the
+  change (LiteForth's `cmp` check for refactors).
+- **No effect when idle.** With `VM_FAULT` on but no fault scheduled, `difftest` and `regression.f` must pass unchanged.
 
 Each run ends in one of these outcomes:
 
@@ -204,10 +233,13 @@ Each run ends in one of these outcomes:
 `vm.c` runs fast enough that every (instruction, fault type) pair in each window can be tried. Double faults are sampled
 randomly, with priority on pairs that each came close to a bypass on their own.
 
-**B. RTL platform: flip-flop faults.** Verilator forces bit flips into any flip-flop of the CPU and the crypto cores at any cycle,
-including the comparators and state machines that campaign A cannot see. Too many combinations for an exhaustive run,
-so the campaign samples randomly, concentrating on the decision windows found in campaign A. A sample of campaign A's faults is
-also repeated here, to check that the ISA-level fault model matches what the hardware does.
+**B. RTL platform: flip-flop faults.** Verilator forces bit flips into any flip-flop of the whole design at any cycle. Its jobs are
+what campaign A cannot do:
+- **Confirmation.** A sample of campaign A's faults, CPU and module alike, is replayed in the full RTL at the matching cycle.
+  Both platforms must reach the same outcome; a disagreement means the software platform's fault model is wrong and is fixed first.
+- **The large cores.** Faults inside SHA-256 and AES-256, sampled randomly.
+- **Sub-instruction timing.** Faults at every cycle within an instruction, and several flip-flops in the same clock, which is what a
+  single glitch tends to do.
 
 **C. On-FPGA emulation.** A test-only bitstream adds a fault controller that flips chosen flip-flops at a programmed cycle,
 armed over the UART. This runs at full hardware speed with real timing, so it reaches millions of trials per day.
@@ -220,7 +252,8 @@ ChipWhisperer or similar, with EM fault injection as an option. Each target deci
 
 ### Pass criteria
 
-- Campaign A: no bypass from any single fault. Every crash is reviewed.
+- Campaign A: no bypass from any single fault, in the CPU or in a security module. Every crash is reviewed.
+- Campaign B: every replayed campaign A fault reaches the same outcome in the full RTL.
 - Campaigns A and B: every double-fault bypass is analyzed, and either fixed or recorded with its rarity.
 - Campaign D: no bypass in an agreed number of attempts per decision (to be set with the integrator). Detection rate recorded.
 
@@ -261,7 +294,7 @@ All open source, to match the Yosys flow:
 | Tool | Use |
 |---|---|
 | Yosys, nextpnr, Project Trellis | Build the RTL and the bitstreams |
-| Verilator | RTL simulation, lockstep with `vm.c`, flip-flop fault forcing |
+| Verilator | RTL simulation, lockstep with `vm.c`, flip-flop fault forcing, and the security modules linked into the software platform |
 | cocotb | Python test benches for the RTL cores |
 | gcc, LiteForth's makefile and Unity | Software platform, `vm.c` fault hook, C tests |
 | AFL++ or libFuzzer | Fuzzing the loader's file and package parsing |
