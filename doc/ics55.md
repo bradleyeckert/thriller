@@ -127,16 +127,20 @@ Several parts of the security design depend on the process, and the FPGA prototy
 
 A small test chip on an early shuttle, carrying just these structures, would settle them before committing the full design.
 
-### Design rules to adopt now, on the FPGA
+### Migration hooks in the FPGA design
 
-These keep the RTL portable to ICS55 without rework:
+The FPGA design is not complicated for the sake of the ASIC. It only leaves hooks: choices that cost nothing on the FPGA
+and avoid rework later. Everything else in this document (the two-stage chain, the PUF, scan clearing, the decrypting cache)
+is built only for the ASIC.
 
-- Wrap every memory (block RAM, ROM, S-box tables) and every clock primitive in a thin module, so FPGA primitives can be swapped for
-  ASIC macros or synthesized logic.
-- Keep the boot code that will become mask ROM in its own image, already separated from the updatable loader, and test the two-stage chain
-  on the FPGA, even though the FPGA does not need it.
-- Do not depend on block RAM being initialized at power-up anywhere except the ROM image.
-- Design the security registers with a clear-on-scan input from the start, even though the FPGA has no scan chain.
+| Hook | On the FPGA | On the ASIC |
+|---|---|---|
+| **Memory and clock wrappers.** Every block RAM, ROM, S-box table and clock primitive sits in a thin module | Instantiates the FPGA primitive | Instantiates an ASIC macro or synthesized logic |
+| **Pairing key source.** The pairing key reaches the loader through one module with a fixed interface | A constant patched into the bitstream's block RAM, as now | PUF key derivation and unwrapping of the blob in flash |
+| **Secret-clear input.** The security registers (keys, pass tokens, AES key) share one clear input | Tied off | Driven by scan entry and by the glitch detectors |
+| **Boot code at the bottom of the loader.** The code that would become mask ROM (core drivers, LMS verification, counter read, UART recovery) is kept together and has no calls into the rest of the loader | No effect: it is all one image | Moves to mask ROM unchanged |
+| **Package component types.** The update package format reserves a component type for "loader" alongside "bitstream" and "application" | Unused | Used for the updatable loader, protected by counter 0 |
+| **No reliance on initialized RAM.** Nothing except the boot code's image assumes block RAM starts with known contents | No effect | SRAM powers up random, and is needed that way for the PUF |
 
 ### Open questions
 
