@@ -32,8 +32,8 @@ Risk IDs (R1–R22) refer to the Risk Assessment in `doc/arch.md`.
 | Element | Description | Trust |
 |---|---|---|
 | FPGA configuration engine | Vendor silicon. Decrypts (and on Tier A, authenticates) the bitstream using eFuse keys | Trusted, fixed |
-| Loader | `thriller` logic in the bitstream: soft CPU or state machine, SHA-256 and AES cores, I2C, QSPI and UART interfaces | Trusted while the bitstream is genuine |
-| Application | Device-specific code, run by the loader after decryption and tag check | Trusted after LMS verification at install and tag check at boot |
+| Loader core | `thriller` logic in the bitstream: a LiteForth CPU with the SHA-256 and AES cores, the security block, and the I2C, QSPI, SD and UART interfaces (`doc/hw.md`) | Trusted while the bitstream is genuine |
+| Application core | A second LiteForth CPU running the device-specific code from the XIP cache. No wiring to keys or security controls; reaches the loader only through the mailbox | Untrusted by the loader; its code is LMS-verified at install and tag-checked on every cache fill |
 | Secure element (ATECC608B) | Monotonic counters, key storage, host authorization (CheckMac), TRNG | Trusted, fixed |
 | QSPI NOR flash | Encrypted bitstreams (A/B), encrypted application (A/B), encrypted user data | Untrusted storage |
 | Host PC | Runs the update client and opens data sessions. Holds the host authorization key | Trusted by the user; authenticated by the secure element |

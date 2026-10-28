@@ -153,6 +153,7 @@ and once more on the MOD8ID.
 | Host sessions | Wrong host key, replayed response, response to a stale challenge: data key never released. Session end and timeout erase the data key (checked by reading the loader's RAM and registers afterward) | R1, R9 |
 | MicroSD input | Fuzzing of every file the loader reads (packages, card metadata) with AFL++ or libFuzzer, through the software platform. Malformed inputs must be rejected cleanly: no `vm.c` trap, no out-of-range access, no stack overflow | R23 |
 | Security event log | Records appended for each security event; removing, editing, reordering or truncating records is detected at the next boot and reported | R24 |
+| Mailbox | Fuzzing of the loader's message parser with malformed, oversized and changing requests from a simulated application core; every request outside the fixed formats rejected; no request reaches a key or the flash directly | R25, R26 |
 | Rollback of the platform | An old bitstream boots but cannot read the application or data keys | R3 |
 
 Every test runs on the software platform in continuous integration. A tagged subset runs on the RTL platform nightly,

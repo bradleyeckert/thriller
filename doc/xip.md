@@ -124,7 +124,7 @@ CTR with HMAC-SHA256 (`doc/arch.md`, Open Question 3), which was made before XIP
 | Writes | None: the XIP region is read-only | The application's variables live in SRAM; user data in flash goes through the loader's explicit encrypted routines |
 | Prefetch | Next line on a sequential miss; LiteForth's proposed `touch` instruction for software prefetch | `touch` is described in LiteForth's `doc/hdl.md` |
 | Replacement | Pseudo-LRU, skipping locked lines | |
-| Locking | One lock bit per line | For flash write routines (see Flash writes while executing) |
+| Locking | One lock bit per line | Optional, for application code that must not stall during flash writes |
 
 The CPU stalls on a miss until the line is checked. It never executes from a line whose tag has not passed, so no speculative execution is needed.
 
@@ -152,24 +152,15 @@ and most of the work even for a hardware one.
 
 ## Flash writes while executing
 
-A NOR flash cannot be read while it is erasing or programming, so code that writes the flash cannot be fetched from it at the same time.
-How the write routine avoids that is left to software, using whatever the platform offers (ROM on the ASIC, block RAM on the FPGA,
-the flash's erase-suspend commands). The hardware only has to make one approach always available: **locking the write routine in the cache.**
+A NOR flash cannot be read while it is erasing or programming. With two cores (`doc/hw.md`), this is simple: only the loader core writes the flash,
+and it runs from its own boot ROM or block RAM, never from the XIP window.
 
-1. The routine prefetches its own lines (with LiteForth's proposed `touch`, or by reading them), so they are fetched and their tags checked as usual.
-2. It sets the lock bit on those lines. Locked lines are never evicted.
-3. It switches the QSPI controller to direct mode and drives erase, program and status polling itself.
-4. It returns the controller to XIP mode and clears the lock bits.
-
-The hardware this needs is small:
-
-- **A lock bit per cache line,** cleared by reset and by the secret-clear input.
-- **A busy interlock.** While the controller is in direct mode, a cache miss raises a programming fault instead of reading the flash.
-  Reading a busy flash would return garbage, the tag would fail, and the device would lock down as if tampered with. The distinct fault
-  keeps a software mistake from looking like an attack.
-
-Locked lines hold plaintext that passed its tag check, like any other line, so locking adds no new path for unchecked code.
-The routine must keep everything it touches in locked lines, including any constants, and must not let the multitasker switch tasks while the flash is busy.
+- **Busy interlock.** While the loader has the QSPI controller in direct mode, an application cache miss stalls until the controller returns to XIP mode.
+  It does not read the flash: a busy flash would return garbage, the tag would fail, and the device would lock down as if tampered with.
+- **Cache locking (optional).** A lock bit per cache line, cleared by reset and by the secret-clear input, keeps chosen lines from being evicted.
+  The loader can lock lines for the application on request, so time-critical application code keeps running during a long erase.
+  Locked lines hold plaintext that passed its tag check, like any other line.
+- **Erase-suspend (optional).** Most QSPI NOR flashes can suspend an erase to serve a read; the loader can use it to shorten application stalls.
 
 ## RAM budget
 
@@ -203,11 +194,11 @@ The cache memory goes through the memory wrappers (`doc/ics55.md`, migration hoo
 - The fill controller's state machine must not be able to mark a line valid without the comparator's pass constant. Its valid bit is set only
   by that constant, which campaign B checks.
 - Test cases for the catalogue in `doc/test.md`: each attack in the table above (modified, moved, other-slot, older-version line; whole older image;
-  copied flash), a tag failure mid-execution, a flash write from a locked routine, and a cache miss in direct mode raising the programming fault, not a lockdown.
+  copied flash), a tag failure mid-execution, and an application cache miss while the loader is writing the flash (it must stall, not lock down).
 
 ## Open questions
 
 1. **Line and cache size,** from hit-rate measurements of real LiteForth applications on the FPGA.
 2. **GHASH multiplier area** for the digit width that keeps pace with the flash, on the smallest target.
 3. **Data reads through the cache.** Constant data in flash can share the cache with code; whether it needs its own region or policy.
-4. **Flash write routine placement.** Cache locking is always available; whether a platform also uses ROM, block RAM or erase-suspend is a software choice.
+4. **Application stalls during flash writes.** Whether cache locking or erase-suspend is needed, from measured erase times and application timing needs.
