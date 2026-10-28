@@ -134,7 +134,7 @@ The mailbox is the only path from the application to the loader, so it is the fi
 | Security block | APB | Slow | RTL | RTL | Comparators, flow counter, key gate tokens, glitch and clock detectors, lockdown, fault status, secret-clear fan-out |
 | Key source (pairing key) | Private to SHA | — | Small block RAM, patched per board | PUF + unwrap (`doc/ics55.md`) | Behind the fixed interface from the migration hooks |
 | I2C master | APB | 100 to 400 kHz | RTL | RTL | The secure element's bus |
-| QSPI direct mode, XIP control | APB | Slow | RTL | RTL | Erase and program; while in direct mode, application cache misses stall |
+| QSPI direct mode, XIP control | APB | Slow | RTL | RTL | Erase and program, during updates and development only; while in direct mode, application cache misses stall |
 | SD (SPI mode) | APB | Up to a few MB/s | RTL | RTL | Logs, offline packages, user data |
 | UART | APB | 115 kbaud to a few Mbaud | RTL | RTL | Host protocol, and the application's terminal forwarded through the mailbox |
 | TRNG + health tests | APB | Slow | Ring oscillators | Ring oscillators | Also feeds conditioned random numbers to the application core |
@@ -259,6 +259,5 @@ The second core costs little: the LiteForth CPU is a small MISC design, and most
 
 1. **AXI4-Lite latency.** Whether the decoder and slaves can answer in the cycles the CPU's memory state machine expects (LiteForth's `doc/hdl.md` assumes about 5 cycles per read), or whether ROM and SRAM need a tightly coupled path beside the bus.
 2. **Mailbox message set.** The exact services and their formats, and the message RAM's size.
-3. **Application stalls during flash writes.** A sector erase can take tens to hundreds of milliseconds, during which an application cache miss stalls. Whether to use the flash's erase-suspend, or let the application lock time-critical lines through a mailbox request.
-4. **SD for the application.** Whether the application needs the card for its own files, through mailbox services or a separate region.
-5. **Port numbering.** Agree the proposed ports with LiteForth's `iomap.h` before any RTL fixes them.
+3. **SD for the application.** Whether the application needs the card for its own files, through mailbox services or a separate region.
+4. **Port numbering.** Agree the proposed ports with LiteForth's `iomap.h` before any RTL fixes them.

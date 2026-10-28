@@ -124,7 +124,6 @@ CTR with HMAC-SHA256 (`doc/arch.md`, Open Question 3), which was made before XIP
 | Writes | None: the XIP region is read-only | The application's variables live in SRAM; user data in flash goes through the loader's explicit encrypted routines |
 | Prefetch | Next line on a sequential miss; LiteForth's proposed `touch` instruction for software prefetch | `touch` is described in LiteForth's `doc/hdl.md` |
 | Replacement | Pseudo-LRU, skipping locked lines | |
-| Locking | One lock bit per line | Optional, for application code that must not stall during flash writes |
 
 The CPU stalls on a miss until the line is checked. It never executes from a line whose tag has not passed, so no speculative execution is needed.
 
@@ -152,15 +151,13 @@ and most of the work even for a hardware one.
 
 ## Flash writes while executing
 
-A NOR flash cannot be read while it is erasing or programming. With two cores (`doc/hw.md`), this is simple: only the loader core writes the flash,
-and it runs from its own boot ROM or block RAM, never from the XIP window.
+A NOR flash cannot be read while it is erasing or programming. The QSPI flash is written only during application updates and application development,
+never while the application is doing its normal work. Only the loader core writes it, running from its own boot ROM or block RAM (`doc/hw.md`).
 
 - **Busy interlock.** While the loader has the QSPI controller in direct mode, an application cache miss stalls until the controller returns to XIP mode.
   It does not read the flash: a busy flash would return garbage, the tag would fail, and the device would lock down as if tampered with.
-- **Cache locking (optional).** A lock bit per cache line, cleared by reset and by the secret-clear input, keeps chosen lines from being evicted.
-  The loader can lock lines for the application on request, so time-critical application code keeps running during a long erase.
-  Locked lines hold plaintext that passed its tag check, like any other line.
-- **Erase-suspend (optional).** Most QSPI NOR flashes can suspend an erase to serve a read; the loader can use it to shorten application stalls.
+- **Stalls are acceptable.** During an update the application only shows progress, so a stall of a few hundred milliseconds during an erase is harmless.
+  No cache locking or erase-suspend is needed.
 
 ## RAM budget
 
@@ -201,4 +198,3 @@ The cache memory goes through the memory wrappers (`doc/ics55.md`, migration hoo
 1. **Line and cache size,** from hit-rate measurements of real LiteForth applications on the FPGA.
 2. **GHASH multiplier area** for the digit width that keeps pace with the flash, on the smallest target.
 3. **Data reads through the cache.** Constant data in flash can share the cache with code; whether it needs its own region or policy.
-4. **Application stalls during flash writes.** Whether cache locking or erase-suspend is needed, from measured erase times and application timing needs.
