@@ -123,7 +123,7 @@ CTR with HMAC-SHA256 (`doc/arch.md`, Open Question 3), which was made before XIP
 | Contents | Plaintext, only after the tag passes | Decrypting on every hit would add latency to every fetch |
 | Writes | None: the XIP region is read-only | The application's variables live in SRAM; user data in flash goes through the loader's explicit encrypted routines |
 | Prefetch | Next line on a sequential miss; LiteForth's proposed `touch` instruction for software prefetch | `touch` is described in LiteForth's `doc/hdl.md` |
-| Replacement | Pseudo-LRU, skipping locked lines | |
+| Replacement | Pseudo-LRU | |
 
 The CPU stalls on a miss until the line is checked. It never executes from a line whose tag has not passed, so no speculative execution is needed.
 
