@@ -154,6 +154,7 @@ and once more on the MOD8ID.
 | MicroSD input | Fuzzing of every file the loader reads (packages, card metadata) with AFL++ or libFuzzer, through the software platform. Malformed inputs must be rejected cleanly: no `vm.c` trap, no out-of-range access, no stack overflow | R23 |
 | Security event log | Records appended for each security event; removing, editing, reordering or truncating records is detected at the next boot and reported | R24 |
 | Mailbox | Fuzzing of the loader's message parser with malformed, oversized and changing requests from a simulated application core; every request outside the fixed formats rejected; no request reaches a key or the flash directly | R25, R26 |
+| Developer builds | A developer package for another device is rejected; a developer build cannot read production user data, and the reverse; counter 1 unchanged after any number of developer installs; a production release installs normally afterward; two builds with the same version get different image keys | R27 |
 | Rollback of the platform | An old bitstream boots but cannot read the application or data keys | R3 |
 
 Every test runs on the software platform in continuous integration. A tagged subset runs on the RTL platform nightly,

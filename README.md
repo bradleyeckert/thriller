@@ -44,6 +44,7 @@ Tier B trades protection against targeted tampering for lower cost and an open t
 | **Data key** | Secure element (per device) | Pairing key **and** host authorization | Encryption and integrity of user data in flash |
 | Host authorization key | Secure element (non-readable) and the host | Never leaves either | Proving the host is present, and UART access |
 | Distribution key | Secure element (same on every unit) | Pairing key | Encrypting application packages in transit, so a hex dump shows no plaintext |
+| Developer key | Secure element (per device) and the device's developer | Never leaves the secure element; the developer gets a copy from the HSM | Sideloading developer builds onto that one device (`doc/roles.md`) |
 
 The distribution key is the one key that is not per device, because one package must install on every unit.
 It is obfuscation, not secrecy: a compromised bitstream on any unit can read it. Users who need real code

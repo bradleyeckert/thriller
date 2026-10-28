@@ -46,7 +46,7 @@ Each line of ciphertext is followed by its tag, so one burst read fetches both:
 
 | Offset in slot | Contents |
 |---|---|
-| 0 | Header line: image version, length, slot, and a tag, in the same format as every other line |
+| 0 | Header record (72 bytes): mode (production or developer), image version, length, slot, a 128-bit install salt R, and an HMAC-SHA256 over these fields |
 | 72 | Line 1 (64 bytes of ciphertext) + tag (8 bytes) |
 | 144 | Line 2 + tag |
 | ... | ... |
@@ -56,36 +56,40 @@ The flash overhead is 8 / 64 = 12.5%.
 
 ## Per-line GCM
 
-For line i of the image in slot s, version v:
+Every install draws a fresh 128-bit salt R from the TRNG and stores it in the header. For line i of the image in slot s:
 
-- **Nonce (96 bits)** = v (32 bits) ‖ s (8 bits) ‖ i (24 bits) ‖ 0 (32 bits).
+- **Image key** = KDF(application key, R), computed through the private key path (`doc/hw.md`, Key paths) and loaded into the AES key registers
+  through the key gate (`doc/test.md`, countermeasure rule 3). It never leaves the hardware.
+- **Nonce (96 bits)** = s (8 bits) ‖ i (24 bits) ‖ 0 (64 bits).
 - **Ciphertext** = plaintext XOR AES-256-CTR keystream from that nonce.
 - **Tag** = GCM tag over the ciphertext, truncated to 64 bits.
-- **Key** = the device-unique application key, unwrapped at boot from the secure element and loaded into the AES core
-  through the key gate (`doc/test.md`, countermeasure rule 3). It never leaves the core.
+
+The header is authenticated separately, with HMAC-SHA256 under the device-unique application key, and checked once at boot.
+After that check, R is already inside the key registers, so changing the header in flash later has no effect.
 
 ### Why this needs no Merkle tree
 
 A hash table or Merkle tree is needed when line checks are unkeyed, because then anyone can compute a valid hash.
-Here every tag depends on the secret device key and on the line's address, slot and version, through the nonce:
+Here every tag depends on a secret key unique to this device and this install, and on the line's slot and address through the nonce:
 
 | Attack | Result |
 |---|---|
 | Modify a line | Tag fails |
 | Move a valid line to another address | The nonce differs, so the tag fails |
-| Copy a line from the other slot | The slot is in the nonce, so the tag fails |
-| Replace a line with the same line from an older version | The version is in the nonce, so the tag fails |
-| Replace the whole image with a complete older version | Every line checks, but the header's version is below the secure element's counter 1, so boot refuses it |
-| Copy the flash to another board | Different device key, so every tag fails |
+| Copy a line from the other slot | Different install, so different image key; the tag fails |
+| Replace a line with one from an earlier install | Different R, so different image key; the tag fails |
+| Replace the whole slot with a complete older production image | Every line checks, but the header's version is below the secure element's counter 1, so boot refuses it |
+| Copy the flash to another board | Different application key, so the header and every tag fail |
 
-The last two rows are why boot still checks one thing: the header line's version against counter 1, read over the authenticated channel.
+The second-to-last row is why boot still checks one thing for production images: the header's version against counter 1,
+read over the authenticated channel. Developer images skip that check (see `doc/roles.md`).
 
 ### Nonce uniqueness
 
-GCM fails badly if a nonce is reused with different plaintext under the same key. The nonce here is unique because a version number
-identifies exactly one signed release: the same (version, slot, line) always encrypts the same plaintext. Reinstalling the same release
-produces identical ciphertext, which leaks nothing. The installer must refuse to encrypt two different images under one version number,
-which the LMS signature already guarantees.
+GCM fails badly if a nonce is reused with different plaintext under the same key. Here each install has its own image key, because R is fresh,
+and within one install the nonce (slot, line) is never repeated. This holds even when two different builds carry the same version number,
+which developers do all the time. An earlier version of this design put the version number in the nonce instead, which was safe only
+for signed production releases.
 
 ### Tag length
 
@@ -145,7 +149,7 @@ RAM cannot hold a package, so:
 
 Each step needs only a line buffer and a flash page buffer.
 
-**Boot.** Boot no longer hashes the whole image. It reads the header line through the cache, which checks its tag, and compares the version with counter 1.
+**Boot.** Boot no longer hashes the whole image. It checks the header record's HMAC, derives the image key from R, and for a production image compares the version with counter 1.
 Every other line is checked when it is first used. This removes the 1 to 2 seconds of whole-image hashing estimated in `doc/arch.md` for a Forth implementation,
 and most of the work even for a hardware one.
 

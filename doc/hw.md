@@ -217,6 +217,7 @@ All key handling is in the loader core domain, and even the loader's Forth code 
 
 **Pairing key into SHA-256.** Every secure element MAC format hashes the pairing key as one 32-byte field of the message (`doc/arch.md`, secure element MAC protocol).
 The SHA-256 core has an "insert key here" port: the key source feeds the 32 bytes straight into the message. The loader core supplies everything else.
+The same port can insert a key unwrapped from the secure element, for the developer package HMAC and for deriving the per-install image key (`doc/roles.md`, `doc/xip.md`).
 
 **Keyed digests stay private.** A digest whose input included an inserted key can't be read back over APB. It can only go to:
 - the security block's comparator, to check a MAC from the secure element; or
