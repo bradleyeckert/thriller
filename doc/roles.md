@@ -21,7 +21,8 @@ A person can hold several roles. A developer is usually also the user of their o
 > developer key = KDF(developer master key, secure element serial number)
 
 It is written into a locked, non-readable slot of every secure element at provisioning, so any device can later be used for development
-without being changed. The HSM gives a device's developer key to a developer when they show they own that device; how ownership is shown is a business process.
+without being changed. It is never handed out directly. What a developer receives is the device's working developer key for the current epoch
+(see Rotating developer keys), when they show they own that device; how ownership is shown is a business process.
 
 **It works only on that device.** A developer package is authenticated and encrypted under keys derived from that device's developer key.
 No other device holds the same key, so the package is rejected everywhere else. A leaked developer key exposes only the one device it belongs to,
@@ -38,7 +39,41 @@ A developer package carries:
 - a header naming the target device's secure element serial number, marked as a developer build;
 - an HMAC-SHA256 over the whole package under a package MAC key derived from the developer key.
 
-The developer's build tools derive both keys from the developer key with KDF labels, so one key from the HSM is all the developer needs.
+Here "the developer key" means the working key for the current epoch. The developer's build tools derive both package keys from it with KDF labels,
+so one key from the HSM is all the developer needs.
+
+## Rotating developer keys
+
+A production release can invalidate every developer key in the field, forcing developers to get new ones. It needs no extra storage and no secure element writes.
+
+**The epoch is part of the production version number.** Production versions carry an epoch in their high bits:
+
+> epoch = counter 1 ÷ 1024
+
+That allows 1,024 releases per epoch and about 2,000 epochs within the counter's maximum of 2,097,151.
+
+**The working developer key depends on the epoch.** The loader reads counter 1 over the authenticated channel at every boot, computes the epoch,
+and derives the working key through the private key path:
+
+> working developer key = KDF(developer key, epoch)
+
+The HSM computes the same value when it issues a key to a developer for a given serial number and epoch.
+
+**To rotate,** a production release takes a version number at the start of the next epoch (the next multiple of 1,024). Once a device installs it,
+counter 1 is in the new epoch, every working key issued before stops matching, and developers must ask the HSM for new ones.
+A release that stays within the current epoch leaves developer keys alone, so rotation is chosen release by release.
+
+**Why it can't be undone:** counter 1 only moves forward, and developer installs never touch it (see below), so no developer can return a device
+to an earlier epoch to revive an old key.
+
+**Developer user data rotates too.** The developer data key also includes the epoch (see Running a developer build), so a rotation makes
+developer-mode data from earlier epochs unreadable. Production user data is not affected.
+
+**HSM policy (optional).** If the HSM issues working keys only for the newest epoch, a developer must install the latest production release
+before getting a key, which keeps developers on current firmware.
+
+A developer build that is already installed keeps running after a rotation, because running it never uses the developer key.
+Installing the production release that rotates the epoch replaces it anyway.
 
 ## Installing a developer build
 
@@ -46,8 +81,8 @@ The loader handles a developer package like a production one, with four differen
 
 | Step | Production package | Developer package |
 |---|---|---|
-| Authenticate | LMS signature against the application public key | HMAC-SHA256 under this device's developer key, checked through the private key path |
-| Decrypt | Distribution key | Package key derived from this device's developer key |
+| Authenticate | LMS signature against the application public key | HMAC-SHA256 under this device's working developer key for the current epoch, checked through the private key path |
+| Decrypt | Distribution key | Package key derived from the working developer key |
 | Rollback check | Version must be above counter 1, which then advances | No check, and counter 1 is not touched |
 | Mark | Header mode: production | Header mode: developer |
 
@@ -59,7 +94,7 @@ version 9999 would block every future production release. Rollback protection is
 
 ## Running a developer build
 
-- **Separate user data.** While a developer build runs, the loader's user data service uses a separate data key, derived from the data key with a "developer" label.
+- **Separate user data.** While a developer build runs, the loader's user data service uses a separate data key, derived from the data key with a "developer" label and the epoch.
   A developer build cannot read data written under a production build, and the reverse. A device that was used in production and then for development
   does not hand its production data to sideloaded code.
 - **Visible state.** The loader tells the application, through the mailbox status service, that it is running a developer build, and can drive a status
@@ -84,4 +119,5 @@ Since developer builds never moved counter 1, the device accepts the same produc
   so developer-package HMACs and the image key derivation run without exposing keys. No other new hardware is needed.
 - **Tests** (to add to `doc/test.md`): a developer package for another device is rejected; a developer build cannot read production user data, and the reverse;
   counter 1 is unchanged after any number of developer installs; a production release installs normally after developer builds;
-  two developer builds with the same version number produce different image keys.
+  two developer builds with the same version number produce different image keys; after a production release that starts a new epoch,
+  the old working key is rejected and developer data from the old epoch is unreadable, while a release within the epoch keeps both working.
