@@ -23,7 +23,7 @@ The guidance asks for at least four views:
 Section 5 maps the design to the guidance's security control categories, and section 6 lists the gaps a submission would have to close.
 
 Terms (loader, Tier A/B, pairing key, data key, distribution key) are defined in the README and `doc/arch.md`.
-Risk IDs (R1–R27) refer to the Risk Assessment in `doc/arch.md`. Roles (manufacturer, application owner, developer, user) are defined in `doc/roles.md`.
+Risk IDs (R1–R28) refer to the Risk Assessment in `doc/arch.md`. Roles (manufacturer, application owner, developer, user) are defined in `doc/roles.md`.
 
 ## 1. Global System View
 
@@ -35,13 +35,13 @@ Risk IDs (R1–R27) refer to the Risk Assessment in `doc/arch.md`. Roles (manufa
 | Loader core | `thriller` logic in the bitstream: a LiteForth CPU with the SHA-256 and AES cores, the security block, and the I2C, QSPI, SD and UART interfaces (`doc/hw.md`) | Trusted while the bitstream is genuine |
 | Application core | A second LiteForth CPU running the device-specific code from the XIP cache. No wiring to keys or security controls; reaches the loader only through the mailbox | Untrusted by the loader; its code is LMS-verified at install and tag-checked on every cache fill |
 | Secure element (ATECC608B) | Monotonic counters, key storage, host authorization (CheckMac), TRNG | Trusted, fixed |
-| QSPI NOR flash | Encrypted bitstreams (A/B), encrypted application (A/B), encrypted user data | Untrusted storage |
+| QSPI NOR flash | Encrypted bitstreams (A/B), encrypted application (A/B); written only during updates and development | Untrusted storage |
 | Host PC | Runs the update client and opens data sessions. Holds the host authorization key | Trusted by the user; authenticated by the secure element |
 | Update server | Builds per-board platform packages and fleet-wide application packages | Manufacturer-controlled |
 | HSM | Holds LMS signing keys (with state), KDF master keys (including the developer master key), the distribution key | Manufacturer-controlled, highest trust |
 | Manufacturing station | Programs eFuse keys, provisions and locks the secure element, writes flash | Manufacturer-controlled |
 | Distribution channel | Delivers update files to the host (download, email, removable media) | Not manufacturer-controlled |
-| MicroSD card | Removable media for security event logs and offline update packages | Untrusted storage |
+| MicroSD card | Removable media for encrypted user data, security event logs and offline update packages | Untrusted storage |
 
 ### Diagram
 
@@ -84,10 +84,10 @@ flowchart LR
 |---|---|---|---|---|
 | Configuration | Flash → config engine | Vendor SPI configuration | Bitstream | AES under a per-board eFuse key; Tier A adds the vendor signature |
 | I2C | Loader ↔ secure element | ATECC command packets, CRC-16 | Counters, key reads, host authorization | Responses MAC'd under the pairing key over a loader nonce; keys read encrypted (EncRead). CRC is for transport only |
-| QSPI | Loader core (direct mode, for installs) and XIP engine (application fetches) ↔ flash | SPI NOR commands | Bitstreams, application, user data | Everything at rest is encrypted and authenticated (AES-256-GCM per cache line, or vendor format); each line checked as it is fetched |
+| QSPI | Loader core (direct mode, for installs) and XIP engine (application fetches) ↔ flash | SPI NOR commands | Bitstreams, application | Everything at rest is encrypted and authenticated (AES-256-GCM per cache line, or vendor format); each line checked as it is fetched |
 | UART | Host ↔ loader | Framed messages, CRC-32 | Update packages, session challenges, user data | LMS signatures on packages; CheckMac host authorization in the secure element. CRC is for transport only |
 | JTAG | Factory station ↔ FPGA | IEEE 1149.1 | eFuse programming, initial configuration | Fused off, or limited to non-configuration instructions, after manufacturing where the FPGA supports it; readback disabled |
-| MicroSD | Loader ↔ removable card | SD (SPI mode) | Security event logs out; update packages in | Update packages carry LMS signatures, exactly as over the UART; log records are MAC'd and chained under a per-device log key so removal, reordering or editing is detectable. The loader reads only fixed-format package and log files, never a general filesystem it must trust |
+| MicroSD | Loader ↔ removable card | SD (SPI mode) | User data in and out; security event logs out; update packages in | User data encrypted and authenticated under the data key (AES-256-GCM); update packages carry LMS signatures, exactly as over the UART; log records are MAC'd and chained under a per-device log key so removal, reordering or editing is detectable. The loader reads only fixed-format package and log files, never a general filesystem it must trust |
 
 The device has no network interface of its own. Any network exposure comes through the host PC and is the integrator's to document.
 
@@ -160,7 +160,7 @@ flowchart LR
 ```
 
 Every segment after publication can be hostile. The design does not trust the distribution channel, the host,
-or the UART for integrity: the loader rejects anything without a valid LMS signature and a version above the counter.
+or the UART for integrity: the loader rejects anything without a valid LMS signature and a version not older than the counter.
 The channel only carries ciphertext.
 
 ### Platform update sequence
@@ -178,7 +178,7 @@ sequenceDiagram
   L->>L: Verify LMS signature (platform public key in bitstream)
   L->>SE: Nonce (loader NumIn), GenDig counter 0, MAC (pairing key)
   SE-->>L: Counter 0 value with MAC
-  L->>L: Check MAC, check version above counter 0
+  L->>L: Check MAC, check version not older than counter 0
   L->>F: Write bitstream to inactive slot, read back and check
   L->>L: Unwrap next pairing key
   L->>SE: Encrypted write of next pairing key (authorized by current key)
@@ -202,7 +202,7 @@ sequenceDiagram
   SE-->>L: Public key with MAC
   L->>L: Verify LMS signature before decrypting
   L->>SE: Authenticated counter 1 read
-  L->>L: Check version above counter 1
+  L->>L: Check version not older than counter 1
   L->>SE: Encrypted reads: distribution key and application key unwrap into the AES key registers (private path)
   L->>L: Decrypt with distribution key; re-encrypt per cache line under a new image key from a fresh install salt
   L->>F: Write inactive application slot, read back and check
@@ -259,7 +259,7 @@ sequenceDiagram
   participant H as Host
   participant L as Loader
   participant SE as Secure element
-  participant F as Flash
+  participant F as MicroSD card
   H->>L: Open session
   L->>SE: Nonce (loader NumIn mixed with SE random)
   SE-->>L: Challenge

@@ -5,7 +5,7 @@ already used in [LiteForth](https://github.com/bradleyeckert/LiteForth), the sof
 `vm.c` as the reference model, power cuts at every step, requirements traced to evidence, and a log of
 board test runs.
 
-Risk IDs (R1–R27) refer to the Risk Assessment in `doc/arch.md`. FDA control categories and gaps refer to `doc/fda.md`.
+Risk IDs (R1–R28) refer to the Risk Assessment in `doc/arch.md`. FDA control categories and gaps refer to `doc/fda.md`.
 
 ## 1. Approach
 
@@ -146,7 +146,7 @@ and once more on the MOD8ID.
 
 | Area | Tests | Risks |
 |---|---|---|
-| Application updates | Valid package installs. Every byte of a package flipped, one at a time: rejected before decryption. Wrong signing key. Old version (counter 1). Truncated package. (LMS leaf reuse cannot be seen by the device; the signing tools are tested for it separately.) | R4, R3, R20 |
+| Application updates | Valid package installs. Every byte of a package flipped, one at a time: rejected before decryption. Wrong signing key. Old version (below counter 1) rejected; reinstalling the current version accepted. Truncated package. (LMS leaf reuse cannot be seen by the device; the signing tools are tested for it separately.) | R4, R3, R20 |
 | Platform updates | As above, plus a package built for another board (fails to configure), and pairing key rotation | R3, R4, R14 |
 | Power cuts | Every update run is repeated with a cut at each step k, where every flash erase, flash program, secure element write and counter increment is one step, and the cut leaves that step half done. After each cut, the board must boot a valid image, and must never accept an older version | R19, Open Question 1 |
 | Boot | A corrupt active slot header falls back to the other slot; both corrupt enters update-only mode; a line tag failure while running locks the device down and never runs the line | R2, R19 |
@@ -156,6 +156,7 @@ and once more on the MOD8ID.
 | Security event log | Records appended for each security event; removing, editing, reordering or truncating records is detected at the next boot and reported | R24 |
 | Mailbox | Fuzzing of the loader's message parser with malformed, oversized and changing requests from a simulated application core; every request outside the fixed formats rejected; no request reaches a key or the flash directly | R25, R26 |
 | Developer builds | A developer package for another device is rejected; a developer build cannot read production user data, and the reverse; counter 1 unchanged after any number of developer installs; a production release installs normally afterward; two builds with the same version get different image keys; a release starting a new epoch invalidates old working keys and old developer data, and a release within the epoch does not | R27 |
+| User data on MicroSD | Records modified, moved or truncated on the card are rejected; a card from another device does not decrypt; if slot 11 freshness is enabled, a restored older copy of the card is detected | R1, R28 |
 | Rollback of the platform | An old bitstream boots but cannot read the application or data keys | R3 |
 
 Every test runs on the software platform in continuous integration. A tagged subset runs on the RTL platform nightly,

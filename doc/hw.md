@@ -107,7 +107,7 @@ The mailbox is the only path from the application to the loader, so it is the fi
 
 **Services the loader offers through the mailbox** (a small, fixed set, each with a fixed message format):
 
-- Read and write user data (encrypted under the data key, inside the loader)
+- Read and write user data on the MicroSD card (encrypted under the data key, inside the loader)
 - Open and close a host session (forwarded host authorization; the application learns only success or failure)
 - Append to the security event log
 - Install an application update from the staging area

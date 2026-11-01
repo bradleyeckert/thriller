@@ -19,7 +19,7 @@ The rows marked "platform only" below disappear in an ASIC conversion; everythin
 
 | Asset | Goal |
 |---|---|
-| User data in flash | Confidentiality and integrity. **The primary asset.** |
+| User data on the MicroSD card | Confidentiality and integrity. **The primary asset.** |
 | Application image | Integrity, and only the genuine signed versions run. Packages are encrypted in transit so they show no plaintext, but keeping the code secret from a determined attacker is not a goal of the base model; see the optional Code Secrecy Profile. |
 | Device identity | A unit cannot be cloned or impersonated. |
 | Update signing keys | Never exposed. They stay offline in an HSM. |
@@ -93,7 +93,7 @@ Ratings are for the base model (no Code Secrecy Profile) unless a row says other
 
 | # | Asset / Component | Threat Actor | Attack Vector / Threat Description | Vulnerability Exploited | Impact | Likelihood | Mitigation / Countermeasure |
 |---|---|---|---|---|---|---|---|
-| R1 | External SPI flash: user data | Thief with a flash programmer | Desolder or clip the flash and read user data offline | Flash is external and readable | Critical | High | AES-256-GCM under a per-device data key that the secure element releases only after host authorization (CheckMac) |
+| R1 | MicroSD card: user data | Thief with a card reader | Remove the card and read user data offline | The card is removable and readable | Critical | High | AES-256-GCM under a per-device data key that the secure element releases only after host authorization (CheckMac) |
 | R2 | External SPI flash: application image | Casual hobbyist with a flash programmer | Dump the flash and inspect the application | Flash is external and readable | Low | High | AES-256-GCM under a per-device application key; a copied image will not run on another board |
 | R3 | External SPI flash: version state | Insider or thief with physical access | Restore an older, vulnerable bitstream or application image | Flash contents are not bound to a version | High | Medium | Secure element monotonic counters (0: platform, 1: application); pairing key rotation retires old bitstreams |
 | R4 | UART update path | Advanced remote attacker | Send a forged or modified update package | UART accepts update packages from anyone | Critical | Medium | LMS signature verified by the loader over the ciphertext, before decrypting or installing anything |
@@ -101,7 +101,7 @@ Ratings are for the base model (no Code Secrecy Profile) unless a row says other
 | R6 | Distribution key | Attacker with one compromised unit | Read the distribution key and decrypt all past and future packages | Key is the same on every unit and readable by the loader | Low (High with the Code Secrecy Profile) | Medium | Accepted in the base model. Code Secrecy Profile replaces it with per-device package keys |
 | R7 | I2C bus to the secure element | Casual hobbyist with a logic analyzer | Sniff keys as the loader reads them | Bus is external and unencrypted | High | High | Encrypted key reads (EncRead) under the pairing key; keys never cross the bus in clear |
 | R8 | I2C bus to the secure element | Insider with a bus interposer | Replay or forge counter values and read results | Bus is external; responses could be replayed | High | Medium | Every response MAC'd under the pairing key over a fresh loader-generated nonce |
-| R9 | UART host session | Advanced remote attacker | Guess or brute-force the host authorization to unlock user data | UART is an open channel; the secure element has no retry lockout | Critical | Low (high-entropy key); High (short PIN) | High-entropy host authorization key checked inside the secure element; if a PIN is ever used, a counter-limited key caps attempts |
+| R9 | UART host session | Advanced remote attacker | Guess or brute-force the host authorization to unlock user data | UART is an open channel; the secure element has no retry lockout | Critical | Low (high-entropy key); High (short PIN) | High-entropy host authorization key checked inside the secure element; if a PIN is ever used, attempts must be limited another way, since both secure element counters are allocated (`doc/se.md`) |
 | R10 | Bitstream (Tier A) | Advanced attacker with a lab | Forge or modify a bitstream that the FPGA will accept | Requires breaking the vendor signature and the AES key | Critical | Low | Vendor signature plus AES-256 with encrypted-only configuration. Damage limited by the pairing key and host-authorized data key |
 | R11 | Bitstream (Tier B, ECP5) | Skilled attacker with physical access | Blind bit-flip edits to the encrypted bitstream, brute-forcing the configuration CRC | No hardware authentication; CBC-style encryption without a MAC | High (code execution on that unit; user data exposed in a later evil-maid session) | Medium (Low if the CRC is 32-bit; see Open Question 9) | Host-authorized data key (a stolen unit still protects data), per-device keys, tamper-evident enclosure |
 | R12 | Bitstream: foreign design | Casual hobbyist with a JTAG pod | Load their own design and talk to the secure element and flash | JTAG configuration open, or plaintext bitstreams accepted | Medium (denial of service, burned counters) | High on Tier B, Low on Tier A | Pairing key gates every secure element key; encrypted-only configuration and JTAG lockout where the FPGA supports them |
@@ -120,6 +120,7 @@ Ratings are for the base model (no Code Secrecy Profile) unless a row says other
 | R25 | Application code | Customer-written application, or an attacker who has compromised it | Read keys, drive the secure element, write the flash or change the loader's state | Loader and application sharing one CPU and its buses | Critical | High if they share a CPU | Separate loader and application cores; the application core has no wiring to keys, the secure element, the security block or flash writing, which can be checked from the netlist (`doc/hw.md`) |
 | R26 | Mailbox between the cores | Compromised application | Malformed or changing requests to exploit the loader's message parser | The mailbox is the only path into the loader | Critical | Medium | Small fixed set of services and formats; each request copied out of shared RAM before checking; every field checked against fixed limits; no pointers from messages; fuzz-tested |
 | R27 | Developer sideloading | Developer, or anyone holding a leaked developer key | Install code that reads production user data, or blocks future production updates | Developer builds are not signed by the application owner | High (one device) | Medium | Developer keys are per device; developer builds get a separate user data key and never advance counter 1 (`doc/roles.md`) |
+| R28 | MicroSD card: user data freshness | Insider or thief with a card reader | Copy the card, and later restore the old copy so the device accepts rolled-back data | Old records still decrypt and authenticate under the same data key | High (one device) | High | Reserved: a digest of the latest user data in secure element slot 11, written at the end of each session that changes data (`doc/se.md`); to be decided per application (Open Question 12) |
 
 ## Optional: Code Secrecy Profile
 
@@ -454,7 +455,7 @@ These are deliberately absent from the loader:
 ## Open Questions
 
 1. **Pairing key rotation sequencing (platform only).** The order of operations for writing a new bitstream, installing the next pairing key and advancing counter 0, such that a power failure at any point leaves a bootable, non-rollbackable device.
-2. **Secure element protocol details.** Confirm that GenDig over the counter zone, authenticated reads of the public key slot, and EncWrite of the pairing key slot all work as expected on the ATECC608B, and separately on the MOD8ID.
+2. **Secure element protocol details.** Confirm the slot map in `doc/se.md`, and that GenDig over the counter zone, authenticated reads of the public key slot, and EncWrite of the pairing key slot all work as expected on the ATECC608B, and separately on the MOD8ID.
 3. **AES mode choice.** AES-256-GCM per cache line is recommended for execute in place (`doc/xip.md`). Confirm the GHASH multiplier's area on the smallest target FPGA.
 4. **Nonce source.** Whether a ring-oscillator TRNG is reliable enough across the supported FPGA families and an ASIC process, or whether the counter fallback is acceptable.
 5. **ASIC pairing key.** A pairing key in mask logic is the same on every chip and can be recovered from one die, and the open ICS55 PDK has no one-time-programmable cells. The proposed answer is an SRAM PUF wrapping a per-device pairing key stored in flash (`doc/ics55.md`).
@@ -462,7 +463,7 @@ These are deliberately absent from the loader:
 7. **LMS parameter set and signing infrastructure.** Final choice of tree height and Winternitz parameter (W = 4 assumed), whether to use SHA-256/192, and which HSM or signing service manages LMS state for each key owner.
 8. **Host authorization on the ATECC608B.** Confirm that a slot can require authorization by another key
    (the ReqAuth and AuthKey configuration fields in cryptoauthlib), how long the authorization lasts, and how it is cleared
-   at session end. Also decide how to limit attempts if the host key is ever derived from a PIN.
+   at session end. Also decide how to limit attempts if the host key is ever derived from a PIN, since both counters are allocated (`doc/se.md`).
 9. **ECP5 bitstream security.** The ECP5's AES key size and mode, the width of the configuration CRC
    (Project Trellis documents the bitstream format), whether encrypted-only configuration and readback lockout can be fused,
    and whether a bitstream built with Yosys and nextpnr can be encrypted, and with which tool.
@@ -472,3 +473,5 @@ These are deliberately absent from the loader:
    package per board; per-batch keys cut packaging work but widen the blast radius to the batch. Also confirm the eFuse
    programming flow for unique keys on each target family, and that `ecpbram` patching works on encrypted ECP5 builds
    (patch first, then encrypt).
+12. **User data freshness.** Whether applications need protection against an old copy of the MicroSD card being restored, and if so whether
+   the secure element's write endurance allows a freshness digest in slot 11 to be written at the end of each session that changes data (`doc/se.md`).

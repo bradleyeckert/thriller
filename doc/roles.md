@@ -59,7 +59,8 @@ and derives the working key through the private key path:
 
 The HSM computes the same value when it issues a key to a developer for a given serial number and epoch.
 
-**To rotate,** a production release takes a version number at the start of the next epoch (the next multiple of 1,024). Once a device installs it,
+**To rotate,** a production release takes a version number at the start of the next epoch (the next multiple of 1,024). Advancing counter 1 there
+takes one increment per version step, up to 1,024 (`doc/se.md`, Counters). Once a device installs it,
 counter 1 is in the new epoch, every working key issued before stops matching, and developers must ask the HSM for new ones.
 A release that stays within the current epoch leaves developer keys alone, so rotation is chosen release by release.
 
@@ -83,7 +84,7 @@ The loader handles a developer package like a production one, with four differen
 |---|---|---|
 | Authenticate | LMS signature against the application public key | HMAC-SHA256 under this device's working developer key for the current epoch, checked through the private key path |
 | Decrypt | Distribution key | Package key derived from the working developer key |
-| Rollback check | Version must be above counter 1, which then advances | No check, and counter 1 is not touched |
+| Rollback check | Version must not be older than counter 1, which then advances to it | No check, and counter 1 is not touched |
 | Mark | Header mode: production | Header mode: developer |
 
 In both cases the loader re-encrypts the image per line into the inactive slot under a fresh install salt (`doc/xip.md`, Per-line GCM),
@@ -103,7 +104,7 @@ version 9999 would block every future production release. Rollback protection is
 
 ## Returning to production
 
-Installing any production package replaces the developer build, with the usual rule: its version must be above counter 1.
+Installing any production package replaces the developer build, with the usual rule: its version must not be older than counter 1.
 Since developer builds never moved counter 1, the device accepts the same production releases it would have accepted before.
 
 ## What developers cannot do

@@ -125,7 +125,7 @@ CTR with HMAC-SHA256 (`doc/arch.md`, Open Question 3), which was made before XIP
 | Line size | 64 bytes (16 cells, 32 instructions) | Halves the tag overhead of 32-byte lines; measure both |
 | Size | 4 KB (64 lines), 2-way set associative | Forth code is dense; measure the hit rate on real applications on the FPGA |
 | Contents | Plaintext, only after the tag passes | Decrypting on every hit would add latency to every fetch |
-| Writes | None: the XIP region is read-only | The application's variables live in SRAM; user data in flash goes through the loader's explicit encrypted routines |
+| Writes | None: the XIP region is read-only | The application's variables live in SRAM; user data is on the MicroSD card, through the loader's mailbox services |
 | Prefetch | Next line on a sequential miss; LiteForth's proposed `touch` instruction for software prefetch | `touch` is described in LiteForth's `doc/hdl.md` |
 | Replacement | Pseudo-LRU | |
 
@@ -143,7 +143,7 @@ RAM cannot hold a package, so:
 
 1. The package is written to a staging area in flash as it arrives (as LiteForth does with `lfstage.bin`).
 2. The LMS signature is verified by streaming the staged package through the SHA-256 core.
-3. The version is checked against counter 1.
+3. The version is checked against counter 1: it must not be older.
 4. A fresh install salt is drawn, and the package is decrypted with the distribution key and re-encrypted per line, with tags, under the new image key into the inactive slot, one line at a time.
 5. Counter 1 advances, and the slot becomes active.
 

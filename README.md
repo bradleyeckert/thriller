@@ -16,10 +16,10 @@ user data is unlocked only with a secret held outside the device. See `doc/arch.
 - A secure element such as an ATECC608B (or a pin-compatible MODSEMI MOD8ID as second source)
 - Voltage regulators
 - Oscillator module
-- QSPI NOR flash (for bitstream, encrypted application and encrypted user data)
+- QSPI NOR flash (for bitstream and encrypted application; written only during updates and development)
 - USB-UART bridge (for connection to host PC or terminal)
 - JTAG port (for connection to ISP tools)
-- MicroSD card socket (for off-device security event logs and offline update packages)
+- MicroSD card socket (for encrypted user data, security event logs and offline update packages)
 
 ## FPGA Tiers
 
@@ -41,7 +41,7 @@ Tier B trades protection against targeted tampering for lower cost and an open t
 |---|---|---|---|
 | Pairing key | Bitstream and secure element (per device) | The bitstream itself | The authenticated channel between the loader and the secure element |
 | Application key | Secure element (per device) | Pairing key | Encryption and integrity of the application image in flash |
-| **Data key** | Secure element (per device) | Pairing key **and** host authorization | Encryption and integrity of user data in flash |
+| **Data key** | Secure element (per device) | Pairing key **and** host authorization | Encryption and integrity of user data on the MicroSD card |
 | Host authorization key | Secure element (non-readable) and the host | Never leaves either | Proving the host is present, and UART access |
 | Distribution key | Secure element (same on every unit) | Pairing key | Encrypting application packages in transit, so a hex dump shows no plaintext |
 | Developer key | Secure element (per device) and the device's developer | Never leaves the secure element; the developer gets a copy from the HSM | Sideloading developer builds onto that one device (`doc/roles.md`) |
@@ -117,7 +117,7 @@ On the manufacturing side:
 - Generate one bitstream per release. For each board, patch that board's own pairing key into the bitstream's
   block RAM initialization, then encrypt it under that board's key (and on Tier A, sign it).
   On the ECP5, Project Trellis's `ecpbram` can patch block RAM contents without re-running place and route.
-- Configure and lock the secure element (keys, slot policies, counters), using a published slot layout such as Microchip's TrustFLEX as the starting point.
+- Configure and lock the secure element (keys, slot policies, counters) according to the slot map in `doc/se.md`.
 - Diversify every secure element key per device, so one compromised unit exposes nothing about another.
 - Build the platform LMS public key into the bitstream, and store the application LMS public key in a locked secure element slot.
 - Store the board's pairing key in its secure element (it is already in that board's bitstream).
@@ -174,10 +174,10 @@ The UART is the one insecure channel, so the host authenticates to the secure el
 - The loader asks the secure element for a challenge, mixed with the loader's own fresh nonce, and passes it to the host.
 - The host answers with a MAC over the challenge, using the host authorization key.
 - The secure element checks the answer itself (CheckMac). Only on success does it release the data key to the loader.
-- The loader then decrypts and authenticates user data in flash for the rest of the session, and erases the data key when the session ends.
+- The loader then decrypts and authenticates user data on the MicroSD card for the rest of the session, and clears the data key when the session ends.
 
 Use a high-entropy host key. If it is derived from a short PIN, the secure element offers no retry lockout,
-so attempts must be limited another way, such as a counter-limited key.
+so attempts must be limited another way; both secure element counters are already allocated (`doc/se.md`).
 
 ## ASIC conversion
 
