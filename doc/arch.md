@@ -463,6 +463,8 @@ These are deliberately absent from the loader:
 
 ## Open Questions
 
+All open questions, from every document, are collected with priorities in `doc/questions.md`, which also proposes how to close 1 and 13.
+
 1. **Pairing key rotation sequencing (platform only).** The order of operations for writing a new bitstream and loader image, installing the next pairing key and advancing counter 0, such that a power failure at any point leaves a bootable, non-rollbackable device.
 2. **Secure element protocol details.** Confirm the slot map in `doc/se.md`, and that GenDig over the counter zone, authenticated reads of the public key slot, and EncWrite of the pairing key slot all work as expected on the ATECC608B, and separately on the MOD8ID.
 3. **AES mode choice.** AES-256-GCM per cache line is recommended for execute in place (`doc/xip.md`). Confirm the GHASH multiplier's area on the smallest target FPGA.

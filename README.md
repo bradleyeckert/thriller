@@ -24,6 +24,7 @@ user data is unlocked only with a secret held outside the device. See `doc/arch.
 | `doc/test.md` | Test plan and fault-injection campaigns |
 | `doc/fda.md` | FDA security architecture views |
 | `doc/ics55.md` | ASIC migration to the ICS55 55 nm process |
+| `doc/questions.md` | Every open question in one matrix, with proposals for the most urgent |
 
 ## chipset
 
