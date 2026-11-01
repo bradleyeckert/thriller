@@ -105,7 +105,9 @@ access to the flash.
 ## Choosing the mode: latency
 
 The miss cost is dominated by the flash read. Using LiteForth's figures for a QPI NOR flash at 80 MHz (`doc/hdl.md` there:
-2 clocks per byte plus a 14-clock preamble), and a core clock of 50 MHz with an iterative AES-256 core (about 15 cycles per block):
+2 clocks per byte plus a 14-clock preamble), and a core clock of 50 MHz with an iterative AES-256 core (about 15 cycles per block).
+The QSPI clock is assumed to be 80 MHz, with DDR outputs from the core clock (`doc/hw.md`); with the flash clocked at 50 MHz SDR,
+a 64-byte line takes about 3.2 µs instead:
 
 | Line size | Flash burst (line + tag) | Flash read time |
 |---|---|---|
@@ -137,7 +139,8 @@ HMAC-SHA256, before XIP was a requirement; `doc/arch.md` now recommends GCM.
 The CPU stalls on a miss until the line is checked. It never executes from a line whose tag has not passed, so no speculative execution is needed.
 
 **On a tag failure,** the line never enters the cache. The fill controller raises a hardware fault that enters the boot ROM's lockdown path
-(`doc/hw.md`, Boot and lockdown): hold the application core in reset, log the event, clear the secret registers, and halt. Lockdown is the only response, because a failing tag in a running image means the flash has been tampered with.
+(`doc/hw.md`, Boot and lockdown): hold the application core in reset, clear the secret registers, record the event and mark the slot bad in the
+flash boot record, and halt. The next boot falls back to the other slot, so a single flash bit error costs one slot, not a lockdown loop. Lockdown is the only response, because a failing tag in a running image means the flash has been tampered with.
 
 **The cache must be cleared by the secret-clear input** (`doc/ics55.md`, migration hooks), since it holds plaintext application code.
 
@@ -147,10 +150,14 @@ The CPU stalls on a miss until the line is checked. It never executes from a lin
 RAM cannot hold a package, so:
 
 1. The package is written to a staging file on the MicroSD card as it arrives (as LiteForth does with `lfstage.bin`). Staging on the card means reading it back never needs QSPI direct mode, which would stall the loader's own fetches (`doc/flash.md`).
-2. The LMS signature is verified by streaming the staged package from the card through the SHA-256 core.
+2. The package's public key is checked against the hash in the secure element, the LMS signature is verified by streaming the staged package through
+   the SHA-256 core, and the digest of the ciphertext is kept.
 3. The version is checked against counter 1: it must not be older.
-4. A fresh install salt is drawn, and the package is decrypted with the distribution key and re-encrypted per line, with tags, under the new image key into the inactive slot, one line at a time.
-5. Counter 1 advances, and the slot becomes active.
+4. A fresh install salt is drawn from the TRNG, and the package is read from the card again, decrypted with the distribution key and re-encrypted per line,
+   with tags, under the new image key into the inactive slot, through the engine's install port. The ciphertext is **hashed again during this pass**;
+   if the digest differs from the one verified in step 2, the install is abandoned and the slot erased. A card swapped or emulated between the two
+   reads therefore cannot inject unsigned code.
+5. The slot is read back and every line's tag checked through the install port. Counter 1 advances, and the boot record selects the slot (`doc/flash.md`, Install order).
 
 Developer packages differ in steps 2 to 5: an HMAC instead of the LMS signature; the epoch instead of the version check; a package key derived from
 the working developer key instead of the distribution key; and counter 1 does not move (`doc/roles.md`). A production install also erases any

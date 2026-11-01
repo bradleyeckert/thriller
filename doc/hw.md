@@ -32,7 +32,7 @@ flowchart TB
     LXC["Loader XIP cache<br/>(read-only window)"]
     LPB["Port bridge to APB4"]
     SHA["SHA-256 + LMS chain sequencer"]
-    AESR["AES-256 (loader use)"]
+    AESR["Install port<br/>(AES-GCM for the loader)"]
     SEC["Security block<br/>comparators, flow counter, key gate,<br/>detectors, lockdown"]
     I2C["I2C master<br/>(secure element)"]
     QD["QSPI direct mode,<br/>XIP control"]
@@ -110,6 +110,7 @@ A port that returns `PSLVERR` becomes an ior, which LiteForth already treats lik
 | AES core (keystream and tag mask) and GHASH multiplier | A request port into the fill engine |
 | Tag comparator and fill state machine | A flash window (base and limit) and an image key register |
 | Busy interlock for flash writes | |
+| **Install port** (port 2, loader only, through APB): GCM on lines and records for the loader | |
 
 - **The requesting port selects the key and window in hardware.** Software never chooses them for a fill, so the application core cannot cause a fill
   with the loader's key or from the loader's flash region.
@@ -117,6 +118,9 @@ A port that returns `PSLVERR` becomes an ior, which LiteForth already treats lik
 - **Loader priority.** Port 0 (the loader) wins arbitration, so the application cannot starve the loader by forcing misses. A loader miss waits at most
   for one application fill in progress, about 2 µs.
 - **Write-once configuration.** The boot ROM sets port 0's window and key at reset; the loader sets port 1's. Each port's configuration locks until the next reset.
+- **Install port.** The loader reaches the engine's AES and GHASH through a third port, which never fills a cache. It encrypts and tags lines under
+  install key B for writing to an inactive slot, decrypts and checks lines from any slot for read-back, and runs AES-GCM on user data records and
+  session frames. Cache fills take priority over it.
 - **Accepted leak.** The application can time its own misses and infer when the loader is fetching. That reveals the loader's activity, not secrets,
   because keys and crypto stay in hardware.
 
@@ -133,7 +137,7 @@ The mailbox is the only path from the application to the loader, so it is the fi
 **Services the loader offers through the mailbox** (a small, fixed set, each with a fixed message format):
 
 - Read and write user data on the MicroSD card (encrypted under the data key, inside the loader)
-- Open and close a host session (forwarded host authorization; the application learns only success or failure)
+- Host session status: the host opens and closes sessions over the UART; the application can ask whether a session is open, or ask the loader to prompt the host for one, and learns only success or failure
 - Append to the security event log
 - Install an application update from the staging area
 - Get the device's identity and status
@@ -155,8 +159,8 @@ The mailbox is the only path from the application to the loader, so it is the fi
 | Loader XIP cache | AXI4-Lite (read-only) | Hits every loader fetch | Block RAM + distributed RAM | SRAM macro + flip-flops | 2 KB; the rest of the loader runs from flash through it |
 | Loader SRAM | AXI4-Lite | Every load and store | Block RAM | SRAM macro | Buffers, stacks, variables; never keys (see Key paths) |
 | SHA-256 core + LMS chain sequencer | APB | About 1 word per 4 cycles | RTL | RTL | Private key input and private keyed-digest output (see Key paths) |
-| AES-256 core (loader use) | APB | Moderate | RTL | RTL | Shares the AES datapath with the XIP engine; XIP fills take priority |
-| AES key registers and key gate | Private | — | RTL | RTL | Loaded only from the SHA unwrap or derive path; never readable. Holds both image keys, the data key and the working keys |
+| AES-256 for the loader | Install port of the XIP engine | Moderate | RTL | RTL | The engine's masked AES core and GHASH, through port 2; cache fills take priority |
+| AES key registers and key gate | Private | — | RTL | RTL | Loaded only from the SHA unwrap or derive path, with pass tokens; never readable (see Key registers) |
 | Security block | APB | Slow | RTL | RTL | Comparators, flow counter, key gate tokens, glitch and clock detectors, lockdown, fault status, secret-clear fan-out |
 | Key source (pairing key) | Private to SHA | — | Small block RAM, patched per board | PUF + unwrap (`doc/ics55.md`) | Behind the fixed interface from the migration hooks |
 | I2C master | APB | 100 to 400 kHz | RTL | RTL | The secure element's bus |
@@ -199,7 +203,7 @@ Sizes are placeholders, to be set from the RAM budget (`doc/xip.md`) and the tar
 | Byte address | Size | Region |
 |---|---|---|
 | `0x000000` | 16 KB | Boot ROM (Stage 0) |
-| `0x010000` | 16 KB | Loader SRAM |
+| `0x010000` | 16 KB | Loader SRAM (a placeholder; the loader's own needs are about 3 to 4 KB, `doc/xip.md`) |
 | `0x030000` | 2 KB | Mailbox message RAM |
 | `0x400000` | about 450 KB | Loader XIP window (active loader slot, plaintext view; `doc/flash.md`); writes return an error |
 | other | — | Unmapped: error |
@@ -226,7 +230,7 @@ Ports 16 to 43 keep LiteForth's existing assignments on the core where they appl
 | 24 | — | LCD (LiteForth), if fitted |
 | 32 to 43 | Math unit, if fitted | Math unit (LiteForth) |
 | 64 to 79 | SHA-256 core and LMS chain sequencer | Mailbox doorbell and status |
-| 80 to 95 | AES-256 (loader use) | Application timer |
+| 80 to 95 | Install port of the XIP engine (AES-GCM for the loader) | Application timer |
 | 96 to 111 | Security block | Random numbers |
 | 112 to 127 | I2C master | Optional application peripherals |
 | 128 to 143 | QSPI direct mode, XIP control and port configuration | — |
@@ -242,59 +246,93 @@ These would also be added to LiteForth's `iomap.h`, so the desktop and MCU build
 
 All key handling is in the loader core domain, and even the loader's Forth code never sees a key.
 
+### Key registers
+
+| Register | Holds | Loaded from | Used by |
+|---|---|---|---|
+| SHA-256 key input | The pairing key, or the application, developer or log key | The key source, or an EncRead unwrap | Secure element MACs, header and boot-record HMACs, log MACs, key derivation |
+| XIP port 0 key | Loader image key | Derived from the application key | Loader cache fills |
+| XIP port 1 key | Application image key | Derived from the application key | Application cache fills |
+| Install key A | Distribution key, package content key, or developer package key | EncRead unwrap or derivation | Decrypting a package on the install port |
+| Install key B | The new image key for the slot being written | Derived from the application key and a fresh salt | Encrypting and tagging lines on the install port |
+| Data key | User data key, or the developer data key | EncRead unwrap after CheckMac, then optional derivation | User data records on the MicroSD card |
+| Session key | Host session key (`doc/questions.md`, Arch 13) | Unwrap of the secure element's KDF output | Session frames on the UART |
+
 **Pairing key into SHA-256.** Every secure element MAC format hashes the pairing key as one 32-byte field of the message (`doc/arch.md`, secure element MAC protocol).
-The SHA-256 core has an "insert key here" port: the key source feeds the 32 bytes straight into the message. The loader core supplies everything else.
-The same port can insert a key unwrapped from the secure element, for the developer package HMAC and for deriving the per-install image keys (`doc/roles.md`, `doc/xip.md`).
+The SHA-256 core has an "insert key here" port: the key source, or a key unwrapped from the secure element, feeds the 32 bytes straight into the message.
+The loader core supplies everything else.
 
-**Keyed digests stay private.** A digest whose input included an inserted key can't be read back over APB. It can only go to:
-- the security block's comparator, to check a MAC from the secure element; or
-- the AES key registers, XORed in, to unwrap a key read from the secure element with EncRead (whose keystream is such a digest); or
-- the AES key registers or the SHA-256 key input, loaded directly, for a derived key: the loader and application image keys (`doc/xip.md`) and the developer working key (`doc/roles.md`).
+### Two output modes
 
-**Unwrapping into SHA-256 as well.** An EncRead can be unwrapped into the SHA-256 key input instead of an AES key register, the same way.
-That is how the application key reaches the SHA-256 core for the header HMACs and the image key derivation.
+Every keyed SHA-256 operation runs in one of two modes, set by a domain byte at the start of the message and enforced in hardware:
 
-**Pass tokens.** The key gate loads a key into an AES key register for decryption only with a pass token from a hardware comparator:
-- an image key goes into an XIP port only after the header HMAC comparator passes for that image;
-- the data key goes into the key registers only after the secure element MAC comparator passes on its EncRead, which the secure element
-  allows only after a successful CheckMac with the host authorization key.
+- **Derive mode.** The digest is key material: an EncRead keystream, an image key, a working key, a session key. It can never be read over APB.
+  It goes only to a key register, XORed in (to unwrap) or loaded directly (for a derivation).
+- **MAC mode.** The digest is a MAC, which is not secret. It can be read over APB, or sent to the security block's comparator. The loader uses it to
+  write header HMACs, boot-record HMACs and log MACs, and to check the secure element's MACs.
 
-Keys used only inside the SHA-256 core (for MACs and key derivation) need no token, since nothing can read a keyed digest.
+The domain bytes reserved for derivation are refused in MAC mode, so software can never compute a derivation as a MAC and read the key it produces.
+Unkeyed digests (LMS verification, image hashes) remain readable.
 
-**Result:** the pairing key, the application, data, distribution, developer and log keys all move from the key source or the secure element
-into the AES key registers without passing through either CPU, their stacks, or any SRAM. A bug in the loader cannot leak them, and the application core has no path to them at all.
-Unkeyed digests (LMS verification, image hashes) remain readable, as the loader needs them.
+### Encrypted reads carry no MAC
+
+The secure element's encrypted read (Nonce, GenDig, Read, then XOR with TempKey, as cryptoauthlib implements it) is not authenticated: a key altered
+on the I2C bus unwraps to a wrong value without any error. Every unwrapped key is therefore checked before it is trusted:
+
+- the application key, by the header HMAC it must reproduce;
+- the developer key, by the developer package HMAC it must reproduce;
+- the log key, by the existing log chain it must reproduce;
+- the data key and the distribution key, by key check values: a MAC of a fixed string under each key, written at provisioning into the first 32 bytes
+  of slot 8 (16 bytes each), which an authenticated read covers (`doc/se.md`).
+
+### Pass tokens
+
+The key gate loads a decryption key into an AES key register only with pass tokens from hardware comparators:
+
+- an image key goes into an XIP port only after the header HMAC comparator passes, and the version comparator (production image) or the epoch
+  comparator (developer image) passes, for that image;
+- the data key goes into its register only after its key check value passes; the secure element releases it only after a successful CheckMac;
+- the install keys load only after the package's LMS root comparator, or the developer package HMAC comparator, passes;
+- the session key loads only after the session's key confirmation passes (Arch 13).
+
+**Result:** the pairing key and the application, data, distribution, developer, log and session keys move from the key source or the secure element
+into key registers without passing through either CPU, their stacks, or any SRAM. A bug in the loader cannot leak them, and the application core has no path to them at all.
 
 ## Boot ROM contents
 
 The boot ROM holds everything that must run before the loader is trusted, or while flash cannot be read:
 
 - Reset, clocking and SRAM test; on the ASIC, the PUF key derivation and the pairing key unwrap (`doc/ics55.md`)
-- Drivers for the SHA-256, AES, I2C and QSPI cores
+- Drivers for the SHA-256, AES, I2C and QSPI cores, and the TRNG health check
 - The secure element pairing exchange, authenticated counter reads, and the EncRead of the application key
-- The loader header check: HMAC, image key derivation, version against counter 0, then configuring and locking XIP port 0
+- The loader header check: HMAC, version against counter 0, image key derivation, then configuring and locking XIP port 0
+- The boot record: choosing the active loader slot, and skipping slots marked bad (`doc/flash.md`)
 - LMS verification, used by UART recovery
 - Flash primitives (read into SRAM, erase, program, status), since nothing fetched from flash can run while the flash is busy
-- The lockdown path, including writing the event to the security event log
-- UART recovery: receiving a signed loader package, unwrapping its content key, re-encrypting it per line into a loader slot, and advancing counter 0
+- The lockdown path, which records the event in the flash boot record; it needs no MicroSD driver and no key
+- UART recovery: receiving a signed loader package into a flash staging region, verifying it, and installing it into a loader slot (`doc/flash.md`, Staging)
 
 ## Boot and lockdown
 
 The same chain runs on the FPGA and the ASIC. On the FPGA, the configuration engine first loads the bitstream, which contains the boot ROM.
 
 1. **Boot ROM.** Reset holds the application core in reset, and the loader core starts in the boot ROM. It authenticates to the secure element,
-   reads counter 0, unwraps the application key, checks the loader image header's HMAC, derives the loader image key into port 0, and checks the
-   loader's version against counter 0. It sets port 0's window and key, which then lock, and jumps to the loader in its XIP window.
-   If neither loader slot checks, it stays in UART recovery.
-2. **Loader.** The loader reads counter 1, checks the application image header, derives the application image key into port 1, and for a production
-   image checks the version against counter 1 (`doc/xip.md`). It sets port 1's window and key, which then lock.
+   reads counter 0, unwraps the application key, checks the loader image header's HMAC and the loader's version against counter 0, derives the loader
+   image key into port 0, and locks port 0's window and key. It then jumps to the loader in its XIP window.
+   If no loader slot checks, it stays in UART recovery.
+2. **Loader.** The loader moves any lockdown record from the boot record into the security event log on the card. It reads counter 1, checks the application
+   image header and its version (production) or epoch (developer), derives the application image key into port 1, and locks port 1's window and key (`doc/xip.md`).
 3. **Application.** The loader releases the application core, which starts executing from its XIP window.
 4. **Lockdown** (any detection, a tag failure on either port, a fault in the loader) enters the boot ROM through a hardware vector, never through
    loader code, which may be the flash that just failed. In this order, it:
    1. holds the application core in reset;
-   2. appends the event to the security event log, while the log key is still loaded;
-   3. clears the key registers, pass tokens, both caches and the XIP port configuration through the secret-clear fan-out, and wipes the loader's stacks and registers;
+   2. clears the key registers, pass tokens, both caches and the XIP port configuration through the secret-clear fan-out, and wipes the loader's stacks and registers;
+   3. writes a lockdown record into the flash boot record with the boot ROM's flash primitives: the cause, and for a tag failure the slot, which it marks bad.
+      The record is not authenticated, because it can only cause logging and a fallback;
    4. halts until the next power-on reset.
+
+On the next boot, the boot ROM and the loader skip slots marked bad and fall back to the other slot, or to recovery or update-only mode if both are bad.
+A single flash bit error therefore costs one slot, not a lockdown loop. Lockdowns are counted in the boot record; past a threshold the device stays in update-only mode.
 
 ## Clocks, resets and errors
 
@@ -336,13 +374,17 @@ These are estimates, to be replaced by synthesis results:
 | Loader cache data (2 KB) | — | — | 1 block |
 | Second request port, priority arbiter, per-port window registers, write-once locks | 50 to 150 | about 70 | — |
 | Second image key register and key select into the AES core | 100 to 300 (less with the keys in distributed RAM) | up to 256 | — |
-| **Total** | **about 0.5K to 1.1K** | **about 0.4K** | **+1 block** |
+| Install port (port 2) and its arbitration | 100 to 200 | about 50 | — |
+| **Total** | **about 0.6K to 1.3K** | **about 0.5K** | **+1 block** |
 
 | Part | Logic available | Added logic | Block RAM available |
 |---|---|---|---|
 | LFE5U-25 (ECP5) | 24K LUTs | about 2 to 5% | 56 blocks of 18 Kbit (1,008 Kbit) |
 | LIFCL-17 (CrossLink-NX) | 17K logic cells | about 3 to 7% | 432 Kbit EBR, plus 2,560 Kbit LRAM |
 | Ti60 (Titanium) | 62K logic elements | about 1 to 2% | 256 blocks of 10 Kbit (2.6 Mbit) |
+
+Not included: the masked AES core, which is now part of the base design (`doc/arch.md`, R17). Masking typically costs two to four times the
+area of an unmasked core; to be measured (`doc/arch.md`, Open Question 14).
 
 **Block RAM use goes down.** Only the boot ROM (8 to 16 KB) and the 2 KB loader cache stay in block RAM, instead of the whole loader.
 If the full loader is 24 to 40 KB, that frees roughly 6 to 22 KB, or 3 to 11 ECP5 blocks.

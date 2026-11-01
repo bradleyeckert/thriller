@@ -73,8 +73,8 @@ Options, in order of preference:
    so an SRAM PUF becomes available, and it needs no special cells. The PUF yields a device-unique key on every power-up:
    - A fuzzy extractor (for example a repetition code concatenated with a BCH or Golay code) corrects bit errors, using public helper data stored in external flash.
    - The PUF key does not itself become the pairing key. At provisioning, the factory station derives the pairing key in the HSM as
-     KDF(master, secure element serial number), writes it to the secure element, and gives it to the ASIC, which wraps it under the PUF key
-     and stores the wrapped blob in external flash. On each boot the ASIC regenerates the PUF key and unwraps the pairing key.
+     KDF(master, secure element serial number, key version), with a fixed key version on the ASIC, writes it to the secure element, and gives it to the ASIC, which wraps it under the PUF key
+     and stores the wrapped blob in external flash (`doc/flash.md`, ASIC key blob). On each boot the ASIC regenerates the PUF key and unwraps the pairing key.
    - A wrapped blob copied to another board will not unwrap there.
    - Risks: the reliability of the open SRAM compiler's cells as a PUF is unknown (bit error rate across temperature, voltage and aging),
      and helper data manipulation is a known attack class. Both need characterization on silicon.
@@ -113,7 +113,7 @@ if those dimensions are the core area. A whole application cannot be decrypted i
 - **Execute in place from QSPI flash, for both cores, through small decrypting and authenticating caches.** The design is worked out in `doc/xip.md`:
   AES-256-GCM per cache line, under an image key unique to each image and install and a nonce that binds each line to its slot and address,
   so lines are checked on every fill without a Merkle tree. One XIP engine serves both cores through two ports, and the loader's RAM plus both caches
-  need about 9 to 10 KB of SRAM.
+  need about 11 to 12 KB of SRAM, including the mailbox.
 
 ### Things only silicon can answer
 

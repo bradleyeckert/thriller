@@ -18,7 +18,9 @@ Sizes are proposals, to be confirmed against real bitstream, loader and applicat
 | `0x0200000` | 64 KB | Boot record | Two copies of the active-slot record (see below); the rest reserved |
 | `0x0210000` | 512 KB | Loader A | Loader image in XIP layout (`doc/xip.md`): a 72-byte header, then 64-byte lines with 8-byte tags. About 450 KB of loader code |
 | `0x0290000` | 512 KB | Loader B | The other loader slot |
-| `0x0310000` | 960 KB | Reserved | Future platform use |
+| `0x0310000` | 512 KB | Recovery staging | Raw ciphertext of a loader package received by UART recovery, before it is verified |
+| `0x0390000` | 64 KB | ASIC key blob | On the ASIC: the PUF helper data and the PUF-wrapped pairing key (`doc/ics55.md`). Reserved on the FPGA |
+| `0x03A0000` | 384 KB | Reserved | Future platform use |
 | `0x0400000` | 12 MB | Application A | Application image in XIP layout. About 10.5 MB of application code and constants |
 | `0x1000000` | 12 MB | Application B | The other application slot |
 | `0x1C00000` | 4 MB | Reserved | Future use |
@@ -28,15 +30,18 @@ The XIP engine maps each port's CPU window onto one slot: port 0 onto the active
 
 The bitstream slot sizes cover the supported parts with margin, to be checked per family: an uncompressed LFE5U-25 bitstream is well under 1 MB.
 Where the FPGA reads its bitstream from a fixed address, slot selection for bitstreams uses the vendor's own dual-boot or multiboot
-mechanism, which differs by family (Open Question 1).
+mechanism, which differs by family (Open Question 1). On a family whose scheme treats the image at address 0 as a fixed fallback ("golden")
+image, bitstream A becomes a factory image that is never overwritten, and updates alternate between other regions; on the ECP5 this is likely and to be confirmed.
 
 ## Boot record
 
 The boot record says which loader slot and which application slot are active. It is kept in two copies in separate 4 KB sectors,
 in the style of LiteForth's stage 1 security record:
 
-- Each copy holds a sequence number, the active loader slot, the active application slot, and an HMAC-SHA256 under the application key
-  (computed through the private key path).
+- Each copy holds a sequence number, the active loader slot, the active application slot, slots marked bad, a lockdown count and any pending
+  lockdown record, and an HMAC-SHA256 under the application key (computed in MAC mode, `doc/hw.md`).
+- The lockdown path writes its record and bad-slot mark without a key, since it runs after the keys are cleared; those fields are
+  outside the HMAC. They can only cause logging and a fallback, never select an image that fails its checks.
 - The copy with the highest sequence number and a valid HMAC wins. An update writes the new record into the *other* copy's sector,
   so a power cut leaves at least one valid copy.
 - The record is a hint, not a security control. Every image is checked on its own (header HMAC, version against its counter, every line's tag),
@@ -69,8 +74,9 @@ including the loader's own code. Instead:
 - The loader reads the staged package from the card, verifies it, and writes the result into the inactive flash slot through the boot ROM's
   flash primitives. Only those writes need direct mode.
 
-A device without a card can still be recovered: the boot ROM's UART recovery receives a signed loader package directly, in small blocks,
-each written to flash as it arrives.
+A device without a card can still be recovered. The boot ROM's UART recovery writes the raw ciphertext of a signed loader package into the
+recovery staging region as it arrives; nothing is decrypted or installed yet. It then verifies the package by reading it back, and installs it in a
+second pass that re-hashes the ciphertext and must reproduce the verified digest, exactly as for packages staged on the card.
 
 ## Developer images
 

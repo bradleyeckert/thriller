@@ -23,7 +23,7 @@ The guidance asks for at least four views:
 Section 5 maps the design to the guidance's security control categories, and section 6 lists the gaps a submission would have to close.
 
 Terms (loader, Tier A/B, pairing key, data key, distribution key) are defined in the README and `doc/arch.md`.
-Risk IDs (R1–R29) refer to the Risk Assessment in `doc/arch.md`. Roles (manufacturer, application owner, developer, user) are defined in `doc/roles.md`.
+Risk IDs (R1–R31) refer to the Risk Assessment in `doc/arch.md`. Roles (manufacturer, application owner, developer, user) are defined in `doc/roles.md`.
 
 ## 1. Global System View
 
@@ -83,7 +83,7 @@ flowchart LR
 | Interface | Between | Protocol | What crosses it | Protection |
 |---|---|---|---|---|
 | Configuration | Flash → config engine | Vendor SPI configuration | Bitstream | AES under a per-board eFuse key; Tier A adds the vendor signature |
-| I2C | Loader ↔ secure element | ATECC command packets, CRC-16 | Counters, key reads, host authorization | Responses MAC'd under the pairing key over a loader nonce; keys read encrypted (EncRead). CRC is for transport only |
+| I2C | Loader ↔ secure element | ATECC command packets, CRC-16 | Counters, key reads, host authorization | Counter and public key hash responses MAC'd under the pairing key over a loader nonce; keys read encrypted (EncRead, which carries no MAC) and checked after unwrapping. The bus and the secure element are physically protected, since counter increments are unauthenticated (R30). CRC is for transport only |
 | QSPI | Loader core (direct mode, for installs) and XIP engine (loader and application fetches, two ports) ↔ flash | SPI NOR commands | Bitstreams, loader and application images | Everything at rest is encrypted and authenticated (AES-256-GCM per cache line, or vendor format); each line checked as it is fetched |
 | UART | Host ↔ loader | Framed messages with a channel number, CRC-32 | Update packages, session challenges, user data, the application's terminal | LMS signatures on packages; CheckMac host authorization in the secure element. Session traffic is not yet encrypted or authenticated (R29, gap 10). CRC is for transport only |
 | JTAG | Factory station ↔ FPGA | IEEE 1149.1 | eFuse programming, initial configuration | Fused off, or limited to non-configuration instructions, after manufacturing where the FPGA supports it; readback disabled |
@@ -199,13 +199,13 @@ sequenceDiagram
   participant SE as Secure element
   participant F as Flash
   H->>L: Application package (ciphertext, version, LMS signature over ciphertext)
-  L->>SE: Authenticated read of application public key
-  SE-->>L: Public key with MAC
-  L->>L: Verify LMS signature before decrypting
+  L->>SE: Authenticated read of the application public key's hash
+  SE-->>L: Hash with MAC
+  L->>L: Check the package's public key against the hash; verify LMS signature before decrypting, keeping the ciphertext digest
   L->>SE: Authenticated counter 1 read
   L->>L: Check version not older than counter 1
   L->>SE: Encrypted reads: distribution key and application key unwrap into the AES key registers (private path)
-  L->>L: Decrypt with distribution key; re-encrypt per cache line under a new image key from a fresh install salt
+  L->>L: Decrypt with distribution key, re-hashing the ciphertext (must match); re-encrypt per cache line under a new image key from a fresh install salt
   L->>F: Write inactive application slot, read back and check
   L->>SE: Advance counter 1
   L->>F: Mark new slot active
@@ -215,7 +215,8 @@ sequenceDiagram
 
 - Security patches can ship as either chain at any time, independent of feature releases.
 - Build environments, test suites and signing tools are preserved for the support life of the device.
-- LMS keys are sized (2^10 to 2^15 signatures) well beyond the expected number of releases.
+- LMS keys are sized (2^10 to 2^15 signatures) well beyond the expected number of releases, since each release takes one signature, on its release manifest.
+- A backup application signing key, held offline, keeps updates possible if the main key or its HSM is lost (R31).
 - The update metrics FDA asks for (time to patch, time for fielded devices to receive patches) are the integrator's to track.
 
 **Integrator adds:** how update files reach users, whether updates are pushed or user-initiated, and labeling for the update procedure.
@@ -260,7 +261,8 @@ sequenceDiagram
 
 Failure behavior: if neither loader slot checks, the boot ROM stays in UART recovery, which accepts only signed loader packages;
 if neither application slot checks, the loader stays in an update-only mode in which it accepts only signed packages.
-While the application runs, every cache line's tag is checked as it is fetched, and a failing tag locks the device down (`doc/xip.md`).
+While the application runs, every cache line's tag is checked as it is fetched. A failing tag locks the device down and marks the slot bad,
+so the next boot falls back to the other slot (`doc/xip.md`).
 
 ### 4.2 Host session and user data access
 

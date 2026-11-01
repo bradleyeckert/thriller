@@ -29,7 +29,8 @@ user data is unlocked only with a secret held outside the device. See `doc/arch.
 ## chipset
 
 - An FPGA with bitstream encryption, ideally also hardware bitstream authentication (see FPGA Tiers)
-- A secure element such as an ATECC608B (or a pin-compatible MODSEMI MOD8ID as second source)
+- A secure element such as an ATECC608B (or a pin-compatible MODSEMI MOD8ID as second source), physically protected together with its I2C bus
+  (potting, or the same package as the FPGA), because its counters can be advanced by anyone on that bus (`doc/arch.md`, R30)
 - Voltage regulators
 - Oscillator module
 - QSPI NOR flash (for bitstreams and encrypted loader and application images; written only during updates and development; see `doc/flash.md`)
@@ -102,12 +103,15 @@ a hash-based scheme that is secure against quantum computers.
   and is not involved in signature checks.
 - **Public keys are small (56 bytes) and must be trusted, not secret.**
   - The platform public key is built into the boot ROM (block RAM in the bitstream on the FPGA, mask ROM on the ASIC).
-  - The application public key is held in a locked secure element slot and read over the authenticated
-    (MAC'd) channel, so it can be provisioned by a different party than the platform.
-    On an ASIC it can instead live in ROM if the same party owns both.
+  - The application public key travels in each application package; a locked secure element slot holds its SHA-256 hash, read over the
+    authenticated (MAC'd) channel, so it can be provisioned by a different party than the platform. A second slot holds the hash of a backup
+    key, kept offline by the application owner, for the day the main signing key or its HSM is lost (`doc/se.md`).
+    On an ASIC the hash can instead live in ROM if the same party owns both.
 - **Signing is stateful.** Each LMS one-time key may sign exactly once. The signer must never reuse a leaf,
   including after a crash or a restore from backup, and SP 800-208 expects that state to be kept in a hardware
-  security module. Updates are infrequent, so a single tree of 2^10 to 2^15 signatures per key is plenty.
+  security module. Each release takes **one** signature: per-board packages are covered by a signed release manifest, a Merkle tree over
+  every package's digest, and each package carries its inclusion proof. A single tree of 2^10 to 2^15 signatures is then plenty;
+  multi-level trees (HSS) remain an option.
 
 ### Quantum safety
 
@@ -116,10 +120,10 @@ so none of it falls to a quantum computer. The one exception is the Tier A vendo
 (ECDSA or RSA). Against a quantum-capable attacker, a Tier A FPGA's bitstream protection reduces to its
 encryption, the same position as Tier B, so `thriller` never depends on that signature for data safety.
 
-## Stage 0 (immutable)
+## Stage 0
 
 Stage 0 is the FPGA's configuration engine, followed by the boot ROM inside the bitstream.
-On an ASIC, it is the silicon and its mask ROM.
+On an ASIC, it is the silicon and its mask ROM, and truly immutable; on the FPGA the boot ROM can still change with a platform update.
 
 - **Tier A:** the engine authenticates and decrypts the bitstream before the design runs,
   so a modified or forged bitstream never gets to execute.
@@ -142,8 +146,9 @@ On the manufacturing side:
 - Diversify every secure element key per device, so one compromised unit exposes nothing about another.
 - Build the platform LMS public key into the boot ROM image in the bitstream, and store the application LMS public key in a locked secure element slot.
 - Store the board's pairing key in its secure element (it is already in that board's bitstream). Pairing keys are derived as
-  KDF(pairing master, secure element serial number, platform version at which the key is issued), so the HSM can recompute the key
-  a board holds from the counter 0 value it reports.
+  KDF(pairing master, secure element serial number, key version), where the key version is the platform version at which the key was issued.
+  The key version is public: it is patched into the bitstream next to the key, and the loader reports it with the serial number,
+  so the HSM can recompute the key a board holds. (Counter 0 cannot tell it, since loader-only updates advance the counter without rotating the key.)
 - Put the encrypted bitstream, the loader image and the application image in flash (the images encrypted per cache line, `doc/xip.md`).
 
 Because each board's bitstream is encrypted under its own key, a bitstream copied from one board will not
@@ -151,8 +156,9 @@ configure another, and extracting one FPGA's key exposes only that board (or tha
 
 In the field:
 
-- The FPGA and secure element share a pairing key. All counter reads and key reads are MAC'd
-  over a fresh FPGA-generated nonce, so a device on the I2C bus cannot replay or forge them.
+- The FPGA and secure element share a pairing key. Counter reads and public key hash reads are MAC'd over a fresh FPGA-generated nonce,
+  so a device on the I2C bus cannot replay or forge them. Key reads are encrypted but not authenticated by the secure element,
+  so every unwrapped key is checked before use (`doc/hw.md`, Encrypted reads carry no MAC).
 
 ## Stage 1: the loader (part of the platform)
 
@@ -167,13 +173,15 @@ A platform package always carries a loader image, and may also carry a new bitst
 A package that changes only the bitstream carries the current loader image restamped with the new version, so the boot ROM's check
 against counter 0 still passes after the counter advances. On the ASIC a platform package carries only a loader image.
 
-- The update server builds a platform package for each board (or batch), selected by the secure element serial number the loader reports.
+- The update server builds a platform package for each board (or batch), selected by the secure element serial number and pairing key version
+  the loader reports. The package's signed header names that serial number and key version, so it installs on no other board, and a replayed
+  older package for the same board is refused.
   - A bitstream carries that board's next pairing key, KDF(pairing master, serial, new platform version), is encrypted under that board's
-    bitstream key, and comes with the next pairing key wrapped under the current one. On Tier A it also carries the FPGA vendor's own signature, so it is signed twice.
-  - A loader image is encrypted under a content key wrapped under the board's current pairing key. Platform packages are therefore
+    bitstream key, and comes with the next pairing key wrapped under the current one with an authenticated wrap (AES-256-GCM). On Tier A it also carries the FPGA vendor's own signature, so it is signed twice.
+  - A loader image is encrypted under a content key wrapped, with an authenticated wrap, under the board's current pairing key. Platform packages are therefore
     per board even without a bitstream, so a stolen platform signing key alone cannot produce a package that installs fleet-wide.
-  - Everything is signed with the platform LMS key.
-- The loader verifies the LMS signature against the platform public key in the boot ROM.
+  - Each package carries its inclusion proof in the release manifest, which is signed once per release with the platform LMS key.
+- The loader verifies the manifest signature against the platform public key in the boot ROM, and the package's inclusion proof.
 - The version must not be older than counter 0.
 - The loader writes the bitstream to the inactive bitstream slot and re-encrypts the loader image per cache line into the inactive loader slot,
   through the boot ROM's flash primitives, installs the next pairing key if the package carries a bitstream, and advances counter 0.
@@ -185,7 +193,9 @@ because its version is older than counter 0.
 ### Application updates
 
 - The host sends an application package: the application image encrypted under the distribution key (AES-256-GCM), and its version, signed with the application LMS key over the ciphertext.
-- The loader reads the application public key from the secure element over the MAC'd channel and verifies the LMS signature against it, before decrypting anything.
+- The loader checks the package's application public key against the hash in the secure element, read over the MAC'd channel, and verifies the
+  LMS signature against it, before decrypting anything. The ciphertext is hashed again as it is decrypted, and must match what was verified
+  (`doc/xip.md`, Install).
 - The loader decrypts the image with the distribution key, read from the secure element over the MAC'd channel.
 - The version is checked against counter 1. Older versions are refused.
 - The loader re-encrypts the application per cache line with AES-256-GCM, under a fresh image key derived from the device-unique application key, writes it to the inactive flash slot, and advances counter 1 (`doc/xip.md`).
@@ -208,12 +218,17 @@ The UART is the one insecure channel, so the host authenticates to the secure el
 - The host answers with a MAC over the challenge, using the host authorization key.
 - The secure element checks the answer itself (CheckMac). Only on success does it release the data key to the loader.
 - The loader then decrypts and authenticates user data on the MicroSD card for the rest of the session, and clears the data key when the session ends.
+  Each user data record is encrypted with AES-256-GCM under a fresh random 96-bit nonce from the TRNG, never a counter kept on the card,
+  so restoring an old card cannot make nonces repeat.
 - **Not yet designed:** after CheckMac, the session's traffic over the UART must also be encrypted and authenticated, under a session key
   that the host and the secure element derive from the host authorization key and the session nonce. Until then, user data crosses the UART
   in clear and the session can be taken over by anyone in the middle (`doc/arch.md`, R29 and Open Question 13).
 
 Use a high-entropy host key. If it is derived from a short PIN, the secure element offers no retry lockout,
 so attempts must be limited another way; both secure element counters are already allocated (`doc/se.md`).
+
+The host authorization key is diversified from an HSM master, so a lost host key can be re-derived for an authorized replacement host.
+A compromised host key cannot be changed (its slot is never writable after lock), so a device whose host key leaks must be retired.
 
 ## ASIC conversion
 
