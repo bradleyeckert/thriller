@@ -24,7 +24,7 @@ These notes therefore assume **no on-chip NVM of any kind**: every per-device se
 
 An ASIC removes a whole class of problems that the FPGA tiers exist to manage:
 
-- **No bitstream.** The platform update chain, the bitstream encryption key, readback, JTAG configuration and Tier A versus Tier B all disappear.
+- **No bitstream.** The bitstream, its encryption key, readback, JTAG configuration and Tier A versus Tier B all disappear. The platform update chain remains, for the loader image.
 - **No vendor signature.** The non-quantum-safe ECDSA or RSA bitstream signature (R21) is gone. Every signature in the system is LMS.
 - **Malleable bitstreams are gone** (R11, R12, R13, R14).
 - **Counter 0 changes role.** On the FPGA it covers the platform: the bitstream and the updatable loader together. On the ASIC it covers the updatable loader alone.
@@ -44,7 +44,9 @@ ask how it gets fixed. So ROM should hold only what must be immutable:
 |---|---|
 | Reset, clocking, SRAM test | The rest of the loader: host sessions, application updates, logging, the MicroSD path, executed in place through the loader's cache |
 | SHA-256 and AES-256 core drivers, LMS verification | The application, executed in place through the application's cache |
-| Secure element protocol: authenticated counter read | |
+| Secure element protocol: pairing exchange, authenticated counter read, EncRead of the application key | |
+| On the ASIC: PUF key derivation and pairing key unwrap | |
+| Lockdown path, including the security event log entry | |
 | Check the loader's header, derive its image key, configure and lock XIP port 0 | |
 | Flash programming primitives (nothing fetched from flash can run while it is busy) | |
 | Recovery: receive a signed loader over the UART if flash holds no valid one | |
@@ -84,8 +86,8 @@ Options, in order of preference:
 **Why not a key in ROM or in gate-level constants?** A common zero-flash approach stores a unique wrapped header in external flash and
 hardcodes the unwrapping key in mask ROM or synthesized logic. The headers differ per chip, but the key that opens them is the same on
 every chip, so recovering it from one die (ROM imaging, or netlist extraction for logic constants, which is harder but routine for a lab)
-opens every header in the fleet. That is obfuscation, not a per-device secret. A **public-key hash** in ROM is fine and is what this design
-uses for the root LMS key, because it is not secret. The SRAM PUF keeps the wrapped-header structure but makes the unwrapping key unique to the die.
+opens every header in the fleet. That is obfuscation, not a per-device secret. A public key, or its hash, in ROM is fine because it is not secret;
+this design stores the root LMS public key itself (56 bytes). The SRAM PUF keeps the wrapped-header structure but makes the unwrapping key unique to the die.
 A ROM constant can still be mixed into the PUF key derivation, so that an attacker needs both the die's PUF response and the ROM contents.
 
 The PUF does not replace the secure element. The secure element still provides the monotonic counters, the host-authorized data key and key storage.
@@ -135,7 +137,7 @@ The PUF and scan clearing are built only for the ASIC.
 |---|---|---|
 | **Memory and clock wrappers.** Every block RAM, ROM, S-box table and clock primitive sits in a thin module | Instantiates the FPGA primitive | Instantiates an ASIC macro or synthesized logic |
 | **Pairing key source.** The pairing key reaches the loader through one module with a fixed interface | A constant patched into the bitstream's block RAM, as now | PUF key derivation and unwrapping of the blob in flash |
-| **Secret-clear input.** The security registers (keys, pass tokens, AES key) share one clear input | Tied off | Driven by scan entry and by the glitch detectors |
+| **Secret-clear input.** The security registers (keys, pass tokens, AES key, both XIP caches and port configuration) share one clear input | Driven by resets, the loader watchdog and lockdown | Also driven by scan entry and by the glitch detectors |
 | **Boot ROM.** The code that becomes mask ROM (core drivers, LMS verification, counter read, loader header check, flash programming primitives, UART recovery) is a separate image | Block RAM in the bitstream; the rest of the loader runs from flash | Moves to mask ROM unchanged |
 | **Package component types.** The update package format has component types for "bitstream", "loader" and "application" | Platform packages carry a bitstream, a loader, or both, under counter 0 | Platform packages carry the loader only, under counter 0 |
 | **No reliance on initialized RAM.** Nothing except the boot code's image assumes block RAM starts with known contents | No effect | SRAM powers up random, and is needed that way for the PUF |

@@ -126,7 +126,7 @@ The mailbox is the only path from the application to the loader, so it is the fi
 
 | Part | What it is |
 |---|---|
-| Message RAM | A small dual-port RAM (one block RAM on the FPGA), with a request ring written by the application core and a response ring written by the loader core. Each core sees it on its AXI4-Lite bus |
+| Message RAM | A small dual-port RAM (2 KB, one 18 Kbit block RAM on the FPGA), with a request ring written by the application core and a response ring written by the loader core. Each core sees it on its AXI4-Lite bus |
 | Doorbells | One register in each direction: writing it raises an event the other core can poll or wait on |
 | Terminal FIFOs | A byte FIFO each way. On the application core they sit behind ports 16 to 18, so LiteForth's `key`, `emit`, `key?` and `emit?` work unchanged. The loader forwards them to and from the UART |
 
@@ -151,7 +151,7 @@ The mailbox is the only path from the application to the loader, so it is the fi
 | Module | Connection | Speed need | FPGA | ASIC | Notes |
 |---|---|---|---|---|---|
 | Loader core | Master | — | RTL | RTL | Unmodified LiteForth CPU |
-| Boot ROM (Stage 0) | AXI4-Lite | Every fetch while it runs | Block RAM, initialized by the bitstream | Mask ROM (`doc/ics55.md`) | Reset, core drivers, LMS verification, counter read, loader header check, flash programming primitives, UART recovery |
+| Boot ROM (Stage 0) | AXI4-Lite | Every fetch while it runs | Block RAM, initialized by the bitstream | Mask ROM (`doc/ics55.md`) | See Boot ROM contents |
 | Loader XIP cache | AXI4-Lite (read-only) | Hits every loader fetch | Block RAM + distributed RAM | SRAM macro + flip-flops | 2 KB; the rest of the loader runs from flash through it |
 | Loader SRAM | AXI4-Lite | Every load and store | Block RAM | SRAM macro | Buffers, stacks, variables; never keys (see Key paths) |
 | SHA-256 core + LMS chain sequencer | APB | About 1 word per 4 cycles | RTL | RTL | Private key input and private keyed-digest output (see Key paths) |
@@ -200,17 +200,17 @@ Sizes are placeholders, to be set from the RAM budget (`doc/xip.md`) and the tar
 |---|---|---|
 | `0x000000` | 16 KB | Boot ROM (Stage 0) |
 | `0x010000` | 16 KB | Loader SRAM |
-| `0x030000` | 4 KB | Mailbox message RAM |
-| `0x400000` | up to 1 MB | Loader XIP window (active loader slot, plaintext view); writes return an error |
+| `0x030000` | 2 KB | Mailbox message RAM |
+| `0x400000` | about 450 KB | Loader XIP window (active loader slot, plaintext view; `doc/flash.md`); writes return an error |
 | other | — | Unmapped: error |
 
 **Application core:**
 
 | Byte address | Size | Region |
 |---|---|---|
-| `0x020000` | up to 192 KB | Application SRAM |
-| `0x030000` | 4 KB | Mailbox message RAM |
-| `0x400000` | 12 MB | Application XIP window (active application slot, plaintext view); writes return an error |
+| `0x030000` | 2 KB | Mailbox message RAM |
+| `0x040000` | up to 192 KB | Application SRAM |
+| `0x400000` | about 10.5 MB | Application XIP window (active application slot, plaintext view; `doc/flash.md`); writes return an error |
 | other | — | Unmapped: error |
 
 The two XIP windows share a CPU address but map to different flash regions, each set by its own port's window register.
@@ -251,9 +251,32 @@ The same port can insert a key unwrapped from the secure element, for the develo
 - the AES key registers, XORed in, to unwrap a key read from the secure element with EncRead (whose keystream is such a digest); or
 - the AES key registers or the SHA-256 key input, loaded directly, for a derived key: the loader and application image keys (`doc/xip.md`) and the developer working key (`doc/roles.md`).
 
+**Unwrapping into SHA-256 as well.** An EncRead can be unwrapped into the SHA-256 key input instead of an AES key register, the same way.
+That is how the application key reaches the SHA-256 core for the header HMACs and the image key derivation.
+
+**Pass tokens.** The key gate loads a key into an AES key register for decryption only with a pass token from a hardware comparator:
+- an image key goes into an XIP port only after the header HMAC comparator passes for that image;
+- the data key goes into the key registers only after the secure element MAC comparator passes on its EncRead, which the secure element
+  allows only after a successful CheckMac with the host authorization key.
+
+Keys used only inside the SHA-256 core (for MACs and key derivation) need no token, since nothing can read a keyed digest.
+
 **Result:** the pairing key, the application, data, distribution, developer and log keys all move from the key source or the secure element
 into the AES key registers without passing through either CPU, their stacks, or any SRAM. A bug in the loader cannot leak them, and the application core has no path to them at all.
 Unkeyed digests (LMS verification, image hashes) remain readable, as the loader needs them.
+
+## Boot ROM contents
+
+The boot ROM holds everything that must run before the loader is trusted, or while flash cannot be read:
+
+- Reset, clocking and SRAM test; on the ASIC, the PUF key derivation and the pairing key unwrap (`doc/ics55.md`)
+- Drivers for the SHA-256, AES, I2C and QSPI cores
+- The secure element pairing exchange, authenticated counter reads, and the EncRead of the application key
+- The loader header check: HMAC, image key derivation, version against counter 0, then configuring and locking XIP port 0
+- LMS verification, used by UART recovery
+- Flash primitives (read into SRAM, erase, program, status), since nothing fetched from flash can run while the flash is busy
+- The lockdown path, including writing the event to the security event log
+- UART recovery: receiving a signed loader package, unwrapping its content key, re-encrypting it per line into a loader slot, and advancing counter 0
 
 ## Boot and lockdown
 
@@ -266,7 +289,12 @@ The same chain runs on the FPGA and the ASIC. On the FPGA, the configuration eng
 2. **Loader.** The loader reads counter 1, checks the application image header, derives the application image key into port 1, and for a production
    image checks the version against counter 1 (`doc/xip.md`). It sets port 1's window and key, which then lock.
 3. **Application.** The loader releases the application core, which starts executing from its XIP window.
-4. **Lockdown** (any detection, a tag failure on either port, a fault in the loader): the lockdown path holds the application core in reset, clears the secrets and stops.
+4. **Lockdown** (any detection, a tag failure on either port, a fault in the loader) enters the boot ROM through a hardware vector, never through
+   loader code, which may be the flash that just failed. In this order, it:
+   1. holds the application core in reset;
+   2. appends the event to the security event log, while the log key is still loaded;
+   3. clears the key registers, pass tokens, both caches and the XIP port configuration through the secret-clear fan-out, and wipes the loader's stacks and registers;
+   4. halts until the next power-on reset.
 
 ## Clocks, resets and errors
 
@@ -274,8 +302,11 @@ The same chain runs on the FPGA and the ASIC. On the FPGA, the configuration eng
 - **QSPI** is clocked from the core clock (with DDR outputs if a faster flash clock is needed).
 - **The TRNG's ring oscillators** are asynchronous by design and pass through a synchronizer into the health tests.
 - **Clock checker:** compares the core clock with the oscillator to detect clock glitching (`doc/test.md`, countermeasure 7).
-- **Resets:** power-on, the loader watchdog and lockdown reset both cores and clear the key registers, pass tokens, both caches, the XIP port configuration
-  and loader SRAM through the secret-clear fan-out. The application watchdog resets only the application core.
+- **Resets:** power-on and the loader watchdog reset both cores and clear the key registers, pass tokens, both caches, the XIP port configuration
+  and loader SRAM through the secret-clear fan-out; the boot ROM then starts again. Lockdown halts instead (see Boot and lockdown).
+  The application watchdog resets only the application core, and it pauses while the QSPI controller is in direct mode, so a long erase stall cannot trip it.
+- **One UART, two channels.** The UART carries the host protocol (updates, sessions) and the application's forwarded terminal. Each frame carries
+  a channel number, and the loader handles host protocol frames itself and forwards terminal frames to the application's FIFOs.
 - **Errors:** a bus error or `PSLVERR` becomes an ior in the core that caused it and goes to that core's `yeet` handler.
   An XIP tag failure goes to the lockdown, on either port.
 

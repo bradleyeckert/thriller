@@ -23,7 +23,7 @@ The guidance asks for at least four views:
 Section 5 maps the design to the guidance's security control categories, and section 6 lists the gaps a submission would have to close.
 
 Terms (loader, Tier A/B, pairing key, data key, distribution key) are defined in the README and `doc/arch.md`.
-Risk IDs (R1–R28) refer to the Risk Assessment in `doc/arch.md`. Roles (manufacturer, application owner, developer, user) are defined in `doc/roles.md`.
+Risk IDs (R1–R29) refer to the Risk Assessment in `doc/arch.md`. Roles (manufacturer, application owner, developer, user) are defined in `doc/roles.md`.
 
 ## 1. Global System View
 
@@ -85,7 +85,7 @@ flowchart LR
 | Configuration | Flash → config engine | Vendor SPI configuration | Bitstream | AES under a per-board eFuse key; Tier A adds the vendor signature |
 | I2C | Loader ↔ secure element | ATECC command packets, CRC-16 | Counters, key reads, host authorization | Responses MAC'd under the pairing key over a loader nonce; keys read encrypted (EncRead). CRC is for transport only |
 | QSPI | Loader core (direct mode, for installs) and XIP engine (loader and application fetches, two ports) ↔ flash | SPI NOR commands | Bitstreams, loader and application images | Everything at rest is encrypted and authenticated (AES-256-GCM per cache line, or vendor format); each line checked as it is fetched |
-| UART | Host ↔ loader | Framed messages, CRC-32 | Update packages, session challenges, user data | LMS signatures on packages; CheckMac host authorization in the secure element. CRC is for transport only |
+| UART | Host ↔ loader | Framed messages with a channel number, CRC-32 | Update packages, session challenges, user data, the application's terminal | LMS signatures on packages; CheckMac host authorization in the secure element. Session traffic is not yet encrypted or authenticated (R29, gap 10). CRC is for transport only |
 | JTAG | Factory station ↔ FPGA | IEEE 1149.1 | eFuse programming, initial configuration | Fused off, or limited to non-configuration instructions, after manufacturing where the FPGA supports it; readback disabled |
 | MicroSD | Loader ↔ removable card | SD (SPI mode) | User data in and out; security event logs out; update packages in | User data encrypted and authenticated under the data key (AES-256-GCM); update packages carry LMS signatures, exactly as over the UART; log records are MAC'd and chained under a per-device log key so removal, reordering or editing is detectable. The loader reads only fixed-format package and log files, never a general filesystem it must trust |
 
@@ -160,7 +160,8 @@ flowchart LR
 ```
 
 Every segment after publication can be hostile. The design does not trust the distribution channel, the host,
-or the UART for integrity: the loader rejects anything without a valid LMS signature and a version not older than the counter.
+or the UART for integrity: the loader rejects anything without a valid LMS signature and a version not older than the counter
+(or, for a developer build on its own device, a valid developer HMAC and the current epoch).
 The channel only carries ciphertext.
 
 ### Platform update sequence
@@ -312,7 +313,7 @@ sequenceDiagram
   M->>SE: Write keys and public key, lock data zone
   M->>FP: Program eFuse key over JTAG, disable readback, lock
   M->>M: Patch pairing key into bitstream, encrypt under eFuse key
-  M->>F: Write encrypted bitstream and application
+  M->>F: Write encrypted bitstream, loader image and application image
   M->>FP: Disable JTAG configuration where supported
   M->>M: Erase all key material from the station
 ```
@@ -323,20 +324,20 @@ it should hold keys only for the board being programmed and erase them afterward
 ### 4.6 Standby, sessions ending, and decommissioning
 
 - **Session end or timeout:** the loader clears the data key from the key registers; the secure element authorization does not persist.
-- **Decommissioning:** secure element key slots can be rewritten only through authorized encrypted writes by a genuine loader, so decommissioning is done by destroying the secure element,
+- **Decommissioning:** after lock, only the pairing key slot and the reserved freshness slot can be rewritten, through authorized encrypted writes; the other key slots never can (`doc/se.md`). Decommissioning is therefore done by destroying the secure element,
   or by having the HSM retire the unit's serial number so it receives no further updates. To be defined (section 6).
 
 ## 5. Security Control Categories (Appendix 1)
 
 | Category | How `thriller` addresses it | Gaps |
 |---|---|---|
-| Authentication | LMS signatures on all updates and metadata, verified before decryption; host authenticated to the secure element (CheckMac); every secure element response MAC'd over a fresh nonce; CRCs used for transport only | The device does not authenticate itself to the host (no mutual authentication) |
+| Authentication | LMS signatures on all production and platform updates and their metadata, verified before decryption; per-device HMAC on developer builds; host authenticated to the secure element (CheckMac); every secure element response MAC'd over a fresh nonce; CRCs used for transport only | The device does not authenticate itself to the host (no mutual authentication) |
 | Authorization | Data key released only after host authorization; secure element slot policies deny by default; roles and per-device developer keys (`doc/roles.md`); application isolated on its own core | Session timeout length to be set |
 | Cryptography | NIST algorithms: AES-256, SHA-256, HMAC, LMS (SP 800-208). Post-quantum for all signatures we control. Per-device keys from an HSM-held master | Vendor bitstream signature (Tier A) is ECDSA or RSA; mitigated by encrypted-only configuration (R21) |
 | Code, data and execution integrity | Signed updates only; anti-rollback counters; every cache line's tag checked before execution; debug ports and readback locked in production | No runtime monitoring; fault-injection hardening designed and planned for testing (`doc/test.md`), not yet implemented (R16) |
-| Confidentiality | User data encrypted per device, unlocked only with the host; keys never cross the I2C bus in clear | Application code is obfuscated, not secret, unless the Code Secrecy Profile is enabled |
+| Confidentiality | User data encrypted per device, unlocked only with the host; keys never cross the I2C bus in clear | Session traffic over the UART is not yet protected (R29); application code is obfuscated, not secret, unless the Code Secrecy Profile is enabled |
 | Event detection and logging | Security event log on the MicroSD card, MAC'd and hash-chained under a per-device log key (R24) | The full list of logged events, and how the host reads the log, to be defined |
-| Resiliency and recovery | A/B slots for bitstream and application; update-only fallback mode | Recovery of a trusted default configuration, and behavior under denial of service on the UART, to be defined |
+| Resiliency and recovery | A/B slots for bitstream, loader and application (`doc/flash.md`); update-only fallback mode | Recovery of a trusted default configuration, and behavior under denial of service on the UART, to be defined |
 | Firmware and software updates | Two independent signed update chains; out-of-cycle patches possible; interruption-safe A/B slots; preserved toolchains | Pairing key rotation sequencing (Open Question 1) |
 
 ## 6. Gaps for a submission
@@ -352,6 +353,7 @@ Items a premarket submission would need that the platform does not yet provide:
 7. **SBOM** for the loader, its RTL cores, the soft CPU, toolchains and the secure element, with support status and end-of-support dates.
 8. **Testing evidence:** security requirements testing, threat mitigation testing, vulnerability testing and independent penetration testing. The plan for the first three is in `doc/test.md`; independent penetration testing is still to be arranged.
 9. **Threat model and risk assessment format.** The Risk Assessment in `doc/arch.md` rates likelihood; FDA asks for an exploitability-based, non-probabilistic approach with scores before and after mitigation. The table needs to be re-scored in that form.
+10. **Host session protection.** Encrypt and authenticate the session's traffic after CheckMac, under a session key derived in the secure element (R29; `doc/arch.md`, Open Question 13).
 
 ## Source
 

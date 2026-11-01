@@ -15,7 +15,7 @@ All keys below are 32-byte symmetric keys (key type "SHA/other"); none is an ECC
 
 | Slot | Size | Contents | Per device | Read | Write after lock | Used for |
 |---|---|---|:-:|---|---|---|
-| 0 | 36 | **Pairing key** | Yes | Never | Encrypted write, authorized by slot 0 itself (FPGA: rotated with each platform update) | MAC key for every authenticated read and counter read; the encryption key for every encrypted read (it is the ReadKey of slots 2 to 6) |
+| 0 | 36 | **Pairing key** | Yes | Never | Encrypted write, authorized by slot 0 itself (FPGA: rotated with bitstream updates; derived as KDF(pairing master, serial, platform version)) | MAC key for every authenticated read and counter read; the encryption key for every encrypted read (it is the ReadKey of slots 2 to 6) |
 | 1 | 36 | **Host authorization key** | Yes | Never | Never | CheckMac of the host's response; the authorization key (AuthKey) of slot 3 |
 | 2 | 36 | **Application key** | Yes | Encrypted read under slot 0 | Never | Deriving each install's image key for the loader and the application, with separate labels (`doc/xip.md`); the header HMACs |
 | 3 | 36 | **Data key** | Yes | Encrypted read under slot 0, **only after CheckMac with slot 1** | Never | User data on the MicroSD card, for one host session |
@@ -25,8 +25,8 @@ All keys below are 32-byte symmetric keys (key type "SHA/other"); none is an ECC
 | 7 | 36 | *Reserved:* **device identity key** | Yes | Never | Never | Device-to-host authentication with the MAC command, used in place (`doc/fda.md`, gap 2) |
 | 8 | 416 | **Provisioning record** | Yes | Clear, authenticated (GenDig over the slot, then MAC under slot 0) | Never | Configuration version, provisioning batch and date, the board's FPGA identity (TraceID on the ECP5) for traceability |
 | 9 | 72 | **Application LMS public key** (56 bytes) | No | Clear, authenticated | Never | Verifying production application packages |
-| 10 | 72 | *Reserved:* **next application LMS public key** | No | Clear, authenticated | Encrypted write, authorized by slot 0 | Rolling over to a new LMS key when the current one runs low on signatures, or on a change of application owner (Open Question 6) |
-| 11 | 72 | *Reserved:* **user data freshness** | Yes | Clear, authenticated | Encrypted write, authorized by slot 0 | A digest of the latest user data, to detect an old copy of the card being restored (see below) |
+| 10 | 72 | Spare | — | — | Never | Not used for key rollover: a slot writable with the pairing key would let any bitstream holding that key plant its own signing key. Signature capacity comes from multi-level LMS (HSS), which keeps one public key |
+| 11 | 72 | *Reserved:* **user data freshness** | Yes | Clear, authenticated | Encrypted write, authorized by slot 0 | A digest of the latest user data, to detect an old copy of the card being restored (see below). A compromised bitstream holding the pairing key could also write it |
 | 12 to 15 | 72 | Spare | — | — | — | Lifecycle state on the ASIC (`doc/ics55.md`), future keys |
 
 Notes:
@@ -43,7 +43,7 @@ Notes:
 
 | Counter | Used for | Notes |
 |---|---|---|
-| 0 | Platform anti-rollback: on the FPGA, the bitstream and the updatable loader under one platform version; on the ASIC, the updatable loader alone (`doc/ics55.md`) | Bitstream rollback is also blocked by pairing key rotation |
+| 0 | Platform anti-rollback: on the FPGA, the bitstream and the updatable loader under one platform version; on the ASIC, the updatable loader alone (`doc/ics55.md`) | Every platform package carries a loader image, restamped if unchanged, so the loader's version always matches counter 0. Bitstream rollback is also blocked by pairing key rotation |
 | 1 | Application anti-rollback, and the developer key epoch (epoch = counter 1 ÷ 1024, `doc/roles.md`) | Developer installs never touch it |
 
 **Version rule:** a package is accepted if its version is **not older** than the counter. Equal is allowed, so a device can reinstall its current release,

@@ -5,7 +5,7 @@ already used in [LiteForth](https://github.com/bradleyeckert/LiteForth), the sof
 `vm.c` as the reference model, power cuts at every step, requirements traced to evidence, and a log of
 board test runs.
 
-Risk IDs (R1–R28) refer to the Risk Assessment in `doc/arch.md`. FDA control categories and gaps refer to `doc/fda.md`.
+Risk IDs (R1–R29) refer to the Risk Assessment in `doc/arch.md`. FDA control categories and gaps refer to `doc/fda.md`.
 
 ## 1. Approach
 
@@ -149,17 +149,17 @@ and once more on the MOD8ID.
 | Area | Tests | Risks |
 |---|---|---|
 | Application updates | Valid package installs. Every byte of a package flipped, one at a time: rejected before decryption. Wrong signing key. Old version (below counter 1) rejected; reinstalling the current version accepted. Truncated package. (LMS leaf reuse cannot be seen by the device; the signing tools are tested for it separately.) | R4, R3, R20 |
-| Platform updates | As above, plus a package built for another board (fails to configure), pairing key rotation, and loader images under counter 0 (one platform version with the bitstream) | R3, R4, R14 |
+| Platform updates | As above, plus a package built for another board (fails to configure), pairing key rotation (the HSM recomputes the board's pairing key from its counter 0), loader images under counter 0, and a bitstream-only change carrying a restamped loader that still boots | R3, R4, R14 |
 | Power cuts | Every update run is repeated with a cut at each step k, where every flash erase, flash program, secure element write and counter increment is one step, and the cut leaves that step half done. After each cut, the board must boot a valid image, and must never accept an older version | R19, Open Question 1 |
 | Boot | A corrupt active slot header falls back to the other slot; both corrupt enters update-only mode; a line tag failure while running locks the device down and never runs the line | R2, R19 |
 | Boot chain | The boot ROM refuses a modified loader image, a loader from another board, and a loader older than counter 0, using the other loader slot if it checks and otherwise entering UART recovery; recovery accepts only signed loader packages | R3, R4, R16 |
 | XIP ports | A fill on the application's port never uses the loader's key or window; each port's window and key cannot be changed once locked; a stream of application misses delays a loader miss by at most one fill; a miss on either port during a flash write stalls instead of locking down | R25 |
 | I2C channel | Replayed counter values, altered MACs, a stale nonce, responses from the wrong slot: all rejected | R7, R8 |
-| Host sessions | Wrong host key, replayed response, response to a stale challenge: data key never released. Session end and timeout clear the data key from the AES key registers (checked through the Verilated key gate and, in RTL, the registers themselves) | R1, R9 |
+| Host sessions | Wrong host key, replayed response, response to a stale challenge: data key never released. Session end and timeout clear the data key from the AES key registers (checked through the Verilated key gate and, in RTL, the registers themselves). Once session protection is designed: modified, replayed or injected session frames are rejected | R1, R9, R29 |
 | MicroSD input | Fuzzing of every file the loader reads (packages, card metadata) with AFL++ or libFuzzer, through the software platform. Malformed inputs must be rejected cleanly: no `vm.c` trap, no out-of-range access, no stack overflow | R23 |
 | Security event log | Records appended for each security event; removing, editing, reordering or truncating records is detected at the next boot and reported | R24 |
 | Mailbox | Fuzzing of the loader's message parser with malformed, oversized and changing requests from a simulated application core; every request outside the fixed formats rejected; no request reaches a key or the flash directly | R25, R26 |
-| Developer builds | A developer package for another device is rejected; a developer build cannot read production user data, and the reverse; counter 1 unchanged after any number of developer installs; a production release installs normally afterward; two builds with the same version get different image keys; a release starting a new epoch invalidates old working keys and old developer data, and a release within the epoch does not | R27 |
+| Developer builds | A developer package for another device is rejected; a developer build cannot read production user data, and the reverse; counter 1 unchanged after any number of developer installs; a production release installs normally afterward; two builds with the same version get different image keys; a release starting a new epoch invalidates old working keys and old developer data, and a release within the epoch does not; a developer image from an older epoch, written back from a flash dump, is refused at boot; a production install erases the developer image in the other slot | R27 |
 | User data on MicroSD | Records modified, moved or truncated on the card are rejected; a card from another device does not decrypt; if slot 11 freshness is enabled, a restored older copy of the card is detected | R1, R28 |
 | Rollback of the platform | An old bitstream boots but cannot read the application or data keys | R3 |
 
@@ -190,6 +190,9 @@ one or more instructions at the moment it makes a security decision (R16). The d
 | Decision | Where | A successful fault would |
 |---|---|---|
 | Loader header and version check | Boot ROM | Run a modified or older loader |
+| Application header HMAC and version check | Loader, at boot | Run a modified or older application |
+| Production or developer mode | Loader, at boot | Skip the version check for a production image |
+| Developer package HMAC and epoch | Loader, at install and boot | Install or run an unauthenticated or old developer build |
 | XIP port selection | Every cache fill | Fill the application's cache from the loader's image, or the reverse |
 | LMS root comparison | Package verification | Install an unsigned update |
 | Version against counter | Package verification | Install an older, vulnerable version |
@@ -284,8 +287,9 @@ These are design rules for the loader, written so that campaigns A to D have som
    application, advancing a counter, releasing a key) proceeds only if the counter holds the exact expected sum.
 6. **Random delays.** Short random delays from the TRNG before each decision, so a glitch cannot be timed by counting cycles from a trigger.
 7. **Detectors.** A delay-line sensor that detects core supply dips, and a frequency check of the core clock against the external oscillator.
-8. **Fail closed.** On any detection or inconsistency: hold the application core in reset, clear the key registers and pass tokens
-   through the secret-clear fan-out, wipe the loader's stacks and registers, log the event, and stop, through the loader's own `yeet` handler. Repeated detections across boots can lock the device into update-only mode.
+8. **Fail closed.** On any detection or inconsistency, enter the boot ROM's lockdown path through a hardware vector (`doc/hw.md`, Boot and lockdown):
+   hold the application core in reset, log the event while the log key is still loaded, clear the key registers and pass tokens through the
+   secret-clear fan-out, wipe the loader's stacks and registers, and halt. Repeated detections across boots can lock the device into update-only mode.
 
 ## 7. Board design for testability
 
@@ -299,7 +303,7 @@ These must be on the board from the first revision:
 
 ## 8. Tools
 
-All open source, to match the Yosys flow:
+Open source wherever possible, to match the Yosys flow. Tier A bitstreams also need the vendor's tools (Lattice Radiant, Efinix Efinity).
 
 | Tool | Use |
 |---|---|

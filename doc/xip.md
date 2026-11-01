@@ -44,12 +44,12 @@ flowchart LR
 
 ## Flash layout
 
-The flash holds four slots, each with this layout: loader A and B, and application A and B.
+The flash holds four slots, each with this layout: loader A and B, and application A and B (`doc/flash.md`).
 Each line of ciphertext is followed by its tag, so one burst read fetches both:
 
 | Offset in slot | Contents |
 |---|---|
-| 0 | Header record (72 bytes): mode (production or developer), image version, length, slot, a 128-bit install salt R, and an HMAC-SHA256 over these fields |
+| 0 | Header record (72 bytes): mode (production or developer), image version, epoch (developer images), length, slot, a 128-bit install salt R, and an HMAC-SHA256 over these fields |
 | 72 | Line 1 (64 bytes of ciphertext) + tag (8 bytes) |
 | 144 | Line 2 + tag |
 | ... | ... |
@@ -81,12 +81,13 @@ Here every tag depends on a secret key unique to this device and this install, a
 | Move a valid line to another address | The nonce differs, so the tag fails |
 | Copy a line from the other slot | Different install, so different image key; the tag fails |
 | Replace a line with one from an earlier install | Different R, so different image key; the tag fails |
-| Replace the whole slot with a complete older production image | Every line checks, but the header's version is below the secure element's counter 1, so boot refuses it |
+| Replace the whole slot with a complete older production image | Every line checks, but the header's version is below counter 0 (loader) or counter 1 (application), so boot refuses it |
+| Replace the slot with an old developer image from an earlier epoch | Every line checks, but the header's epoch is older than the current one, so boot refuses it |
 | Copy a loader line into the application's slots, or the reverse | Different label, so different image key; the tag fails |
 | Copy the flash to another board | Different application key, so the header and every tag fail |
 
 The row about a complete older image is why boot still checks one thing for production images: the header's version against
-counter 0 for the loader or counter 1 for the application, read over the authenticated channel. Developer images skip that check (see `doc/roles.md`).
+counter 0 for the loader or counter 1 for the application, read over the authenticated channel. Developer images are checked against the current epoch instead (see `doc/roles.md`).
 
 ### Nonce uniqueness
 
@@ -116,11 +117,11 @@ What each mode adds after the last byte arrives, for a 64-byte line:
 | Mode | How it works on a miss | Added latency | Extra hardware |
 |---|---|---|---|
 | **AES-GCM per line (recommended)** | All five AES operations (four keystream blocks and the tag mask) depend only on the address, so they run during the flash read. GHASH processes each 16-byte block as it arrives | A few cycles | GHASH multiplier (digit-serial, a few cycles per block) |
-| AES-CTR + HMAC-SHA256 | Keystream as above. HMAC needs about three SHA-256 compressions over the line, mostly after it arrives | About 2.5 µs, more than doubling the miss | None |
+| AES-CTR + HMAC-SHA256 | Keystream as above. HMAC needs about three SHA-256 compressions over the line, mostly after it arrives | About 4 µs (three compressions of 65 cycles at 50 MHz), about tripling the miss | None |
 | AES-CTR + AES-CMAC | CMAC chains AES over the data as it arrives, but one AES core cannot also produce the keystream at that rate | About 0.3 µs, with a second AES core | Second AES core |
 
-GCM's GHASH costs area, but it is the only mode whose authentication keeps pace with the flash. This reverses the earlier recommendation of
-CTR with HMAC-SHA256 (`doc/arch.md`, Open Question 3), which was made before XIP was a requirement.
+GCM's GHASH costs area, but it is the only mode whose authentication keeps pace with the flash. An earlier draft recommended CTR with
+HMAC-SHA256, before XIP was a requirement; `doc/arch.md` now recommends GCM.
 
 ## Cache
 
@@ -135,8 +136,8 @@ CTR with HMAC-SHA256 (`doc/arch.md`, Open Question 3), which was made before XIP
 
 The CPU stalls on a miss until the line is checked. It never executes from a line whose tag has not passed, so no speculative execution is needed.
 
-**On a tag failure,** the line never enters the cache. The fill controller raises a fault to the loader's lockdown path: log the event,
-clear the secret registers, and stop. Lockdown is the only response, because a failing tag in a running image means the flash has been tampered with.
+**On a tag failure,** the line never enters the cache. The fill controller raises a hardware fault that enters the boot ROM's lockdown path
+(`doc/hw.md`, Boot and lockdown): hold the application core in reset, log the event, clear the secret registers, and halt. Lockdown is the only response, because a failing tag in a running image means the flash has been tampered with.
 
 **The cache must be cleared by the secret-clear input** (`doc/ics55.md`, migration hooks), since it holds plaintext application code.
 
@@ -145,13 +146,15 @@ clear the secret registers, and stop. Lockdown is the only response, because a f
 **Install.** An application package arrives encrypted under the distribution key and signed with LMS over the whole package.
 RAM cannot hold a package, so:
 
-1. The package is written to a staging area in flash as it arrives (as LiteForth does with `lfstage.bin`).
-2. The LMS signature is verified by streaming the staged package through the SHA-256 core.
+1. The package is written to a staging file on the MicroSD card as it arrives (as LiteForth does with `lfstage.bin`). Staging on the card means reading it back never needs QSPI direct mode, which would stall the loader's own fetches (`doc/flash.md`).
+2. The LMS signature is verified by streaming the staged package from the card through the SHA-256 core.
 3. The version is checked against counter 1: it must not be older.
 4. A fresh install salt is drawn, and the package is decrypted with the distribution key and re-encrypted per line, with tags, under the new image key into the inactive slot, one line at a time.
 5. Counter 1 advances, and the slot becomes active.
 
-Developer packages differ in steps 2, 3 and 5: HMAC instead of LMS, no version check, and counter 1 does not move (`doc/roles.md`).
+Developer packages differ in steps 2 to 5: an HMAC instead of the LMS signature; the epoch instead of the version check; a package key derived from
+the working developer key instead of the distribution key; and counter 1 does not move (`doc/roles.md`). A production install also erases any
+developer image left in the other application slot.
 
 Loader images install the same way, from platform packages signed with the platform LMS key, into a loader slot, with counter 0 in place of counter 1.
 Their content key is wrapped under the board's pairing key instead of being the distribution key, so platform packages stay per board (README, Platform updates).
@@ -166,7 +169,7 @@ and most of the work even for a hardware one.
 
 ## Flash writes while executing
 
-A NOR flash cannot be read while it is erasing or programming. The QSPI flash is written only during application updates and application development,
+A NOR flash cannot be read while it is erasing or programming. The QSPI flash is written only during platform updates, application updates and application development,
 never while the application is doing its normal work. Only the loader core writes it, using flash programming primitives in the boot ROM: with both cores executing from flash,
 nothing fetched from flash can run while the flash is busy. The loader calls a primitive, which runs from ROM until the flash is ready again.
 
@@ -192,7 +195,8 @@ Estimates for the loader and the XIP system, to be replaced with measurements. T
 | Flash page buffer (installs) | 256 bytes | One NOR page |
 | MicroSD sector buffer | 512 bytes | |
 | Loader variables | About 0.5 KB | |
-| **Total** | **About 9 to 10 KB** | About 0.08 Mb, roughly 0.2 mm2 at ICS55's 2 to 3 mm2/Mb |
+| Mailbox message RAM | 2 KB | Shared by both cores (`doc/hw.md`) |
+| **Total** | **About 11 to 12 KB** | About 0.1 Mb, roughly 0.25 mm2 at ICS55's 2 to 3 mm2/Mb |
 
 The application's own data comes on top of this. Neither core's code costs RAM beyond its cache.
 

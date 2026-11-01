@@ -118,10 +118,11 @@ Ratings are for the base model (no Code Secrecy Profile) unless a row says other
 | R22 | Remote attestation | Advanced remote attacker controlling a compromised unit | Pass a compromised unit off as genuine to a host or server | A bitstream holding the pairing key is indistinguishable from a good one | High | Low | Accepted. Not protected by this design (see Not protected) |
 | R23 | MicroSD card | Casual hobbyist, or anyone who can insert a card | Insert a card with malformed files to exploit the loader's file handling, or with forged or old update packages | Removable media is fully attacker-controlled; filesystem parsing is complex | Critical (code execution in the loader if parsing is exploitable) | High | Minimal fixed-format parsing with strict bounds checks, fuzz-tested; packages verified by LMS and checked against the counters exactly as on the UART |
 | R24 | Security event log on MicroSD | Insider or thief | Remove the card, or edit, truncate or reorder log records to hide an attack | Card is removable and writable | Medium | High | Log records MAC'd and hash-chained under a per-device log key in the secure element; a missing card or broken chain is itself logged and reported to the host |
-| R25 | Application code | Customer-written application, or an attacker who has compromised it | Read keys, drive the secure element, write the flash or change the loader's state | Loader and application sharing one CPU and its buses | Critical | High if they share a CPU | Separate loader and application cores; the application core has no wiring to keys, the secure element, the security block or flash writing, which can be checked from the netlist (`doc/hw.md`) |
+| R25 | Application code | Customer-written application, or an attacker who has compromised it | Read keys, drive the secure element, write the flash or change the loader's state | Shared hardware between the loader and the application | Critical | Low, with separate cores (High if they shared a CPU) | Separate loader and application cores; the application core has no wiring to keys, the secure element, the security block or flash writing, which can be checked from the netlist (`doc/hw.md`) |
 | R26 | Mailbox between the cores | Compromised application | Malformed or changing requests to exploit the loader's message parser | The mailbox is the only path into the loader | Critical | Medium | Small fixed set of services and formats; each request copied out of shared RAM before checking; every field checked against fixed limits; no pointers from messages; fuzz-tested |
-| R27 | Developer sideloading | Developer, or anyone holding a leaked developer key | Install code that reads production user data, or blocks future production updates | Developer builds are not signed by the application owner | High (one device) | Medium | Developer keys are per device; developer builds get a separate user data key and never advance counter 1 (`doc/roles.md`) |
+| R27 | Developer sideloading | Developer, or anyone holding a leaked developer key or an old flash dump | Install code that reads production user data, block future production updates, or restore an old developer build | Developer builds are not signed by the application owner and skip the version check | High (one device) | Medium | Developer keys are per device; developer builds get a separate user data key and never advance counter 1; developer headers carry the epoch and boot refuses older epochs; a production install erases any developer image in the other slot (`doc/roles.md`) |
 | R28 | MicroSD card: user data freshness | Insider or thief with a card reader | Copy the card, and later restore the old copy so the device accepts rolled-back data | Old records still decrypt and authenticate under the same data key | High (one device) | High | Reserved: a digest of the latest user data in secure element slot 11, written at the end of each session that changes data (`doc/se.md`); to be decided per application (Open Question 12) |
+| R29 | UART host session | Attacker in the middle of the host link | Read user data in transit, or take over a session after the host has authenticated | CheckMac authenticates the host once; the session's traffic is not yet encrypted or authenticated | Critical | Medium | **Not yet designed:** a session key derived inside the secure element from the host authorization key and the session nonce (Open Question 13) |
 
 ## Optional: Code Secrecy Profile
 
@@ -179,7 +180,6 @@ so the loader can reject a forged package before decrypting anything.
 loader's AES core decrypts the application. Recovering one unit's key reveals the fleet's code. Options:
 - A masked or otherwise side-channel-hardened AES core. With execute in place (`doc/xip.md`), the application is decrypted again on every
   cache miss, so an attacker can collect traces without rebooting; masking is the main defense.
-- Optionally, a counter-limited application key in the secure element, which caps how many times it is released, at the cost of a fixed boot budget.
 
 **No in-use readout paths.** These become hard requirements instead of hygiene:
 - No debug port on the soft CPU in production bitstreams.
@@ -273,6 +273,8 @@ their own application on our platform.
 - Diversify every key per device, derived in the HSM as KDF(master key, secure element serial number) so no key database is needed.
   This is mandatory: it is what keeps a compromised unit from exposing the rest of the fleet.
   The one exception is the distribution key, which must be the same on every unit so one package installs everywhere.
+  The pairing key also takes the platform version at which it is issued, KDF(pairing master, serial, platform version), because it rotates
+  with bitstream updates; the board reports counter 0, so the HSM can recompute the key it holds.
 - Program a per-board (or per-batch) bitstream encryption key into the FPGA's eFuses. Patch the board's pairing key
   into its copy of the bitstream (block RAM initialization; `ecpbram` on the ECP5) and encrypt that copy under the board's key.
   Because the pairing key is in that board's bitstream only, a pairing key no longer needs to be derived from a
@@ -318,7 +320,7 @@ eight times faster. Public keys are 56 bytes for every parameter set. SP 800-208
 variants with smaller signatures.
 
 Where the public keys come from:
-- **Platform key:** a constant in the boot ROM (block RAM in the bitstream on the FPGA, authenticated by the configuration engine; mask ROM on the ASIC).
+- **Platform key:** a constant in the boot ROM (block RAM in the bitstream on the FPGA, authenticated by the configuration engine on Tier A and protected only by bitstream encryption on Tier B; mask ROM on the ASIC).
 - **Application key:** read from its secure element slot over the MAC'd channel at each use, so a device on the I2C bus cannot substitute its own.
 
 **Secure element MAC protocol.** The loader recomputes the MACs that the secure element returns, so the I2C bus
@@ -353,7 +355,7 @@ The loader must clear the data key from the AES key registers when the session e
 
 **Support logic (not cryptographic).**
 - I2C master with the secure element's CRC-16 (polynomial 0x8005, initial value 0, LSB first), wake, idle and sleep handling.
-- QSPI flash driver with A/B slots for the bitstream and for the application, so a failed update never leaves the device without a bootable image.
+- QSPI flash driver with A/B slots for the bitstream, the loader and the application, so a failed update never leaves the device without a bootable image (`doc/flash.md`).
 - UART framing with CRC-32.
 
 ## Implementation partition
@@ -398,7 +400,8 @@ The same port set replaces the C crypto libraries in LiteForth itself.
 | TRNG | **Ring-oscillator source with health tests** (SP 800-90B repetition count and adaptive proportion) | Conditioning through the SHA-256 core | Entropy and its health checks must be hardware |
 | Glitch detectors, flow counter check | **Hardware** | Feeds the flow counter | Countermeasure rules 5 and 7 |
 | Random delays | — | Delay loops seeded by the TRNG | Countermeasure rule 6 |
-| Key wrap, log chaining, version checks, A/B slot logic | — | All | Control logic |
+| Version against counter | **Comparator** that outputs a 32-bit pass or fail constant | Reads the counter and the version, feeds both | Countermeasure rules 1 and 2 |
+| Key wrap, log chaining, A/B slot logic | — | All | Control logic |
 
 ### Cost estimates
 
@@ -420,7 +423,7 @@ and the comparators. Software-only crypto would work but makes every boot second
 Executing the application in place from flash (`doc/xip.md`) needs each cache line authenticated as fast as the flash delivers it.
 **AES-256-GCM applied per line** does that: its AES work depends only on the address and runs during the flash read, and GHASH
 streams with the data. CTR with HMAC-SHA256 would add no hardware but would more than double the cache miss time.
-The recommendation is therefore AES-256-GCM, which is what these documents already say, at the cost of a GHASH multiplier.
+The recommendation is therefore AES-256-GCM, at the cost of a GHASH multiplier.
 
 ### Changes to LiteForth
 
@@ -481,3 +484,6 @@ These are deliberately absent from the loader:
    (patch first, then encrypt).
 12. **User data freshness.** Whether applications need protection against an old copy of the MicroSD card being restored, and if so whether
    the secure element's write endurance allows a freshness digest in slot 11 to be written at the end of each session that changes data (`doc/se.md`).
+13. **Host session protection.** How the host and the device protect a session's traffic after CheckMac: a session key derived inside the
+   secure element from the host authorization key and the session nonce (the ATECC608B's KDF command is a candidate, to confirm), handed to the
+   AES key registers through the private key path, with the host deriving the same key (R29).

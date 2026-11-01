@@ -20,7 +20,7 @@ A person can hold several roles. A developer is usually also the user of their o
 
 > developer key = KDF(developer master key, secure element serial number)
 
-It is written into a locked, non-readable slot of every secure element at provisioning, so any device can later be used for development
+It is written into a locked slot of every secure element at provisioning, readable only by encrypted read into the loader's hardware key path, so any device can later be used for development
 without being changed. It is never handed out directly. What a developer receives is the device's working developer key for the current epoch
 (see Rotating developer keys), when they show they own that device; how ownership is shown is a business process.
 
@@ -73,8 +73,9 @@ developer-mode data from earlier epochs unreadable. Production user data is not 
 **HSM policy (optional).** If the HSM issues working keys only for the newest epoch, a developer must install the latest production release
 before getting a key, which keeps developers on current firmware.
 
-A developer build that is already installed keeps running after a rotation, because running it never uses the developer key.
-Installing the production release that rotates the epoch replaces it anyway.
+A developer build's header records the epoch it was installed under, and boot refuses a developer image from an older epoch.
+After a rotation, no developer build from before it can run, even if an old flash dump is written back. The production release that
+rotates the epoch replaces the developer build anyway, and erases any developer image left in the other slot.
 
 ## Installing a developer build
 
@@ -82,7 +83,7 @@ The loader handles a developer package like a production one, with four differen
 
 | Step | Production package | Developer package |
 |---|---|---|
-| Authenticate | LMS signature against the application public key | HMAC-SHA256 under this device's working developer key for the current epoch, checked through the private key path |
+| Authenticate | LMS signature against the application public key | HMAC-SHA256 under a package MAC key derived from this device's working developer key for the current epoch, checked through the private key path |
 | Decrypt | Distribution key | Package key derived from the working developer key |
 | Rollback check | Version must not be older than counter 1, which then advances to it | No check, and counter 1 is not touched |
 | Mark | Header mode: production | Header mode: developer |
@@ -105,6 +106,7 @@ version 9999 would block every future production release. Rollback protection is
 ## Returning to production
 
 Installing any production package replaces the developer build, with the usual rule: its version must not be older than counter 1.
+The install also erases any developer image left in the other application slot, so the device holds no developer build that could become a fallback (`doc/flash.md`).
 Since developer builds never moved counter 1, the device accepts the same production releases it would have accepted before.
 
 ## What developers cannot do

@@ -19,6 +19,7 @@ user data is unlocked only with a secret held outside the device. See `doc/arch.
 | `doc/hw.md` | Hardware modules, buses, the two cores and mailbox, the shared XIP engine, key paths, boot sequence, resource estimate |
 | `doc/xip.md` | Execute in place: per-line AES-GCM, flash layout, caches, install and boot, RAM budget |
 | `doc/se.md` | Secure element slot map, counters, version rule |
+| `doc/flash.md` | Flash map, boot record, install order, staging on the MicroSD card |
 | `doc/roles.md` | Manufacturer, application owner, developer and user; developer keys and their rotation |
 | `doc/test.md` | Test plan and fault-injection campaigns |
 | `doc/fda.md` | FDA security architecture views |
@@ -30,7 +31,7 @@ user data is unlocked only with a secret held outside the device. See `doc/arch.
 - A secure element such as an ATECC608B (or a pin-compatible MODSEMI MOD8ID as second source)
 - Voltage regulators
 - Oscillator module
-- QSPI NOR flash (for bitstream and encrypted application; written only during updates and development)
+- QSPI NOR flash (for bitstreams and encrypted loader and application images; written only during updates and development; see `doc/flash.md`)
 - USB-UART bridge (for connection to host PC or terminal)
 - JTAG port (for connection to ISP tools)
 - MicroSD card socket (for encrypted user data, security event logs and offline update packages)
@@ -54,11 +55,11 @@ Tier B trades protection against targeted tampering for lower cost and an open t
 | Key | Held in | Unlocked by | Protects |
 |---|---|---|---|
 | Pairing key | Bitstream and secure element (per device) | The bitstream itself | The authenticated channel between the loader and the secure element |
-| Application key | Secure element (per device) | Pairing key | Encryption and integrity of the application image in flash |
+| Application key | Secure element (per device) | Pairing key | Encryption and integrity of the loader and application images in flash (separate labels), and the boot record |
 | **Data key** | Secure element (per device) | Pairing key **and** host authorization | Encryption and integrity of user data on the MicroSD card |
 | Host authorization key | Secure element (non-readable) and the host | Never leaves either | Proving the host is present, and UART access |
 | Distribution key | Secure element (same on every unit) | Pairing key | Encrypting application packages in transit, so a hex dump shows no plaintext |
-| Developer key | Secure element (per device) and the device's developer | Never leaves the secure element; the developer gets a copy from the HSM | Sideloading developer builds onto that one device (`doc/roles.md`) |
+| Developer key | Secure element (per device) | Pairing key, into hardware only. The developer never gets this key, only a working key for the current epoch from the HSM | Sideloading developer builds onto that one device (`doc/roles.md`) |
 
 The distribution key is the one key that is not per device, because one package must install on every unit.
 It is obfuscation, not secrecy: a compromised bitstream on any unit can read it. Users who need real code
@@ -124,7 +125,8 @@ On an ASIC, it is the silicon and its mask ROM.
 - **Tier B:** the engine only decrypts. A modified bitstream may run. `thriller` tolerates this:
   a foreign bitstream has no pairing key, and even a modified genuine one cannot unlock user data without the host.
 - **Boot ROM:** a small image (8 to 16 KB) in block RAM, configured with the bitstream. It checks the loader image in flash
-  (header HMAC, version against counter 0) before running it, and holds the flash programming primitives and UART recovery.
+  (header HMAC, version against counter 0) before running it, and holds the flash programming primitives, the lockdown path
+  and UART recovery (full list in `doc/hw.md`).
   On the ASIC the same code is mask ROM (`doc/ics55.md`). The FPGA mirrors the ASIC's boot chain on purpose, so it is tested from the start (`doc/hw.md`).
 
 On the manufacturing side:
@@ -138,7 +140,9 @@ On the manufacturing side:
 - Configure and lock the secure element (keys, slot policies, counters) according to the slot map in `doc/se.md`.
 - Diversify every secure element key per device, so one compromised unit exposes nothing about another.
 - Build the platform LMS public key into the boot ROM image in the bitstream, and store the application LMS public key in a locked secure element slot.
-- Store the board's pairing key in its secure element (it is already in that board's bitstream).
+- Store the board's pairing key in its secure element (it is already in that board's bitstream). Pairing keys are derived as
+  KDF(pairing master, secure element serial number, platform version at which the key is issued), so the HSM can recompute the key
+  a board holds from the counter 0 value it reports.
 - Put the encrypted bitstream, the loader image and the application image in flash (the images encrypted per cache line, `doc/xip.md`).
 
 Because each board's bitstream is encrypted under its own key, a bitstream copied from one board will not
@@ -158,12 +162,13 @@ It is the same on every FPGA, and the ASIC runs the same boot ROM and loader.
 
 ### Platform updates
 
-A platform package carries a new bitstream, a new loader image, or both, under one platform version on counter 0.
-On the ASIC it carries only a loader image.
+A platform package always carries a loader image, and may also carry a new bitstream, all under one platform version on counter 0.
+A package that changes only the bitstream carries the current loader image restamped with the new version, so the boot ROM's check
+against counter 0 still passes after the counter advances. On the ASIC a platform package carries only a loader image.
 
 - The update server builds a platform package for each board (or batch), selected by the secure element serial number the loader reports.
-  - A bitstream carries that board's next pairing key, is encrypted under that board's bitstream key, and comes with the next pairing key
-    wrapped under the current one. On Tier A it also carries the FPGA vendor's own signature, so it is signed twice.
+  - A bitstream carries that board's next pairing key, KDF(pairing master, serial, new platform version), is encrypted under that board's
+    bitstream key, and comes with the next pairing key wrapped under the current one. On Tier A it also carries the FPGA vendor's own signature, so it is signed twice.
   - A loader image is encrypted under a content key wrapped under the board's current pairing key. Platform packages are therefore
     per board even without a bitstream, so a stolen platform signing key alone cannot produce a package that installs fleet-wide.
   - Everything is signed with the platform LMS key.
@@ -202,6 +207,9 @@ The UART is the one insecure channel, so the host authenticates to the secure el
 - The host answers with a MAC over the challenge, using the host authorization key.
 - The secure element checks the answer itself (CheckMac). Only on success does it release the data key to the loader.
 - The loader then decrypts and authenticates user data on the MicroSD card for the rest of the session, and clears the data key when the session ends.
+- **Not yet designed:** after CheckMac, the session's traffic over the UART must also be encrypted and authenticated, under a session key
+  that the host and the secure element derive from the host authorization key and the session nonce. Until then, user data crosses the UART
+  in clear and the session can be taken over by anyone in the middle (`doc/arch.md`, R29 and Open Question 13).
 
 Use a high-entropy host key. If it is derived from a short PIN, the secure element offers no retry lockout,
 so attempts must be limited another way; both secure element counters are already allocated (`doc/se.md`).
