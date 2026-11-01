@@ -27,7 +27,7 @@ An ASIC removes a whole class of problems that the FPGA tiers exist to manage:
 - **No bitstream.** The platform update chain, the bitstream encryption key, readback, JTAG configuration and Tier A versus Tier B all disappear.
 - **No vendor signature.** The non-quantum-safe ECDSA or RSA bitstream signature (R21) is gone. Every signature in the system is LMS.
 - **Malleable bitstreams are gone** (R11, R12, R13, R14).
-- **Counter 0 is freed** in the secure element, which turns out to be useful (see below).
+- **Counter 0 changes role.** On the FPGA it covers the platform: the bitstream and the updatable loader together. On the ASIC it covers the updatable loader alone.
 
 ### Mask ROM
 
@@ -42,15 +42,16 @@ ask how it gets fixed. So ROM should hold only what must be immutable:
 
 | In mask ROM (immutable) | In external flash (signed, updatable) |
 |---|---|
-| Reset, clocking, SRAM test | The rest of the loader: host sessions, application updates, logging, the MicroSD path |
-| SHA-256 and AES-256 core drivers, LMS verification | The application |
+| Reset, clocking, SRAM test | The rest of the loader: host sessions, application updates, logging, the MicroSD path, executed in place through the loader's cache |
+| SHA-256 and AES-256 core drivers, LMS verification | The application, executed in place through the application's cache |
 | Secure element protocol: authenticated counter read | |
-| Verify and decrypt the next stage from flash | |
+| Check the loader's header, derive its image key, configure and lock XIP port 0 | |
+| Flash programming primitives (nothing fetched from flash can run while it is busy) | |
 | Recovery: receive a signed loader over the UART if flash holds no valid one | |
 
-This brings back a two-stage chain, but a cheap one: the ROM verifies an updatable loader with LMS, and the loader's anti-rollback counter
-is the secure element's counter 0, which the ASIC no longer needs for bitstreams. The updatable loader plays the role the bitstream
-played on the FPGA, without a bitstream's attack surface.
+This is a two-stage chain, and a cheap one: the ROM checks the updatable loader, whose anti-rollback counter is the secure element's counter 0,
+and the loader then runs from flash through its own cache on the shared XIP engine, so it needs no SRAM copy (`doc/hw.md`, `doc/xip.md`).
+The FPGA runs the same chain, with the boot ROM in block RAM, so the ASIC's boot chain is tested from the first FPGA build.
 
 **Recovery must be in ROM.** If the flash loader is corrupt and there is no recovery path in ROM, the chip is a brick. LiteForth's stage 1
 recovery terminal on the CH32H417 (YMODEM into a staging file, then install) is the model: small, signed input only, nothing else.
@@ -107,9 +108,10 @@ FPGAs and MCUs usually lock debug access with a one-time fuse. Without one:
 At 2 to 3 mm2 per Mb, SRAM is expensive: 64 KB (0.5 Mb) takes about 1 to 1.5 mm2, a large share of a 1.5 x 1.5 mm or 2.0 x 2.0 mm block
 if those dimensions are the core area. A whole application cannot be decrypted into SRAM unless it is small. That suggests:
 
-- **Execute in place from QSPI flash, through a small decrypting and authenticating cache.** The design is worked out in `doc/xip.md`:
-  AES-256-GCM per cache line, under an image key unique to each install and a nonce that binds each line to its slot and address,
-  so lines are checked on every fill without a Merkle tree, and the loader plus a 4 KB cache need about 7 to 8 KB of SRAM.
+- **Execute in place from QSPI flash, for both cores, through small decrypting and authenticating caches.** The design is worked out in `doc/xip.md`:
+  AES-256-GCM per cache line, under an image key unique to each image and install and a nonce that binds each line to its slot and address,
+  so lines are checked on every fill without a Merkle tree. One XIP engine serves both cores through two ports, and the loader's RAM plus both caches
+  need about 9 to 10 KB of SRAM.
 
 ### Things only silicon can answer
 
@@ -124,24 +126,25 @@ A small test chip on an early shuttle, carrying just these structures, would set
 
 ### Migration hooks in the FPGA design
 
-The FPGA design is not complicated for the sake of the ASIC. It only leaves hooks: choices that cost nothing on the FPGA
-and avoid rework later. Everything else in this document (the two-stage chain, the PUF, scan clearing, the decrypting cache)
-is built only for the ASIC.
+The FPGA design is not complicated for the sake of the ASIC beyond one deliberate choice: it mirrors the ASIC's boot chain
+(boot ROM, updatable loader in flash, shared two-port XIP engine), at an estimated cost of 0.5K to 1.1K LUTs and a net saving in block RAM
+(`doc/hw.md`, Resource estimate). Otherwise it only leaves hooks: choices that cost nothing on the FPGA and avoid rework later.
+The PUF and scan clearing are built only for the ASIC.
 
 | Hook | On the FPGA | On the ASIC |
 |---|---|---|
 | **Memory and clock wrappers.** Every block RAM, ROM, S-box table and clock primitive sits in a thin module | Instantiates the FPGA primitive | Instantiates an ASIC macro or synthesized logic |
 | **Pairing key source.** The pairing key reaches the loader through one module with a fixed interface | A constant patched into the bitstream's block RAM, as now | PUF key derivation and unwrapping of the blob in flash |
 | **Secret-clear input.** The security registers (keys, pass tokens, AES key) share one clear input | Tied off | Driven by scan entry and by the glitch detectors |
-| **Boot code at the bottom of the loader.** The code that would become mask ROM (core drivers, LMS verification, counter read, UART recovery) is kept together and has no calls into the rest of the loader | No effect: it is all one image | Moves to mask ROM unchanged |
-| **Package component types.** The update package format reserves a component type for "loader" alongside "bitstream" and "application" | Unused | Used for the updatable loader, protected by counter 0 |
+| **Boot ROM.** The code that becomes mask ROM (core drivers, LMS verification, counter read, loader header check, flash programming primitives, UART recovery) is a separate image | Block RAM in the bitstream; the rest of the loader runs from flash | Moves to mask ROM unchanged |
+| **Package component types.** The update package format has component types for "bitstream", "loader" and "application" | Platform packages carry a bitstream, a loader, or both, under counter 0 | Platform packages carry the loader only, under counter 0 |
 | **No reliance on initialized RAM.** Nothing except the boot code's image assumes block RAM starts with known contents | No effect | SRAM powers up random, and is needed that way for the PUF |
 
 ### Open questions
 
 1. Whether the ICS55 SRAM is usable as a PUF, and the fuzzy extractor's parameters for its error rate.
 2. Whether OTP or eFlash IP will become available to open designs on this process.
-3. ROM size, SRAM size and cache size, from measurements on the FPGA prototype.
+3. ROM size, SRAM size and both cache sizes, from measurements on the FPGA prototype.
 4. Whether a system in package with the secure element is practical for the target packages.
 
 ### Sources

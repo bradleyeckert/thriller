@@ -1,10 +1,11 @@
 # Execute in Place: Decrypting and Authenticating Flash on the Fly
 
-The application runs directly from external QSPI flash, through a small cache, instead of being copied into RAM.
+Both the loader and the application run directly from external QSPI flash, each through its own small cache, instead of being copied into RAM.
+One XIP engine serves both, through two ports (`doc/hw.md`, Shared XIP engine).
 This keeps on-chip RAM small, which matters most on an ASIC, where SRAM costs 2 to 3 mm2 per Mb (`doc/ics55.md`).
 The same design runs on the FPGA, so the RAM budget can be measured there before any silicon.
 
-The flash holds the application encrypted and authenticated under a device-unique key. Nothing is ever decrypted back into
+The flash holds the loader and the application encrypted and authenticated under device-unique keys. Nothing is ever decrypted back into
 flash. Each cache line is decrypted and checked as it is fetched, and only checked plaintext enters the cache.
 
 ## Requirements
@@ -22,7 +23,7 @@ flash. Each cache line is decrypted and checked as it is fetched, and only check
 
 ```mermaid
 flowchart LR
-  CPU["Application core<br/>fetch and @"] -->|miss| FSM["Fill controller"]
+  CPU["Loader core (port 0) or<br/>application core (port 1)<br/>fetch and @"] -->|miss| FSM["Fill controller<br/>(loader port first)"]
   FSM -->|"one burst: line + tag"| QSPI["QSPI flash"]
   FSM -->|"nonce from slot<br/>and line address"| AES["AES-256, per-install image key<br/>keystream and tag mask<br/>(computed during the read)"]
   QSPI -->|ciphertext| X["XOR"]
@@ -38,10 +39,12 @@ flowchart LR
 
 - **Encryption and authentication:** AES-256-GCM applied to each cache line separately, with a 64-bit tag stored next to the line.
 - **Key and nonce:** a fresh image key for every install, derived from the device's application key and a random salt; the nonce is the slot and the line's address, so it is never reused.
-- **Cache:** a few KB of plaintext lines. A line enters the cache only after its tag checks.
+- **Caches:** one per core, a few KB of plaintext lines each. A line enters a cache only after its tag checks.
+- **Ports:** the requesting port selects the flash window and image key in hardware, so neither core can fill its cache from the other's image.
 
 ## Flash layout
 
+The flash holds four slots, each with this layout: loader A and B, and application A and B.
 Each line of ciphertext is followed by its tag, so one burst read fetches both:
 
 | Offset in slot | Contents |
@@ -58,7 +61,7 @@ The flash overhead is 8 / 64 = 12.5%.
 
 Every install draws a fresh 128-bit salt R from the TRNG and stores it in the header. For line i of the image in slot s:
 
-- **Image key** = KDF(application key, R), computed through the private key path (`doc/hw.md`, Key paths) and loaded into the AES key registers
+- **Image key** = KDF(application key, label, R), where the label is "loader" or "application", so the two images never share a key. It is computed through the private key path (`doc/hw.md`, Key paths) and loaded into the AES key registers
   through the key gate (`doc/test.md`, countermeasure rule 3). It never leaves the hardware.
 - **Nonce (96 bits)** = s (8 bits) ‖ i (24 bits) ‖ 0 (64 bits).
 - **Ciphertext** = plaintext XOR AES-256-CTR keystream from that nonce.
@@ -79,10 +82,11 @@ Here every tag depends on a secret key unique to this device and this install, a
 | Copy a line from the other slot | Different install, so different image key; the tag fails |
 | Replace a line with one from an earlier install | Different R, so different image key; the tag fails |
 | Replace the whole slot with a complete older production image | Every line checks, but the header's version is below the secure element's counter 1, so boot refuses it |
+| Copy a loader line into the application's slots, or the reverse | Different label, so different image key; the tag fails |
 | Copy the flash to another board | Different application key, so the header and every tag fail |
 
-The second-to-last row is why boot still checks one thing for production images: the header's version against counter 1,
-read over the authenticated channel. Developer images skip that check (see `doc/roles.md`).
+The row about a complete older image is why boot still checks one thing for production images: the header's version against
+counter 0 for the loader or counter 1 for the application, read over the authenticated channel. Developer images skip that check (see `doc/roles.md`).
 
 ### Nonce uniqueness
 
@@ -149,30 +153,37 @@ RAM cannot hold a package, so:
 
 Developer packages differ in steps 2, 3 and 5: HMAC instead of LMS, no version check, and counter 1 does not move (`doc/roles.md`).
 
+Loader images install the same way, from platform packages signed with the platform LMS key, into a loader slot, with counter 0 in place of counter 1.
+
 Each step needs only a line buffer and a flash page buffer.
 
-**Boot.** Boot no longer hashes the whole image. It checks the header record's HMAC, derives the image key from R, and for a production image compares the version with counter 1.
+**Boot.** Boot no longer hashes a whole image. It runs in two stages (`doc/hw.md`, Boot and lockdown):
+the boot ROM checks the loader's header, derives the loader image key into port 0 and compares the version with counter 0;
+then the loader does the same for the application on port 1, with counter 1 for a production image.
 Every other line is checked when it is first used. This removes the 1 to 2 seconds of whole-image hashing estimated in `doc/arch.md` for a Forth implementation,
 and most of the work even for a hardware one.
 
 ## Flash writes while executing
 
 A NOR flash cannot be read while it is erasing or programming. The QSPI flash is written only during application updates and application development,
-never while the application is doing its normal work. Only the loader core writes it, running from its own boot ROM or block RAM (`doc/hw.md`).
+never while the application is doing its normal work. Only the loader core writes it, using flash programming primitives in the boot ROM: with both cores executing from flash,
+nothing fetched from flash can run while the flash is busy. The loader calls a primitive, which runs from ROM until the flash is ready again.
 
-- **Busy interlock.** While the loader has the QSPI controller in direct mode, an application cache miss stalls until the controller returns to XIP mode.
+- **Busy interlock.** While the QSPI controller is in direct mode, a cache miss on either port stalls until the controller returns to XIP mode.
   It does not read the flash: a busy flash would return garbage, the tag would fail, and the device would lock down as if tampered with.
 - **Stalls are acceptable.** During an update the application only shows progress, so a stall of a few hundred milliseconds during an erase is harmless.
   No cache locking or erase-suspend is needed.
 
 ## RAM budget
 
-Estimates for the loader and the XIP system, to be replaced with measurements:
+Estimates for the loader and the XIP system, to be replaced with measurements. The loader's code takes no RAM: Stage 0 is in the boot ROM
+(8 to 16 KB of ROM), and the rest runs from flash.
 
 | Use | Size | Notes |
 |---|---|---|
-| XIP cache data | 4 KB | 64 lines of 64 bytes |
-| XIP cache tags and state | About 0.2 KB | Can be flip-flops |
+| Application XIP cache data | 4 KB | 64 lines of 64 bytes |
+| Loader XIP cache data | 2 KB | 32 lines of 64 bytes |
+| XIP cache tags and state (both) | About 0.3 KB | Can be flip-flops or distributed RAM |
 | Loader core stacks | 0.5 to 1 KB | Two stacks of 64 to 128 cells |
 | LMS verification | About 0.3 KB | The signature streams from flash; only running hashes are kept |
 | Secure element I/O buffer | About 0.2 KB | Largest ATECC command or response |
@@ -180,14 +191,15 @@ Estimates for the loader and the XIP system, to be replaced with measurements:
 | Flash page buffer (installs) | 256 bytes | One NOR page |
 | MicroSD sector buffer | 512 bytes | |
 | Loader variables | About 0.5 KB | |
-| **Total** | **About 7 to 8 KB** | About 0.06 Mb, roughly 0.15 mm2 at ICS55's 2 to 3 mm2/Mb |
+| **Total** | **About 9 to 10 KB** | About 0.08 Mb, roughly 0.2 mm2 at ICS55's 2 to 3 mm2/Mb |
 
-The application's own data comes on top of this. Its code costs no RAM beyond the shared cache.
+The application's own data comes on top of this. Neither core's code costs RAM beyond its cache.
 
 ## FPGA and ASIC
 
-The XIP controller, cache and GHASH are the same RTL on both. On the FPGA they let the application exceed block RAM and, more importantly,
-let the cache size, line size and hit rate be measured on real applications before choosing the ASIC's SRAM size.
+The XIP engine, both caches and GHASH are the same RTL on both, and the FPGA runs the same two-stage boot chain as the ASIC (`doc/hw.md`).
+On the FPGA they let the application exceed block RAM and, more importantly, let the cache sizes, line size and hit rates be measured
+on real loader and application code before choosing the ASIC's SRAM size.
 The cache memory goes through the memory wrappers (`doc/ics55.md`, migration hooks).
 
 ## Fault injection and testing
@@ -197,10 +209,12 @@ The cache memory goes through the memory wrappers (`doc/ics55.md`, migration hoo
 - The fill controller's state machine must not be able to mark a line valid without the comparator's pass constant. Its valid bit is set only
   by that constant, which campaign B checks.
 - Test cases for the catalogue in `doc/test.md`: each attack in the table above (modified, moved, other-slot, older-version line; whole older image;
-  copied flash), a tag failure mid-execution, and an application cache miss while the loader is writing the flash (it must stall, not lock down).
+  copied flash), a tag failure mid-execution, and a cache miss on either port while the loader is writing the flash (it must stall, not lock down).
+- Port isolation: a fill on port 1 can never use port 0's key or window, the configuration of each port cannot be changed once locked, and a stream of
+  application misses delays a loader miss by at most one fill.
 
 ## Open questions
 
-1. **Line and cache size,** from hit-rate measurements of real LiteForth applications on the FPGA.
+1. **Line and cache sizes,** from hit-rate measurements of the real loader and real LiteForth applications on the FPGA.
 2. **GHASH multiplier area** for the digit width that keeps pace with the flash, on the smallest target.
 3. **Data reads through the cache.** Constant data in flash can share the cache with code; whether it needs its own region or policy.

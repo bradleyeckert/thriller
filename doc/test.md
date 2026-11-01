@@ -12,7 +12,9 @@ Risk IDs (R1–R28) refer to the Risk Assessment in `doc/arch.md`. FDA control c
 ### One loader, two execution platforms
 
 The loader is LiteForth code running on its own LiteForth CPU in the FPGA fabric, next to a second core for the application (`doc/hw.md`).
-`vm.c` simulates that CPU; the software platform runs the two cores as two processes joined by a shared-memory mailbox.
+`vm.c` simulates that CPU; the software platform runs the two cores as two processes joined by a shared-memory mailbox,
+with one model of the shared XIP engine serving both. As on the ASIC, the loader core starts in a boot ROM image that checks the
+loader image in flash before running it.
 The crypto and peripheral cores (SHA-256, AES, LMS chain hashing, I2C, QSPI, SD, UART) appear to the CPU as
 I/O ports through `>sys` and `sys>`, the same way LiteForth's non-blocking math unit does (`src/iomap.c`).
 
@@ -96,7 +98,7 @@ campaign A on the software platform, because the small security modules run ther
 | Where the decision is made | How the software platform models it | Fault campaign |
 |---|---|---|
 | Forth (MAC message assembly, version checks, flow counter updates) | `vm.c` | A |
-| Small security modules (comparators, key gate, flow counter check, TRNG health tests) | The real Verilog, compiled by Verilator and linked into the port implementation | A, with B confirming |
+| Small security modules (comparators, key gate, flow counter check, TRNG health tests, XIP port selection and write-once locks) | The real Verilog, compiled by Verilator and linked into the port implementation | A, with B confirming |
 | Large cores (SHA-256, AES-256) | Fast C models | B (a corrupted digest or keystream already fails at a comparator) |
 | Glitch detectors (analog behavior), multi-bit timing faults | Not modeled | B and D |
 
@@ -147,9 +149,11 @@ and once more on the MOD8ID.
 | Area | Tests | Risks |
 |---|---|---|
 | Application updates | Valid package installs. Every byte of a package flipped, one at a time: rejected before decryption. Wrong signing key. Old version (below counter 1) rejected; reinstalling the current version accepted. Truncated package. (LMS leaf reuse cannot be seen by the device; the signing tools are tested for it separately.) | R4, R3, R20 |
-| Platform updates | As above, plus a package built for another board (fails to configure), and pairing key rotation | R3, R4, R14 |
+| Platform updates | As above, plus a package built for another board (fails to configure), pairing key rotation, and loader images under counter 0 (one platform version with the bitstream) | R3, R4, R14 |
 | Power cuts | Every update run is repeated with a cut at each step k, where every flash erase, flash program, secure element write and counter increment is one step, and the cut leaves that step half done. After each cut, the board must boot a valid image, and must never accept an older version | R19, Open Question 1 |
 | Boot | A corrupt active slot header falls back to the other slot; both corrupt enters update-only mode; a line tag failure while running locks the device down and never runs the line | R2, R19 |
+| Boot chain | The boot ROM refuses a modified loader image, a loader from another board, and a loader older than counter 0, using the other loader slot if it checks and otherwise entering UART recovery; recovery accepts only signed loader packages | R3, R4, R16 |
+| XIP ports | A fill on the application's port never uses the loader's key or window; each port's window and key cannot be changed once locked; a stream of application misses delays a loader miss by at most one fill; a miss on either port during a flash write stalls instead of locking down | R25 |
 | I2C channel | Replayed counter values, altered MACs, a stale nonce, responses from the wrong slot: all rejected | R7, R8 |
 | Host sessions | Wrong host key, replayed response, response to a stale challenge: data key never released. Session end and timeout clear the data key from the AES key registers (checked through the Verilated key gate and, in RTL, the registers themselves) | R1, R9 |
 | MicroSD input | Fuzzing of every file the loader reads (packages, card metadata) with AFL++ or libFuzzer, through the software platform. Malformed inputs must be rejected cleanly: no `vm.c` trap, no out-of-range access, no stack overflow | R23 |
@@ -185,6 +189,8 @@ one or more instructions at the moment it makes a security decision (R16). The d
 
 | Decision | Where | A successful fault would |
 |---|---|---|
+| Loader header and version check | Boot ROM | Run a modified or older loader |
+| XIP port selection | Every cache fill | Fill the application's cache from the loader's image, or the reverse |
 | LMS root comparison | Package verification | Install an unsigned update |
 | Version against counter | Package verification | Install an older, vulnerable version |
 | Authentication tag check | Every cache fill | Run modified code from flash |

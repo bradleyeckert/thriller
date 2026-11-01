@@ -17,7 +17,7 @@ All keys below are 32-byte symmetric keys (key type "SHA/other"); none is an ECC
 |---|---|---|:-:|---|---|---|
 | 0 | 36 | **Pairing key** | Yes | Never | Encrypted write, authorized by slot 0 itself (FPGA: rotated with each platform update) | MAC key for every authenticated read and counter read; the encryption key for every encrypted read (it is the ReadKey of slots 2 to 6) |
 | 1 | 36 | **Host authorization key** | Yes | Never | Never | CheckMac of the host's response; the authorization key (AuthKey) of slot 3 |
-| 2 | 36 | **Application key** | Yes | Encrypted read under slot 0 | Never | Deriving each install's image key (`doc/xip.md`); the header HMAC |
+| 2 | 36 | **Application key** | Yes | Encrypted read under slot 0 | Never | Deriving each install's image key for the loader and the application, with separate labels (`doc/xip.md`); the header HMACs |
 | 3 | 36 | **Data key** | Yes | Encrypted read under slot 0, **only after CheckMac with slot 1** | Never | User data on the MicroSD card, for one host session |
 | 4 | 36 | **Distribution key** | No (fleet-wide) | Encrypted read under slot 0 | Never | Decrypting application packages. Under the Code Secrecy Profile, the per-device package key goes here instead |
 | 5 | 36 | **Developer key** | Yes | Encrypted read under slot 0 | Never | Deriving the developer working key for the current epoch (`doc/roles.md`) |
@@ -43,7 +43,7 @@ Notes:
 
 | Counter | Used for | Notes |
 |---|---|---|
-| 0 | Platform (bitstream) anti-rollback on the FPGA; the updatable loader on the ASIC (`doc/ics55.md`) | |
+| 0 | Platform anti-rollback: on the FPGA, the bitstream and the updatable loader under one platform version; on the ASIC, the updatable loader alone (`doc/ics55.md`) | Bitstream rollback is also blocked by pairing key rotation |
 | 1 | Application anti-rollback, and the developer key epoch (epoch = counter 1 ÷ 1024, `doc/roles.md`) | Developer installs never touch it |
 
 **Version rule:** a package is accepted if its version is **not older** than the counter. Equal is allowed, so a device can reinstall its current release,
