@@ -154,6 +154,7 @@ RAM cannot hold a package, so:
 Developer packages differ in steps 2, 3 and 5: HMAC instead of LMS, no version check, and counter 1 does not move (`doc/roles.md`).
 
 Loader images install the same way, from platform packages signed with the platform LMS key, into a loader slot, with counter 0 in place of counter 1.
+Their content key is wrapped under the board's pairing key instead of being the distribution key, so platform packages stay per board (README, Platform updates).
 
 Each step needs only a line buffer and a flash page buffer.
 

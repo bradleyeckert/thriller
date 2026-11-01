@@ -32,10 +32,10 @@ Risk IDs (R1–R28) refer to the Risk Assessment in `doc/arch.md`. Roles (manufa
 | Element | Description | Trust |
 |---|---|---|
 | FPGA configuration engine | Vendor silicon. Decrypts (and on Tier A, authenticates) the bitstream using eFuse keys | Trusted, fixed |
-| Loader core | `thriller` logic in the bitstream: a LiteForth CPU with the SHA-256 and AES cores, the security block, and the I2C, QSPI, SD and UART interfaces (`doc/hw.md`) | Trusted while the bitstream is genuine |
+| Loader core | A LiteForth CPU in the bitstream with the SHA-256 and AES cores, the security block, and the I2C, QSPI, SD and UART interfaces. It starts in a boot ROM (block RAM in the bitstream; mask ROM on the ASIC) that verifies the loader image in flash, then runs the loader from flash through its own XIP cache (`doc/hw.md`) | Trusted while the bitstream is genuine |
 | Application core | A second LiteForth CPU running the device-specific code from the XIP cache. No wiring to keys or security controls; reaches the loader only through the mailbox | Untrusted by the loader; its code is LMS-verified at install and tag-checked on every cache fill |
 | Secure element (ATECC608B) | Monotonic counters, key storage, host authorization (CheckMac), TRNG | Trusted, fixed |
-| QSPI NOR flash | Encrypted bitstreams (A/B), encrypted application (A/B); written only during updates and development | Untrusted storage |
+| QSPI NOR flash | Encrypted bitstreams (A/B), loader images (A/B) and application images (A/B); written only during updates and development | Untrusted storage |
 | Host PC | Runs the update client and opens data sessions. Holds the host authorization key | Trusted by the user; authenticated by the secure element |
 | Update server | Builds per-board platform packages and fleet-wide application packages | Manufacturer-controlled |
 | HSM | Holds LMS signing keys (with state), KDF master keys (including the developer master key), the distribution key | Manufacturer-controlled, highest trust |
@@ -59,7 +59,7 @@ flowchart LR
   subgraph DEV["Device boundary"]
     subgraph FPGA["FPGA"]
       CE["Config engine<br/>eFuse AES key"]
-      LDR["Loader<br/>SHA-256, AES, LMS verify"]
+      LDR["Boot ROM + loader core<br/>SHA-256, AES, LMS verify"]
       APP["Application"]
     end
     SE["Secure element<br/>ATECC608B"]
@@ -84,7 +84,7 @@ flowchart LR
 |---|---|---|---|---|
 | Configuration | Flash → config engine | Vendor SPI configuration | Bitstream | AES under a per-board eFuse key; Tier A adds the vendor signature |
 | I2C | Loader ↔ secure element | ATECC command packets, CRC-16 | Counters, key reads, host authorization | Responses MAC'd under the pairing key over a loader nonce; keys read encrypted (EncRead). CRC is for transport only |
-| QSPI | Loader core (direct mode, for installs) and XIP engine (application fetches) ↔ flash | SPI NOR commands | Bitstreams, application | Everything at rest is encrypted and authenticated (AES-256-GCM per cache line, or vendor format); each line checked as it is fetched |
+| QSPI | Loader core (direct mode, for installs) and XIP engine (loader and application fetches, two ports) ↔ flash | SPI NOR commands | Bitstreams, loader and application images | Everything at rest is encrypted and authenticated (AES-256-GCM per cache line, or vendor format); each line checked as it is fetched |
 | UART | Host ↔ loader | Framed messages, CRC-32 | Update packages, session challenges, user data | LMS signatures on packages; CheckMac host authorization in the secure element. CRC is for transport only |
 | JTAG | Factory station ↔ FPGA | IEEE 1149.1 | eFuse programming, initial configuration | Fused off, or limited to non-configuration instructions, after manufacturing where the FPGA supports it; readback disabled |
 | MicroSD | Loader ↔ removable card | SD (SPI mode) | User data in and out; security event logs out; update packages in | User data encrypted and authenticated under the data key (AES-256-GCM); update packages carry LMS signatures, exactly as over the UART; log records are MAC'd and chained under a per-device log key so removal, reordering or editing is detectable. The loader reads only fixed-format package and log files, never a general filesystem it must trust |
@@ -104,7 +104,7 @@ For `thriller`, that means any compromise that scales from one unit to the fleet
 | Asset | If compromised | Defense | Risk |
 |---|---|---|---|
 | LMS application signing key | Malicious application installs on every unit | Key and state kept in an HSM; one-time leaf use enforced (SP 800-208) | R20 |
-| LMS platform signing key | Malicious loader on every unit, at the next platform update | As above, and the attacker also needs each board's eFuse key to produce a bitstream that configures | R20 |
+| LMS platform signing key | Malicious loader on every unit, at the next platform update | As above, and every platform package is per board: a bitstream needs the board's eFuse key, and a loader image's content key is wrapped under the board's pairing key, both derived from HSM-held masters | R20 |
 | KDF master keys | Every unit's per-device keys derivable | Held only in the HSM; never placed on a device, so compromising a unit cannot reveal them | — |
 | Distribution key | Every application package readable | Accepted: obfuscation only, not relied on for safety. The Code Secrecy Profile replaces it with per-device keys | R6 |
 | Update server | Could withhold updates or serve stale ones | Cannot forge packages (no signing keys on the server); counters reject old versions | R3, R4 |
@@ -136,12 +136,12 @@ There are two independent update chains. Each has its own signing key, anti-roll
 
 | | Platform update | Application update |
 |---|---|---|
-| Content | Bitstream (loader) | Application image |
+| Content | Bitstream (hardware and boot ROM) and/or loader image | Application image |
 | Signing | LMS, platform key (HSM) | LMS, application key (HSM) |
-| Encryption in transit | Per-board eFuse key (bitstream) | Fleet-wide distribution key (per-device keys under the Code Secrecy Profile) |
+| Encryption in transit | Per-board eFuse key (bitstream); content key wrapped under the board's pairing key (loader image) | Fleet-wide distribution key (per-device keys under the Code Secrecy Profile) |
 | Packages built | One per board (or batch), selected by secure element serial | One per release |
 | Anti-rollback | Secure element counter 0, plus pairing key rotation | Secure element counter 1 |
-| Interruption safety | A/B bitstream slots | A/B application slots |
+| Interruption safety | A/B bitstream and loader slots | A/B application slots |
 | After an ASIC conversion | Replaced by an updatable-loader chain on counter 0 (`doc/ics55.md`) | Unchanged |
 
 ### End-to-end path
@@ -168,19 +168,19 @@ The channel only carries ciphertext.
 ```mermaid
 sequenceDiagram
   participant H as Host
-  participant L as Loader (current bitstream)
+  participant L as Loader
   participant SE as Secure element
   participant F as Flash
   L->>SE: Read serial number
   L-->>H: Serial number
   H->>H: Select this board's platform package
-  H->>L: Platform package (bitstream, version, wrapped next pairing key, LMS signature)
-  L->>L: Verify LMS signature (platform public key in bitstream)
+  H->>L: Platform package (bitstream and/or loader image, version, wrapped keys, LMS signature)
+  L->>L: Verify LMS signature (platform public key in the boot ROM)
   L->>SE: Nonce (loader NumIn), GenDig counter 0, MAC (pairing key)
   SE-->>L: Counter 0 value with MAC
   L->>L: Check MAC, check version not older than counter 0
-  L->>F: Write bitstream to inactive slot, read back and check
-  L->>L: Unwrap next pairing key
+  L->>F: Write bitstream and re-encrypted loader image to inactive slots (boot ROM flash primitives), read back and check
+  L->>L: Unwrap next pairing key (bitstream packages)
   L->>SE: Encrypted write of next pairing key (authorized by current key)
   L->>SE: Advance counter 0
   L->>F: Mark new slot active
@@ -230,6 +230,7 @@ Clinical functions are the integrator's; these are the platform's.
 sequenceDiagram
   participant F as Flash
   participant CE as Config engine
+  participant B as Boot ROM
   participant L as Loader
   participant SE as Secure element
   F->>CE: Encrypted bitstream (active slot)
@@ -237,19 +238,27 @@ sequenceDiagram
   alt Configuration fails
     CE->>F: Try the other slot
   end
-  CE->>L: Design running
-  L->>SE: Nonce (loader NumIn) and MAC exchange under the pairing key
-  SE-->>L: Proof of pairing
-  L->>SE: Encrypted read: application key unwraps into the AES key registers
-  L->>F: Read the active slot's image header
-  L->>L: Check header HMAC, derive image key, check version against counter 1
-  alt Header check fails
+  CE->>B: Design running, loader core starts in the boot ROM
+  B->>SE: Nonce (loader NumIn) and MAC exchange under the pairing key
+  SE-->>B: Proof of pairing, counter 0
+  B->>SE: Encrypted read: application key unwraps into the AES key registers
+  B->>F: Read the active loader slot's header
+  B->>B: Check header HMAC, derive loader image key, check version against counter 0, lock XIP port 0
+  alt Loader header check fails
+    B->>F: Try the other loader slot, else stay in UART recovery
+  end
+  B->>L: Jump to the loader, which runs from flash through its cache
+  L->>SE: Authenticated read of counter 1
+  L->>F: Read the active application slot's header
+  L->>L: Check header HMAC, derive application image key, check version against counter 1, lock XIP port 1
+  alt Application header check fails
     L->>F: Try the other application slot, else stay in update-only mode
   end
-  L->>L: Release the application core, which runs from flash through the XIP cache
+  L->>L: Release the application core, which runs from flash through its own XIP cache
 ```
 
-Failure behavior: if neither slot's header checks, the device stays in an update-only mode in which it accepts only signed packages.
+Failure behavior: if neither loader slot checks, the boot ROM stays in UART recovery, which accepts only signed loader packages;
+if neither application slot checks, the loader stays in an update-only mode in which it accepts only signed packages.
 While the application runs, every cache line's tag is checked as it is fetched, and a failing tag locks the device down (`doc/xip.md`).
 
 ### 4.2 Host session and user data access

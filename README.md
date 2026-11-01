@@ -10,6 +10,20 @@ and I2C to a secure element.
 The design assumes a bitstream may be compromised and limits what that can expose:
 user data is unlocked only with a secret held outside the device. See `doc/arch.md` for the threat model.
 
+## Documents
+
+| Document | Contents |
+|---|---|
+| This README | Overview: chipset, FPGA tiers, keys, update chains, boot stages, supported FPGAs |
+| `doc/arch.md` | Threat model, risk assessment, Code Secrecy Profile, algorithm bill of materials, Verilog/Forth partition |
+| `doc/hw.md` | Hardware modules, buses, the two cores and mailbox, the shared XIP engine, key paths, boot sequence, resource estimate |
+| `doc/xip.md` | Execute in place: per-line AES-GCM, flash layout, caches, install and boot, RAM budget |
+| `doc/se.md` | Secure element slot map, counters, version rule |
+| `doc/roles.md` | Manufacturer, application owner, developer and user; developer keys and their rotation |
+| `doc/test.md` | Test plan and fault-injection campaigns |
+| `doc/fda.md` | FDA security architecture views |
+| `doc/ics55.md` | ASIC migration to the ICS55 55 nm process |
+
 ## chipset
 
 - An FPGA with bitstream encryption, ideally also hardware bitstream authentication (see FPGA Tiers)
@@ -64,14 +78,14 @@ Keeping the application code itself secret is not a goal.
 
 | | Platform | Application |
 |---|---|---|
-| What it is | The FPGA bitstream, including the `thriller` loader logic | The code the device runs, stored encrypted in SPI NOR flash |
+| What it is | The FPGA bitstream (hardware and boot ROM) and the updatable loader image in flash, in one package or separately | The code the device runs, stored encrypted in SPI NOR flash |
 | Signing key | Platform LMS key | Application LMS key |
 | Anti-rollback counter | Secure element counter 0 | Secure element counter 1 |
-| Checked by | Loader (LMS) before install; FPGA config engine at boot (Tier A) | Loader (LMS) before install; every cache line's tag as it is fetched (`doc/xip.md`) |
+| Checked by | Loader (LMS) before install; at boot, the FPGA config engine (Tier A) and the boot ROM (loader header, counter 0), then every loader cache line as it is fetched | Loader (LMS) before install; every cache line's tag as it is fetched (`doc/xip.md`) |
 | After an ASIC conversion | Gone, replaced by a smaller updatable-loader chain on counter 0 (`doc/ics55.md`) | Unchanged |
 
 The two chains share nothing except the secure element. A platform update never touches the application,
-and an application update never touches the bitstream. The application key can belong to a different
+and an application update never touches the platform. The application key can belong to a different
 party than the platform key, for example a customer who ships their own application on our platform.
 
 The ATECC608B has exactly two monotonic counters, one per chain.
@@ -85,7 +99,7 @@ a hash-based scheme that is secure against quantum computers.
   already has, so it needs no bignum or elliptic-curve arithmetic. The secure element does not support LMS
   and is not involved in signature checks.
 - **Public keys are small (56 bytes) and must be trusted, not secret.**
-  - The platform public key is built into the bitstream.
+  - The platform public key is built into the boot ROM (block RAM in the bitstream on the FPGA, mask ROM on the ASIC).
   - The application public key is held in a locked secure element slot and read over the authenticated
     (MAC'd) channel, so it can be provisioned by a different party than the platform.
     On an ASIC it can instead live in ROM if the same party owns both.
@@ -102,12 +116,16 @@ encryption, the same position as Tier B, so `thriller` never depends on that sig
 
 ## Stage 0 (immutable)
 
-Stage 0 is the FPGA's configuration engine. On an ASIC, it is the silicon itself.
+Stage 0 is the FPGA's configuration engine, followed by the boot ROM inside the bitstream.
+On an ASIC, it is the silicon and its mask ROM.
 
 - **Tier A:** the engine authenticates and decrypts the bitstream before the design runs,
   so a modified or forged bitstream never gets to execute.
 - **Tier B:** the engine only decrypts. A modified bitstream may run. `thriller` tolerates this:
   a foreign bitstream has no pairing key, and even a modified genuine one cannot unlock user data without the host.
+- **Boot ROM:** a small image (8 to 16 KB) in block RAM, configured with the bitstream. It checks the loader image in flash
+  (header HMAC, version against counter 0) before running it, and holds the flash programming primitives and UART recovery.
+  On the ASIC the same code is mask ROM (`doc/ics55.md`). The FPGA mirrors the ASIC's boot chain on purpose, so it is tested from the start (`doc/hw.md`).
 
 On the manufacturing side:
 
@@ -119,9 +137,9 @@ On the manufacturing side:
   On the ECP5, Project Trellis's `ecpbram` can patch block RAM contents without re-running place and route.
 - Configure and lock the secure element (keys, slot policies, counters) according to the slot map in `doc/se.md`.
 - Diversify every secure element key per device, so one compromised unit exposes nothing about another.
-- Build the platform LMS public key into the bitstream, and store the application LMS public key in a locked secure element slot.
+- Build the platform LMS public key into the boot ROM image in the bitstream, and store the application LMS public key in a locked secure element slot.
 - Store the board's pairing key in its secure element (it is already in that board's bitstream).
-- Put the encrypted bitstream and the encrypted application in flash.
+- Put the encrypted bitstream, the loader image and the application image in flash (the images encrypted per cache line, `doc/xip.md`).
 
 Because each board's bitstream is encrypted under its own key, a bitstream copied from one board will not
 configure another, and extracting one FPGA's key exposes only that board (or that batch).
@@ -133,23 +151,30 @@ In the field:
 
 ## Stage 1: the loader (part of the platform)
 
-The loader is the `thriller` logic in the bitstream. It runs on its own LiteForth core, separate from the core that runs
-the application, and acts as the application's firewall (`doc/hw.md`). It talks to the secure element, holds every key in
-hardware, protects user data, and accepts updates over the UART. It is the same on every FPGA, and it is what an ASIC
-conversion would put in silicon.
+The loader runs on its own LiteForth core, separate from the core that runs the application, and acts as the application's
+firewall (`doc/hw.md`). The boot ROM checks it and starts it, and it then executes in place from flash through its own cache
+(`doc/xip.md`). It talks to the secure element, holds every key in hardware, protects user data, and accepts updates over the UART.
+It is the same on every FPGA, and the ASIC runs the same boot ROM and loader.
 
-### Platform updates (FPGA only)
+### Platform updates
 
-- The update server builds a platform package for each board (or batch): the new bitstream, carrying that board's
-  next pairing key and encrypted under that board's bitstream key, its version, and the next pairing key wrapped under
-  the current one, all signed with the platform LMS key. The secure element serial number, reported by the loader, selects its package.
-  On Tier A, the bitstream also carries the FPGA vendor's own signature, so a platform update is signed twice.
-- The loader verifies the LMS signature against the platform public key built into the current bitstream.
-- The version is checked against counter 0. Older versions are refused.
-- The loader writes the bitstream to the inactive flash slot, installs the next pairing key in the secure element, and advances counter 0.
+A platform package carries a new bitstream, a new loader image, or both, under one platform version on counter 0.
+On the ASIC it carries only a loader image.
 
-An old bitstream can still configure the FPGA, but it holds a retired pairing key, so the secure element
-will not give it the application key or the data key. That is what stops platform rollback.
+- The update server builds a platform package for each board (or batch), selected by the secure element serial number the loader reports.
+  - A bitstream carries that board's next pairing key, is encrypted under that board's bitstream key, and comes with the next pairing key
+    wrapped under the current one. On Tier A it also carries the FPGA vendor's own signature, so it is signed twice.
+  - A loader image is encrypted under a content key wrapped under the board's current pairing key. Platform packages are therefore
+    per board even without a bitstream, so a stolen platform signing key alone cannot produce a package that installs fleet-wide.
+  - Everything is signed with the platform LMS key.
+- The loader verifies the LMS signature against the platform public key in the boot ROM.
+- The version must not be older than counter 0.
+- The loader writes the bitstream to the inactive bitstream slot and re-encrypts the loader image per cache line into the inactive loader slot,
+  through the boot ROM's flash primitives, installs the next pairing key if the package carries a bitstream, and advances counter 0.
+
+Platform rollback is blocked twice. An old bitstream can still configure the FPGA, but it holds a retired pairing key,
+so the secure element will not give it the application key or the data key. An old loader image is refused by the boot ROM,
+because its version is older than counter 0.
 
 ### Application updates
 
@@ -161,8 +186,10 @@ will not give it the application key or the data key. That is what stops platfor
 
 ### Boot
 
-- The loader checks the image header, derives the image key into the AES key registers, compares the version with counter 1,
-  and then releases the application core, which executes from flash through the decrypting cache.
+- The boot ROM authenticates to the secure element, checks the loader image's header and its version against counter 0,
+  derives the loader's image key, and starts the loader, which runs from flash through its own cache.
+- The loader checks the application image header, derives its image key into the AES key registers, compares the version with counter 1,
+  and then releases the application core, which executes from flash through its own cache.
 - Every cache line's tag is checked as it is fetched, so flash changed after boot is caught (`doc/xip.md`).
 - The application key is device-unique and reaches only the AES key registers, never software, so a flash image copied to another board will not run.
 - The application key survives platform updates: each new bitstream reaches it through its own pairing key.
@@ -181,8 +208,9 @@ so attempts must be limited another way; both secure element counters are alread
 
 ## ASIC conversion
 
-An ASIC removes the bitstream: no bitstream key, no vendor signature, no pairing key rotation. Mask ROM becomes Stage 0,
-and verifies an updatable loader in flash whose anti-rollback counter is the freed counter 0.
+An ASIC removes the bitstream: no bitstream key, no vendor signature, no pairing key rotation. Mask ROM holds the boot ROM code,
+and verifies the same updatable loader in flash as on the FPGA, still under counter 0. Because the FPGA already runs this chain,
+the ASIC's boot chain will have been tested long before tape-out.
 The application chain, the host-authorized data key and the secure element carry over unchanged.
 
 One thing does change. A pairing key in mask-programmed logic is identical on every chip and can be recovered

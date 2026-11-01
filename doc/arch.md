@@ -7,11 +7,12 @@ provisioning, booting and updating, and where each one runs.
 
 `thriller` authenticates two independent kinds of update:
 
-- **Platform updates** replace the FPGA bitstream, including the `thriller` loader. They exist only on FPGAs.
+- **Platform updates** replace the FPGA bitstream (hardware and boot ROM), the updatable loader image in flash, or both, under one platform version.
+  On an ASIC they replace only the loader image.
 - **Application updates** replace the application code stored encrypted in SPI NOR flash. They exist on FPGAs and on an ASIC conversion.
 
 Each chain has its own LMS signing key, its own secure element counter and its own package format.
-The rows marked "platform only" below disappear in an ASIC conversion; everything else carries over.
+Rows about the bitstream (marked "platform only" or "—" below) disappear in an ASIC conversion; the platform chain itself remains, for the loader.
 
 ## Threat model
 
@@ -95,7 +96,7 @@ Ratings are for the base model (no Code Secrecy Profile) unless a row says other
 |---|---|---|---|---|---|---|---|
 | R1 | MicroSD card: user data | Thief with a card reader | Remove the card and read user data offline | The card is removable and readable | Critical | High | AES-256-GCM under a per-device data key that the secure element releases only after host authorization (CheckMac) |
 | R2 | External SPI flash: application image | Casual hobbyist with a flash programmer | Dump the flash and inspect the application | Flash is external and readable | Low | High | AES-256-GCM under a per-device application key; a copied image will not run on another board |
-| R3 | External SPI flash: version state | Insider or thief with physical access | Restore an older, vulnerable bitstream or application image | Flash contents are not bound to a version | High | Medium | Secure element monotonic counters (0: platform, 1: application); pairing key rotation retires old bitstreams |
+| R3 | External SPI flash: version state | Insider or thief with physical access | Restore an older, vulnerable bitstream, loader or application image | Flash contents are not bound to a version | High | Medium | Secure element monotonic counters (0: platform, covering bitstream and loader; 1: application), checked by the boot ROM and the loader; pairing key rotation retires old bitstreams |
 | R4 | UART update path | Advanced remote attacker | Send a forged or modified update package | UART accepts update packages from anyone | Critical | Medium | LMS signature verified by the loader over the ciphertext, before decrypting or installing anything |
 | R5 | Update packages in transit | Casual hobbyist | Hex dump an update file or capture it on the UART | Packages travel over open channels | Low | High | AES-256-GCM under the fleet-wide distribution key (obfuscation). For real secrecy, per-device package keys (Code Secrecy Profile) |
 | R6 | Distribution key | Attacker with one compromised unit | Read the distribution key and decrypt all past and future packages | Key is the same on every unit and readable by the loader | Low (High with the Code Secrecy Profile) | Medium | Accepted in the base model. Code Secrecy Profile replaces it with per-device package keys |
@@ -206,7 +207,7 @@ Package encryption itself (AES-256-GCM) is already in the base model.
 |---|---|---|
 | **Host** | Signing and provisioning tools, and the field update client | Us (scripts and an HSM) and the FPGA vendor (bitstream tools) |
 | **Config engine** | The FPGA's hardened configuration logic | FPGA vendor, fixed in silicon (platform only) |
-| **Loader** | RTL cores and soft MCU code in the bitstream, or in silicon on an ASIC | Us |
+| **Loader** | RTL cores and the boot ROM in the bitstream (or silicon on an ASIC), and the loader image executed in place from flash | Us |
 | **Secure element** | ATECC608B (or MOD8ID) | Microchip / Modsemi, fixed in silicon |
 
 The design goal is that every algorithm in the loader is built from **SHA-256 and AES**: no bignum or
@@ -218,7 +219,7 @@ elliptic-curve arithmetic. LMS signatures make this possible, because verifying 
 |---|:-:|:-:|:-:|:-:|---|:-:|
 | Bitstream signature (ECDSA P-256 or RSA-4096, per family; Tier A only) | sign | verify | | | Stage 0 bitstream authentication | — |
 | Bitstream encryption (AES, mode per family; per-board key) | encrypt | decrypt | | | Bitstream confidentiality, and quantum-safe Stage 0 | — |
-| LMS (RFC 8554), platform key | sign (stateful, HSM) | | **verify** | | Platform package signatures | — |
+| LMS (RFC 8554), platform key | sign (stateful, HSM) | | **verify** | | Platform package signatures (bitstream and loader image) | ✓ (loader only) |
 | LMS (RFC 8554), application key | sign (stateful, HSM) | | **verify** | | Application package signatures | ✓ |
 | SHA-256 | yes | | **yes** | yes | LMS, package digests, MACs, nonce and key derivation | ✓ |
 | SE MAC protocol (SHA-256 based) | | | **yes** | yes | Authenticated counter reads and public key reads | ✓ |
@@ -226,7 +227,7 @@ elliptic-curve arithmetic. LMS signatures make this possible, because verifying 
 | AES-256-GCM | | | **yes** | | Application (per cache line, `doc/xip.md`) and user data encryption and authentication | ✓ |
 | AES-256-GCM, distribution key | encrypt | | **decrypt** | store | Application packages in transit (obfuscation) | ✓ |
 | Key wrap / encrypted write | wrap | | **yes** | yes | Installing the next pairing key | — |
-| Monotonic counter 0 | | | | yes | Platform anti-rollback | — |
+| Monotonic counter 0 | | | | yes | Platform anti-rollback (bitstream and loader image) | ✓ (loader only) |
 | Monotonic counter 1 | | | | yes | Application anti-rollback | ✓ |
 | TRNG | | | | yes | Key generation, SE nonces | ✓ |
 | Loader nonce source | | | **yes** | | Freshness the SE and bus cannot control | ✓ |
@@ -239,14 +240,17 @@ elliptic-curve arithmetic. LMS signatures make this possible, because verifying 
 ECDSA with AES-256 on Lattice Nexus, RSA-4096 with AES-GCM-256 on Efinix Titanium. These signatures are not
 quantum-safe, so the device must also be locked to accept only encrypted bitstreams (README, FPGA Requirements item 5).
 
-**LMS signing (both chains).** Each chain has its own LMS key pair. Platform packages hold a bitstream, its version,
-and the next pairing key wrapped under the current one. Application packages hold the application image, encrypted
+**LMS signing (both chains).** Each chain has its own LMS key pair. Platform packages hold a bitstream (with the next pairing key
+wrapped under the current one), a loader image (encrypted under a content key wrapped under the board's current pairing key), or both,
+and the platform version. Application packages hold the application image, encrypted
 under the distribution key (AES-256-GCM), and its version; the LMS signature covers the ciphertext.
-Because the loader verifies the platform signature before writing a bitstream to flash, every platform update is signed
+Because the loader verifies the platform signature before writing a bitstream to flash, every bitstream is signed
 twice: LMS by us, and the vendor's own format checked by the config engine at boot.
 
 Platform packages are built per board (or per batch), because each board's bitstream is encrypted under its own
-eFuse key and carries its own pairing key. Synthesis and place and route still run once per release; only the
+eFuse key and carries its own pairing key, and each loader image's content key is wrapped under the board's pairing key.
+That keeps a second barrier in place for loader-only packages: a stolen platform signing key alone cannot build a package
+that installs on any board. Synthesis and place and route still run once per release; only the
 block RAM patch, encryption and signing are repeated per board.
 
 LMS is stateful, and the signing side must be built around that:
@@ -265,7 +269,7 @@ their own application on our platform.
   the device-unique application key, data key, developer key (`doc/roles.md`) and log key into their slots, then lock the data zone.
 - Configure the data key slot to require authorization by the host authorization key, and make the host
   authorization key non-readable, so it can only be used inside the secure element.
-- The platform LMS public key needs no provisioning: it is built into the bitstream.
+- The platform LMS public key needs no provisioning: it is built into the boot ROM image in the bitstream.
 - Diversify every key per device, derived in the HSM as KDF(master key, secure element serial number) so no key database is needed.
   This is mandatory: it is what keeps a compromised unit from exposing the rest of the fleet.
   The one exception is the distribution key, which must be the same on every unit so one package installs everywhere.
@@ -291,6 +295,8 @@ Fixed in silicon; we only choose and lock it.
 ## Loader
 
 This is the part we write. It should be small, identical across FPGA families, and suitable for an ASIC.
+It has two parts: the boot ROM, which checks and starts the loader image, and the loader image itself, which runs in place from flash
+(`doc/hw.md`, Boot and lockdown).
 
 **SHA-256 (required, RTL core strongly recommended).** Everything else in the loader is built on it:
 LMS verification, package digests, the secure element MAC protocol, HMAC, and key derivation.
@@ -312,7 +318,7 @@ eight times faster. Public keys are 56 bytes for every parameter set. SP 800-208
 variants with smaller signatures.
 
 Where the public keys come from:
-- **Platform key:** a constant in the bitstream, authenticated by Stage 0.
+- **Platform key:** a constant in the boot ROM (block RAM in the bitstream on the FPGA, authenticated by the configuration engine; mask ROM on the ASIC).
 - **Application key:** read from its secure element slot over the MAC'd channel at each use, so a device on the I2C bus cannot substitute its own.
 
 **Secure element MAC protocol.** The loader recomputes the MACs that the secure element returns, so the I2C bus
@@ -454,7 +460,7 @@ These are deliberately absent from the loader:
 
 ## Open Questions
 
-1. **Pairing key rotation sequencing (platform only).** The order of operations for writing a new bitstream, installing the next pairing key and advancing counter 0, such that a power failure at any point leaves a bootable, non-rollbackable device.
+1. **Pairing key rotation sequencing (platform only).** The order of operations for writing a new bitstream and loader image, installing the next pairing key and advancing counter 0, such that a power failure at any point leaves a bootable, non-rollbackable device.
 2. **Secure element protocol details.** Confirm the slot map in `doc/se.md`, and that GenDig over the counter zone, authenticated reads of the public key slot, and EncWrite of the pairing key slot all work as expected on the ATECC608B, and separately on the MOD8ID.
 3. **AES mode choice.** AES-256-GCM per cache line is recommended for execute in place (`doc/xip.md`). Confirm the GHASH multiplier's area on the smallest target FPGA.
 4. **Nonce source.** Whether a ring-oscillator TRNG is reliable enough across the supported FPGA families and an ASIC process, or whether the counter fallback is acceptable.
