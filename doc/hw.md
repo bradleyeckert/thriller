@@ -127,7 +127,7 @@ The mailbox is the only path from the application to the loader, so it is the fi
 |---|---|---|---|---|---|
 | Loader core | Master | — | RTL | RTL | Unmodified LiteForth CPU |
 | Boot ROM / loader memory | AXI4-Lite | Every fetch | Block RAM, initialized by the bitstream | Mask ROM (`doc/ics55.md`) | |
-| Loader SRAM | AXI4-Lite | Every load and store | Block RAM | SRAM macro | Keys in transit, buffers, stacks |
+| Loader SRAM | AXI4-Lite | Every load and store | Block RAM | SRAM macro | Buffers, stacks, variables; never keys (see Key paths) |
 | SHA-256 core + LMS chain sequencer | APB | About 1 word per 4 cycles | RTL | RTL | Private key input and private keyed-digest output (see Key paths) |
 | AES-256 core (loader use) | APB | Moderate | RTL | RTL | Shares the AES datapath with the XIP engine; XIP refills take priority |
 | AES key registers and key gate | Private | — | RTL | RTL | Loaded only from the SHA unwrap path; never readable |
@@ -221,16 +221,17 @@ The same port can insert a key unwrapped from the secure element, for the develo
 
 **Keyed digests stay private.** A digest whose input included an inserted key can't be read back over APB. It can only go to:
 - the security block's comparator, to check a MAC from the secure element; or
-- the AES key registers, XORed in, to unwrap a key read from the secure element with EncRead (whose keystream is such a digest).
+- the AES key registers, XORed in, to unwrap a key read from the secure element with EncRead (whose keystream is such a digest); or
+- the AES key registers or the SHA-256 key input, loaded directly, for a derived key: the per-install image key (`doc/xip.md`) and the developer working key (`doc/roles.md`).
 
-**Result:** the pairing key, the application key, the data key and the distribution key all move from the key source or the secure element
+**Result:** the pairing key, the application, data, distribution, developer and log keys all move from the key source or the secure element
 into the AES key registers without passing through either CPU, their stacks, or any SRAM. A bug in the loader cannot leak them, and the application core has no path to them at all.
 Unkeyed digests (LMS verification, image hashes) remain readable, as the loader needs them.
 
 ## Boot and lockdown
 
 1. Reset holds the application core in reset. The loader core starts from its boot ROM.
-2. The loader authenticates to the secure element, reads counter 1, unwraps the application key into the key registers, and checks the XIP header's version.
+2. The loader authenticates to the secure element, reads counter 1, unwraps the application key, checks the XIP header's HMAC, derives the image key into the key registers, and for a production image checks the header's version against counter 1 (`doc/xip.md`).
 3. The loader releases the application core, which starts executing from the XIP window.
 4. On lockdown (any detection, a tag failure, a fault in the loader), the loader core's lockdown path holds the application core in reset, clears the secrets and stops.
 

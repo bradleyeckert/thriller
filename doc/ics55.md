@@ -108,8 +108,8 @@ At 2 to 3 mm2 per Mb, SRAM is expensive: 64 KB (0.5 Mb) takes about 1 to 1.5 mm2
 if those dimensions are the core area. A whole application cannot be decrypted into SRAM unless it is small. That suggests:
 
 - **Execute in place from QSPI flash, through a small decrypting and authenticating cache.** The design is worked out in `doc/xip.md`:
-  AES-256-GCM per cache line, with a nonce that binds each line to its address, slot and image version, so lines are checked on every fill
-  without a Merkle tree, and the loader plus a 4 KB cache need about 7 to 8 KB of SRAM.
+  AES-256-GCM per cache line, under an image key unique to each install and a nonce that binds each line to its slot and address,
+  so lines are checked on every fill without a Merkle tree, and the loader plus a 4 KB cache need about 7 to 8 KB of SRAM.
 
 ### Things only silicon can answer
 

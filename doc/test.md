@@ -5,13 +5,14 @@ already used in [LiteForth](https://github.com/bradleyeckert/LiteForth), the sof
 `vm.c` as the reference model, power cuts at every step, requirements traced to evidence, and a log of
 board test runs.
 
-Risk IDs (R1–R24) refer to the Risk Assessment in `doc/arch.md`. FDA control categories and gaps refer to `doc/fda.md`.
+Risk IDs (R1–R27) refer to the Risk Assessment in `doc/arch.md`. FDA control categories and gaps refer to `doc/fda.md`.
 
 ## 1. Approach
 
 ### One loader, two execution platforms
 
-The loader is LiteForth code running on a LiteForth CPU built in the FPGA fabric. `vm.c` simulates that CPU.
+The loader is LiteForth code running on its own LiteForth CPU in the FPGA fabric, next to a second core for the application (`doc/hw.md`).
+`vm.c` simulates that CPU; the software platform runs the two cores as two processes joined by a shared-memory mailbox.
 The crypto and peripheral cores (SHA-256, AES, LMS chain hashing, I2C, QSPI, SD, UART) appear to the CPU as
 I/O ports through `>sys` and `sys>`, the same way LiteForth's non-blocking math unit does (`src/iomap.c`).
 
@@ -148,9 +149,9 @@ and once more on the MOD8ID.
 | Application updates | Valid package installs. Every byte of a package flipped, one at a time: rejected before decryption. Wrong signing key. Old version (counter 1). Truncated package. (LMS leaf reuse cannot be seen by the device; the signing tools are tested for it separately.) | R4, R3, R20 |
 | Platform updates | As above, plus a package built for another board (fails to configure), and pairing key rotation | R3, R4, R14 |
 | Power cuts | Every update run is repeated with a cut at each step k, where every flash erase, flash program, secure element write and counter increment is one step, and the cut leaves that step half done. After each cut, the board must boot a valid image, and must never accept an older version | R19, Open Question 1 |
-| Boot | Corrupt active slot falls back to the other; both corrupt enters update-only mode; tag failure never runs code | R2, R19 |
+| Boot | A corrupt active slot header falls back to the other slot; both corrupt enters update-only mode; a line tag failure while running locks the device down and never runs the line | R2, R19 |
 | I2C channel | Replayed counter values, altered MACs, a stale nonce, responses from the wrong slot: all rejected | R7, R8 |
-| Host sessions | Wrong host key, replayed response, response to a stale challenge: data key never released. Session end and timeout erase the data key (checked by reading the loader's RAM and registers afterward) | R1, R9 |
+| Host sessions | Wrong host key, replayed response, response to a stale challenge: data key never released. Session end and timeout clear the data key from the AES key registers (checked through the Verilated key gate and, in RTL, the registers themselves) | R1, R9 |
 | MicroSD input | Fuzzing of every file the loader reads (packages, card metadata) with AFL++ or libFuzzer, through the software platform. Malformed inputs must be rejected cleanly: no `vm.c` trap, no out-of-range access, no stack overflow | R23 |
 | Security event log | Records appended for each security event; removing, editing, reordering or truncating records is detected at the next boot and reported | R24 |
 | Mailbox | Fuzzing of the loader's message parser with malformed, oversized and changing requests from a simulated application core; every request outside the fixed formats rejected; no request reaches a key or the flash directly | R25, R26 |
@@ -185,10 +186,10 @@ one or more instructions at the moment it makes a security decision (R16). The d
 |---|---|---|
 | LMS root comparison | Package verification | Install an unsigned update |
 | Version against counter | Package verification | Install an older, vulnerable version |
-| Authentication tag check | Boot | Run modified code from flash |
+| Authentication tag check | Every cache fill | Run modified code from flash |
 | Secure element MAC check | Every counter and key read | Accept a forged counter or response |
 | CheckMac result | Host session | Release the data key without the host (this one is in the secure element; the loader must still not act on a forged success) |
-| Key erasure | Session end | Leave the data key in RAM |
+| Key erasure | Session end | Leave the data key in the AES key registers |
 
 ### Fault model
 
@@ -276,8 +277,8 @@ These are design rules for the loader, written so that campaigns A to D have som
    application, advancing a counter, releasing a key) proceeds only if the counter holds the exact expected sum.
 6. **Random delays.** Short random delays from the TRNG before each decision, so a glitch cannot be timed by counting cycles from a trigger.
 7. **Detectors.** A delay-line sensor that detects core supply dips, and a frequency check of the core clock against the external oscillator.
-8. **Fail closed.** On any detection or inconsistency: erase keys held in the fabric (RAM, stacks, A and B registers), log the event,
-   and stop, through the loader's own `yeet` handler. Repeated detections across boots can lock the device into update-only mode.
+8. **Fail closed.** On any detection or inconsistency: hold the application core in reset, clear the key registers and pass tokens
+   through the secret-clear fan-out, wipe the loader's stacks and registers, log the event, and stop, through the loader's own `yeet` handler. Repeated detections across boots can lock the device into update-only mode.
 
 ## 7. Board design for testability
 

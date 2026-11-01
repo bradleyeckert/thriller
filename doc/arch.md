@@ -8,7 +8,7 @@ provisioning, booting and updating, and where each one runs.
 `thriller` authenticates two independent kinds of update:
 
 - **Platform updates** replace the FPGA bitstream, including the `thriller` loader. They exist only on FPGAs.
-- **Application updates** replace the code and data stored encrypted in SPI NOR flash. They exist on FPGAs and on an ASIC conversion.
+- **Application updates** replace the application code stored encrypted in SPI NOR flash. They exist on FPGAs and on an ASIC conversion.
 
 Each chain has its own LMS signing key, its own secure element counter and its own package format.
 The rows marked "platform only" below disappear in an ASIC conversion; everything else carries over.
@@ -109,7 +109,7 @@ Ratings are for the base model (no Code Secrecy Profile) unless a row says other
 | R14 | FPGA bitstream encryption key | Advanced attacker with a lab | Side-channel or invasive extraction of the AES key from one FPGA, then decryption of its bitstream | Physical access to the configuration engine | High (that board only, or that batch with per-batch keys) | Low | Per-board (or per-batch) eFuse keys and per-board pairing keys patched into each board's bitstream; host-authorized data key keeps user data on the stolen board safe even so |
 | R15 | Loader: soft CPU debug paths | Casual hobbyist with a JTAG pod | Use a soft CPU debug port or user-JTAG primitive to read keys from internal memory | Debug logic left in a production bitstream | Critical | Medium | No debug ports or user-JTAG primitives in production bitstreams |
 | R16 | Loader: security checks | Advanced attacker with physical access | Voltage or clock glitching to skip the LMS check, the counter check or the tag check | A single check is a single point of failure | Critical | Low | Multi-bit decisions, hardware comparators and key gating, duplicated checks, flow counter, random delays, glitch detectors, fail closed. Tested by fault-injection campaigns A to D (`doc/test.md` section 6) |
-| R17 | Loader: AES core | Thief with an oscilloscope | Power or EM side-channel analysis during application decryption | AES core is not masked | Low (High with the Code Secrecy Profile) | Medium | Accepted in the base model. Code Secrecy Profile adds a masked AES core and decrypts once per boot |
+| R17 | Loader: AES core | Thief with an oscilloscope | Power or EM side-channel analysis during application decryption | AES core is not masked | Low (High with the Code Secrecy Profile) | Medium | Accepted in the base model. Code Secrecy Profile adds a masked AES core |
 | R18 | Secure element | Advanced attacker with a lab | Invasive or side-channel attack on the ATECC608B to extract its keys | Physical access to the secure element | High (one unit only) | Low | Per-device key diversification limits the result to one unit |
 | R19 | Update process | Any user, or an attacker cutting power | Power failure during a platform or application update | Update is not atomic | Medium (bricked unit) | Medium | A/B flash slots. Pairing key rotation sequencing is still open (Open Question 1) |
 | R20 | LMS signing infrastructure | Insider, or an operator error | Reuse an LMS leaf (for example after restoring the signer from backup), enabling forgery | LMS is stateful | Critical (fleet-wide forged updates) | Low | Signing state kept in an HSM that enforces one-time use (SP 800-208); no restores of signer state |
@@ -175,8 +175,8 @@ so the loader can reject a forged package before decrypting anything.
 
 **Side-channel hardening.** A thief can reboot a unit thousands of times and record power or EM traces while the
 loader's AES core decrypts the application. Recovering one unit's key reveals the fleet's code. Options:
-- A masked or otherwise side-channel-hardened AES core in the loader.
-- Decrypt the application once per boot into internal RAM, never streaming it repeatedly from flash.
+- A masked or otherwise side-channel-hardened AES core. With execute in place (`doc/xip.md`), the application is decrypted again on every
+  cache miss, so an attacker can collect traces without rebooting; masking is the main defense.
 - Optionally, a counter-limited application key in the secure element, which caps how many times it is released, at the cost of a fixed boot budget.
 
 **No in-use readout paths.** These become hard requirements instead of hygiene:
@@ -222,7 +222,7 @@ elliptic-curve arithmetic. LMS signatures make this possible, because verifying 
 | SHA-256 | yes | | **yes** | yes | LMS, package digests, MACs, nonce and key derivation | ✓ |
 | SE MAC protocol (SHA-256 based) | | | **yes** | yes | Authenticated counter reads and public key reads | ✓ |
 | SE host authorization (CheckMac, SHA-256 based) | yes | | forwards only | **check** | Host proves itself to the SE; unlocks the data key | ✓ |
-| AES-256-GCM (or AES-CTR + HMAC) | | | **yes** | | Application and user data encryption and authentication in flash | ✓ |
+| AES-256-GCM | | | **yes** | | Application (per cache line, `doc/xip.md`) and user data encryption and authentication | ✓ |
 | AES-256-GCM, distribution key | encrypt | | **decrypt** | store | Application packages in transit (obfuscation) | ✓ |
 | Key wrap / encrypted write | wrap | | **yes** | yes | Installing the next pairing key | — |
 | Monotonic counter 0 | | | | yes | Platform anti-rollback | — |
@@ -261,7 +261,7 @@ their own application on our platform.
 **Provisioning.**
 - Write and lock the secure element configuration zone.
 - Write the application LMS public key, the first pairing key, the host authorization key, the distribution key,
-  the device-unique application key and the device-unique data key into their slots, then lock the data zone.
+  the device-unique application key, data key, developer key (`doc/roles.md`) and log key into their slots, then lock the data zone.
 - Configure the data key slot to require authorization by the host authorization key, and make the host
   authorization key non-readable, so it can only be used inside the secure element.
 - The platform LMS public key needs no provisioning: it is built into the bitstream.
@@ -329,12 +329,12 @@ Options, smallest first:
 - A ring-oscillator TRNG with health tests (no external dependency).
 - A free-running counter combined with the SE serial number and a boot count. This is weaker: it must never repeat across power cycles.
 
-**AES-256-GCM, or AES-256-CTR with HMAC-SHA256.** Decrypts and authenticates the application read from flash at boot,
-and encrypts it on update. GCM needs an AES core plus a GHASH (GF(2^128) multiply). CTR plus HMAC reuses the
-SHA-256 core and needs only the AES encrypt direction, so it is the recommendation (see Implementation partition).
+**AES-256-GCM.** Decrypts and authenticates each cache line of the application as it is fetched (`doc/xip.md`),
+and encrypts the application on install. GCM needs an AES core (encrypt direction only) plus a GHASH multiplier;
+see AES mode under Implementation partition for why it was chosen over CTR with HMAC-SHA256.
 The secure element's AES is single-block over I2C and too slow for whole images. AES-256 is quantum-safe.
 
-**Key wrap for pairing key rotation (platform only).** The platform package carries the next release's pairing key,
+**Key wrap for pairing key rotation (platform only).** The platform package carries the board's next pairing key,
 encrypted under the current one. The loader unwraps it and writes it to the secure element with an
 authorized encrypted write. Sequencing across power failures still needs to be designed (see Open Questions).
 
@@ -342,7 +342,7 @@ authorized encrypted write. Sequencing across power failures still needs to be d
 challenge, mixes in its own nonce, passes the challenge to the host, and forwards the host's answer to the
 secure element's CheckMac. Only after a successful CheckMac will the secure element release the data key.
 The loader never sees the host authorization key, so a compromised bitstream cannot learn it.
-The loader must erase the data key when the session ends.
+The loader must clear the data key from the AES key registers when the session ends.
 
 **Support logic (not cryptographic).**
 - I2C master with the secure element's CRC-16 (polynomial 0x8005, initial value 0, LSB first), wake, idle and sleep handling.
@@ -401,7 +401,7 @@ These are rough, to be replaced by Yosys and simulation measurements.
 |---|---|---|
 | SHA-256, one block | About 6,000 to 8,000 instructions (the ISA has shifts but no rotate, so each rotate takes several instructions) | About 65 cycles |
 | LMS verification (W = 4) | About 0.2 to 0.4 seconds | A few milliseconds |
-| Hashing a 256 KB application at boot | About 1 to 2 seconds | Limited by flash reads, roughly 10 milliseconds |
+| Hashing a 256 KB application (at install; execute in place checks lines as they are fetched instead) | About 1 to 2 seconds | Limited by flash reads, roughly 10 milliseconds |
 | AES-256, a 256 KB application | Seconds, with large tables | Limited by flash reads |
 | Area | Code space only | SHA-256 and AES-256 each roughly 1,000 to 2,500 LUT4s, against 24K (LFE5U-25) or 17K (LIFCL-17) |
 
@@ -425,7 +425,7 @@ LiteForth's sealed update format and data logs move to the same algorithms:
 | X25519 | Wrapping package content keys to a board's key; data logs to the server's key | Per-device symmetric keys derived in the HSM as KDF(master, serial), which the server can derive too. No public-key step remains, so nothing breaks under quantum attack |
 | BLAKE2s | Package hashes, block hash tables, stage 1 MACs | SHA-256 and HMAC-SHA256 |
 | Poly1305 | Data log record tags | HMAC-SHA256 |
-| AES-128 and SM4 in CTR mode | Package and data log encryption | AES-256 in CTR mode |
+| AES-128 and SM4 in CTR mode | Package and data log encryption | AES-256-GCM |
 
 The C libraries remain useful on the host and as the C implementations of the crypto ports on MCU targets,
 but none of them is called from Forth code through the C API.
@@ -434,21 +434,21 @@ but none of them is called from Forth code through the C API.
 
 Fixed in silicon; we only configure and lock it. With LMS, it no longer checks signatures. Its jobs are:
 
-- Two monotonic counters (maximum 2,097,151): counter 0 for the platform, counter 1 for the application
-- Key storage: application LMS public key, pairing key, host authorization key, distribution key, device-unique application key, device-unique data key
+- Two monotonic counters (maximum 2,097,151): counter 0 for the platform, counter 1 for the application (which also carries the developer key epoch, `doc/roles.md`)
+- Key storage: application LMS public key, pairing key, host authorization key, distribution key, and the device-unique application key, data key, developer key and log key
 - Host authorization: CheckMac against the non-readable host authorization key, gating use of the data key slot
 - SHA-256 and the Nonce, GenDig, MAC, CheckMac, EncRead and EncWrite commands for the authenticated channel
 - TRNG
 - Configuration and data zone locks
 
-Its ECDSA engine goes unused. On an ASIC, counter 0 is free for other uses.
+Its ECDSA engine goes unused. On an ASIC, counter 0 protects the updatable loader instead of the bitstream (`doc/ics55.md`).
 
 ## Not needed
 
 These are deliberately absent from the loader:
 
 - ECDSA, Ed25519 and RSA (no bignum or elliptic-curve arithmetic, and none are quantum-safe)
-- PUF and fuzzy extractor (the secure element holds device-unique keys)
+- PUF and fuzzy extractor on the FPGA (the secure element holds device-unique keys). An ASIC with no on-chip NVM needs an SRAM PUF to bind its pairing key (`doc/ics55.md`)
 - Any algorithm specific to one FPGA family
 
 ## Open Questions
@@ -457,7 +457,7 @@ These are deliberately absent from the loader:
 2. **Secure element protocol details.** Confirm that GenDig over the counter zone, authenticated reads of the public key slot, and EncWrite of the pairing key slot all work as expected on the ATECC608B, and separately on the MOD8ID.
 3. **AES mode choice.** AES-256-GCM per cache line is recommended for execute in place (`doc/xip.md`). Confirm the GHASH multiplier's area on the smallest target FPGA.
 4. **Nonce source.** Whether a ring-oscillator TRNG is reliable enough across the supported FPGA families and an ASIC process, or whether the counter fallback is acceptable.
-5. **ASIC pairing key.** A pairing key in mask logic is the same on every chip and can be recovered from one die. An ASIC needs a per-device pairing key, written at provisioning into one-time-programmable fuses or another per-device store.
+5. **ASIC pairing key.** A pairing key in mask logic is the same on every chip and can be recovered from one die, and the open ICS55 PDK has no one-time-programmable cells. The proposed answer is an SRAM PUF wrapping a per-device pairing key stored in flash (`doc/ics55.md`).
 6. **Separate key owners.** If the application key belongs to a customer, how they provision their LMS public key into the secure element without needing access to the platform key.
 7. **LMS parameter set and signing infrastructure.** Final choice of tree height and Winternitz parameter (W = 4 assumed), whether to use SHA-256/192, and which HSM or signing service manages LMS state for each key owner.
 8. **Host authorization on the ATECC608B.** Confirm that a slot can require authorization by another key
@@ -467,8 +467,7 @@ These are deliberately absent from the loader:
    (Project Trellis documents the bitstream format), whether encrypted-only configuration and readback lockout can be fused,
    and whether a bitstream built with Yosys and nextpnr can be encrypted, and with which tool.
 10. **Code Secrecy Profile.** Whether per-device package keys fit the intended update distribution (one build per unit),
-   how much area a masked AES core costs on the smallest target, and whether the application fits in internal RAM
-   so it is decrypted only once per boot.
+   and how much area a masked AES core costs on the smallest target.
 11. **Per-board or per-batch bitstream keys.** Per-board keys contain a key extraction to one board but need one platform
    package per board; per-batch keys cut packaging work but widen the blast radius to the batch. Also confirm the eFuse
    programming flow for unique keys on each target family, and that `ecpbram` patching works on encrypted ECP5 builds

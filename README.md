@@ -67,8 +67,8 @@ Keeping the application code itself secret is not a goal.
 | What it is | The FPGA bitstream, including the `thriller` loader logic | The code the device runs, stored encrypted in SPI NOR flash |
 | Signing key | Platform LMS key | Application LMS key |
 | Anti-rollback counter | Secure element counter 0 | Secure element counter 1 |
-| Checked by | Loader (LMS) before install; FPGA config engine at boot (Tier A) | Loader (LMS) before install; loader's authentication tag at boot |
-| After an ASIC conversion | Gone: the platform is fixed in silicon | Unchanged |
+| Checked by | Loader (LMS) before install; FPGA config engine at boot (Tier A) | Loader (LMS) before install; every cache line's tag as it is fetched (`doc/xip.md`) |
+| After an ASIC conversion | Gone, replaced by a smaller updatable-loader chain on counter 0 (`doc/ics55.md`) | Unchanged |
 
 The two chains share nothing except the secure element. A platform update never touches the application,
 and an application update never touches the bitstream. The application key can belong to a different
@@ -133,9 +133,10 @@ In the field:
 
 ## Stage 1: the loader (part of the platform)
 
-The loader is the `thriller` logic in the bitstream: a soft MCU or state machine that talks to the
-secure element, decrypts the application and user data, and accepts updates over the UART. It is the same on
-every FPGA, and it is what an ASIC conversion would put in silicon.
+The loader is the `thriller` logic in the bitstream. It runs on its own LiteForth core, separate from the core that runs
+the application, and acts as the application's firewall (`doc/hw.md`). It talks to the secure element, holds every key in
+hardware, protects user data, and accepts updates over the UART. It is the same on every FPGA, and it is what an ASIC
+conversion would put in silicon.
 
 ### Platform updates (FPGA only)
 
@@ -156,12 +157,14 @@ will not give it the application key or the data key. That is what stops platfor
 - The loader reads the application public key from the secure element over the MAC'd channel and verifies the LMS signature against it, before decrypting anything.
 - The loader decrypts the image with the distribution key, read from the secure element over the MAC'd channel.
 - The version is checked against counter 1. Older versions are refused.
-- The loader encrypts and authenticates the application (for example AES-GCM) with the device-unique application key, writes it to the inactive flash slot, and advances counter 1.
+- The loader re-encrypts the application per cache line with AES-256-GCM, under a fresh image key derived from the device-unique application key, writes it to the inactive flash slot, and advances counter 1 (`doc/xip.md`).
 
 ### Boot
 
-- The loader reads the application from flash and checks its authentication tag before running it.
-- The application key is device-unique and stays in the secure element, so a flash image copied to another board will not run.
+- The loader checks the image header, derives the image key into the AES key registers, compares the version with counter 1,
+  and then releases the application core, which executes from flash through the decrypting cache.
+- Every cache line's tag is checked as it is fetched, so flash changed after boot is caught (`doc/xip.md`).
+- The application key is device-unique and reaches only the AES key registers, never software, so a flash image copied to another board will not run.
 - The application key survives platform updates: each new bitstream reaches it through its own pairing key.
 
 ### Host sessions and user data
@@ -178,12 +181,13 @@ so attempts must be limited another way, such as a counter-limited key.
 
 ## ASIC conversion
 
-An ASIC removes the platform chain completely: no bitstream, no platform key, no counter 0, no pairing key rotation.
-The application chain, the host-authorized data key, the secure element and the loader carry over unchanged.
+An ASIC removes the bitstream: no bitstream key, no vendor signature, no pairing key rotation. Mask ROM becomes Stage 0,
+and verifies an updatable loader in flash whose anti-rollback counter is the freed counter 0.
+The application chain, the host-authorized data key and the secure element carry over unchanged.
 
 One thing does change. A pairing key in mask-programmed logic is identical on every chip and can be recovered
-by reverse engineering one die. An ASIC should instead get a per-device pairing key at provisioning,
-for example in one-time-programmable fuses (see `doc/arch.md`, Open Questions).
+by reverse engineering one die, and the open ICS55 PDK has no one-time-programmable cells. The proposed answer is an
+SRAM PUF that wraps a per-device pairing key stored in flash. See `doc/ics55.md`.
 
 ## FPGA Requirements
 

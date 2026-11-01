@@ -22,9 +22,9 @@ flash. Each cache line is decrypted and checked as it is fetched, and only check
 
 ```mermaid
 flowchart LR
-  CPU["LiteForth CPU<br/>fetch and @"] -->|miss| FSM["Fill controller"]
+  CPU["Application core<br/>fetch and @"] -->|miss| FSM["Fill controller"]
   FSM -->|"one burst: line + tag"| QSPI["QSPI flash"]
-  FSM -->|"nonce from address,<br/>slot and version"| AES["AES-256<br/>keystream and tag mask<br/>(computed during the read)"]
+  FSM -->|"nonce from slot<br/>and line address"| AES["AES-256, per-install image key<br/>keystream and tag mask<br/>(computed during the read)"]
   QSPI -->|ciphertext| X["XOR"]
   AES --> X
   QSPI -->|ciphertext| GH["GHASH<br/>(streams with the data)"]
@@ -37,7 +37,7 @@ flowchart LR
 ```
 
 - **Encryption and authentication:** AES-256-GCM applied to each cache line separately, with a 64-bit tag stored next to the line.
-- **Nonce:** built from the image version, the slot, and the line's address, so it is unique per line and per version.
+- **Key and nonce:** a fresh image key for every install, derived from the device's application key and a random salt; the nonce is the slot and the line's address, so it is never reused.
 - **Cache:** a few KB of plaintext lines. A line enters the cache only after its tag checks.
 
 ## Flash layout
@@ -144,8 +144,10 @@ RAM cannot hold a package, so:
 1. The package is written to a staging area in flash as it arrives (as LiteForth does with `lfstage.bin`).
 2. The LMS signature is verified by streaming the staged package through the SHA-256 core.
 3. The version is checked against counter 1.
-4. The package is decrypted with the distribution key and re-encrypted per line, with tags, into the inactive slot, one line at a time.
+4. A fresh install salt is drawn, and the package is decrypted with the distribution key and re-encrypted per line, with tags, under the new image key into the inactive slot, one line at a time.
 5. Counter 1 advances, and the slot becomes active.
+
+Developer packages differ in steps 2, 3 and 5: HMAC instead of LMS, no version check, and counter 1 does not move (`doc/roles.md`).
 
 Each step needs only a line buffer and a flash page buffer.
 
@@ -171,11 +173,11 @@ Estimates for the loader and the XIP system, to be replaced with measurements:
 |---|---|---|
 | XIP cache data | 4 KB | 64 lines of 64 bytes |
 | XIP cache tags and state | About 0.2 KB | Can be flip-flops |
-| CPU stacks | 0.5 to 1 KB | Two stacks of 64 to 128 cells |
+| Loader core stacks | 0.5 to 1 KB | Two stacks of 64 to 128 cells |
 | LMS verification | About 0.3 KB | The signature streams from flash; only running hashes are kept |
 | Secure element I/O buffer | About 0.2 KB | Largest ATECC command or response |
 | UART buffer | 0.25 to 1 KB | |
-| Flash page buffer (installs, logs) | 256 bytes | One NOR page |
+| Flash page buffer (installs) | 256 bytes | One NOR page |
 | MicroSD sector buffer | 512 bytes | |
 | Loader variables | About 0.5 KB | |
 | **Total** | **About 7 to 8 KB** | About 0.06 Mb, roughly 0.15 mm2 at ICS55's 2 to 3 mm2/Mb |

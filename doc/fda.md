@@ -23,7 +23,7 @@ The guidance asks for at least four views:
 Section 5 maps the design to the guidance's security control categories, and section 6 lists the gaps a submission would have to close.
 
 Terms (loader, Tier A/B, pairing key, data key, distribution key) are defined in the README and `doc/arch.md`.
-Risk IDs (R1–R22) refer to the Risk Assessment in `doc/arch.md`.
+Risk IDs (R1–R27) refer to the Risk Assessment in `doc/arch.md`. Roles (manufacturer, application owner, developer, user) are defined in `doc/roles.md`.
 
 ## 1. Global System View
 
@@ -38,7 +38,7 @@ Risk IDs (R1–R22) refer to the Risk Assessment in `doc/arch.md`.
 | QSPI NOR flash | Encrypted bitstreams (A/B), encrypted application (A/B), encrypted user data | Untrusted storage |
 | Host PC | Runs the update client and opens data sessions. Holds the host authorization key | Trusted by the user; authenticated by the secure element |
 | Update server | Builds per-board platform packages and fleet-wide application packages | Manufacturer-controlled |
-| HSM | Holds LMS signing keys (with state), KDF master keys, the distribution key | Manufacturer-controlled, highest trust |
+| HSM | Holds LMS signing keys (with state), KDF master keys (including the developer master key), the distribution key | Manufacturer-controlled, highest trust |
 | Manufacturing station | Programs eFuse keys, provisions and locks the secure element, writes flash | Manufacturer-controlled |
 | Distribution channel | Delivers update files to the host (download, email, removable media) | Not manufacturer-controlled |
 | MicroSD card | Removable media for security event logs and offline update packages | Untrusted storage |
@@ -84,7 +84,7 @@ flowchart LR
 |---|---|---|---|---|
 | Configuration | Flash → config engine | Vendor SPI configuration | Bitstream | AES under a per-board eFuse key; Tier A adds the vendor signature |
 | I2C | Loader ↔ secure element | ATECC command packets, CRC-16 | Counters, key reads, host authorization | Responses MAC'd under the pairing key over a loader nonce; keys read encrypted (EncRead). CRC is for transport only |
-| QSPI | Loader ↔ flash | SPI NOR commands | Bitstreams, application, user data | Everything at rest is encrypted and authenticated (AES-256-GCM or vendor format) |
+| QSPI | Loader core (direct mode, for installs) and XIP engine (application fetches) ↔ flash | SPI NOR commands | Bitstreams, application, user data | Everything at rest is encrypted and authenticated (AES-256-GCM per cache line, or vendor format); each line checked as it is fetched |
 | UART | Host ↔ loader | Framed messages, CRC-32 | Update packages, session challenges, user data | LMS signatures on packages; CheckMac host authorization in the secure element. CRC is for transport only |
 | JTAG | Factory station ↔ FPGA | IEEE 1149.1 | eFuse programming, initial configuration | Fused off, or limited to non-configuration instructions, after manufacturing where the FPGA supports it; readback disabled |
 | MicroSD | Loader ↔ removable card | SD (SPI mode) | Security event logs out; update packages in | Update packages carry LMS signatures, exactly as over the UART; log records are MAC'd and chained under a per-device log key so removal, reordering or editing is detectable. The loader reads only fixed-format package and log files, never a general filesystem it must trust |
@@ -142,7 +142,7 @@ There are two independent update chains. Each has its own signing key, anti-roll
 | Packages built | One per board (or batch), selected by secure element serial | One per release |
 | Anti-rollback | Secure element counter 0, plus pairing key rotation | Secure element counter 1 |
 | Interruption safety | A/B bitstream slots | A/B application slots |
-| After an ASIC conversion | Removed | Unchanged |
+| After an ASIC conversion | Replaced by an updatable-loader chain on counter 0 (`doc/ics55.md`) | Unchanged |
 
 ### End-to-end path
 
@@ -203,8 +203,8 @@ sequenceDiagram
   L->>L: Verify LMS signature before decrypting
   L->>SE: Authenticated counter 1 read
   L->>L: Check version above counter 1
-  L->>SE: Encrypted read of distribution key and application key
-  L->>L: Decrypt with distribution key, re-encrypt with per-device application key
+  L->>SE: Encrypted reads: distribution key and application key unwrap into the AES key registers (private path)
+  L->>L: Decrypt with distribution key; re-encrypt per cache line under a new image key from a fresh install salt
   L->>F: Write inactive application slot, read back and check
   L->>SE: Advance counter 1
   L->>F: Mark new slot active
@@ -240,17 +240,17 @@ sequenceDiagram
   CE->>L: Design running
   L->>SE: Nonce (loader NumIn) and MAC exchange under the pairing key
   SE-->>L: Proof of pairing
-  L->>SE: Encrypted read of application key
-  L->>F: Read encrypted application (active slot)
-  L->>L: Decrypt, check authentication tag
-  alt Tag check fails
+  L->>SE: Encrypted read: application key unwraps into the AES key registers
+  L->>F: Read the active slot's image header
+  L->>L: Check header HMAC, derive image key, check version against counter 1
+  alt Header check fails
     L->>F: Try the other application slot, else stay in update-only mode
   end
-  L->>L: Start application
+  L->>L: Release the application core, which runs from flash through the XIP cache
 ```
 
-Failure behavior: the device never runs an application whose tag fails, and falls back to an update-only
-mode in which it accepts only signed packages.
+Failure behavior: if neither slot's header checks, the device stays in an update-only mode in which it accepts only signed packages.
+While the application runs, every cache line's tag is checked as it is fetched, and a failing tag locks the device down (`doc/xip.md`).
 
 ### 4.2 Host session and user data access
 
@@ -273,10 +273,10 @@ sequenceDiagram
     L-->>H: Refused
   else Succeeds
     SE-->>L: Success, data key slot authorized
-    L->>SE: Encrypted read of data key
+    L->>SE: Encrypted read: data key unwraps into the AES key registers
     L->>F: Read and write user data (AES-256-GCM)
     H->>L: Close session (or timeout)
-    L->>L: Erase data key
+    L->>L: Clear the data key from the key registers
   end
 ```
 
@@ -298,7 +298,7 @@ sequenceDiagram
   participant F as Flash
   M->>SE: Read serial number
   M->>HSM: Request keys for this serial
-  HSM-->>M: eFuse key, pairing key, application key, data key, host authorization key (all per device), distribution key
+  HSM-->>M: eFuse key, pairing key, application key, data key, developer key, log key, host authorization key (all per device), distribution key
   M->>SE: Write configuration, lock configuration zone
   M->>SE: Write keys and public key, lock data zone
   M->>FP: Program eFuse key over JTAG, disable readback, lock
@@ -313,8 +313,8 @@ it should hold keys only for the board being programmed and erase them afterward
 
 ### 4.6 Standby, sessions ending, and decommissioning
 
-- **Session end or timeout:** the loader erases the data key; the secure element authorization does not persist.
-- **Decommissioning:** locked secure element slots cannot be rewritten, so decommissioning is done by destroying the secure element,
+- **Session end or timeout:** the loader clears the data key from the key registers; the secure element authorization does not persist.
+- **Decommissioning:** secure element key slots can be rewritten only through authorized encrypted writes by a genuine loader, so decommissioning is done by destroying the secure element,
   or by having the HSM retire the unit's serial number so it receives no further updates. To be defined (section 6).
 
 ## 5. Security Control Categories (Appendix 1)
@@ -322,11 +322,11 @@ it should hold keys only for the board being programmed and erase them afterward
 | Category | How `thriller` addresses it | Gaps |
 |---|---|---|
 | Authentication | LMS signatures on all updates and metadata, verified before decryption; host authenticated to the secure element (CheckMac); every secure element response MAC'd over a fresh nonce; CRCs used for transport only | The device does not authenticate itself to the host (no mutual authentication) |
-| Authorization | Data key released only after host authorization; secure element slot policies deny by default | Roles beyond "authorized host" are the integrator's; session timeout length to be set |
+| Authorization | Data key released only after host authorization; secure element slot policies deny by default; roles and per-device developer keys (`doc/roles.md`); application isolated on its own core | Session timeout length to be set |
 | Cryptography | NIST algorithms: AES-256, SHA-256, HMAC, LMS (SP 800-208). Post-quantum for all signatures we control. Per-device keys from an HSM-held master | Vendor bitstream signature (Tier A) is ECDSA or RSA; mitigated by encrypted-only configuration (R21) |
-| Code, data and execution integrity | Signed updates only; anti-rollback counters; authentication tag checked before execution; debug ports and readback locked in production | No runtime monitoring; fault-injection hardening not yet designed (R16) |
+| Code, data and execution integrity | Signed updates only; anti-rollback counters; every cache line's tag checked before execution; debug ports and readback locked in production | No runtime monitoring; fault-injection hardening designed and planned for testing (`doc/test.md`), not yet implemented (R16) |
 | Confidentiality | User data encrypted per device, unlocked only with the host; keys never cross the I2C bus in clear | Application code is obfuscated, not secret, unless the Code Secrecy Profile is enabled |
-| Event detection and logging | None yet | Security event log (failed signatures, failed host authorization, rollback attempts, tag failures) to be designed |
+| Event detection and logging | Security event log on the MicroSD card, MAC'd and hash-chained under a per-device log key (R24) | The full list of logged events, and how the host reads the log, to be defined |
 | Resiliency and recovery | A/B slots for bitstream and application; update-only fallback mode | Recovery of a trusted default configuration, and behavior under denial of service on the UART, to be defined |
 | Firmware and software updates | Two independent signed update chains; out-of-cycle patches possible; interruption-safe A/B slots; preserved toolchains | Pairing key rotation sequencing (Open Question 1) |
 
@@ -334,7 +334,7 @@ it should hold keys only for the board being programmed and erase them afterward
 
 Items a premarket submission would need that the platform does not yet provide:
 
-1. **Security event logging.** Detect and record failed signatures, failed host authorizations, rollback attempts and tag failures, and make the log available to the host.
+1. **Security event logging.** The log's format and protection are designed (R24); the full list of events (failed signatures, failed host authorizations, rollback attempts, tag failures, developer installs) and how the host reads it remain to be defined.
 2. **Device-to-host authentication.** A non-readable identity key in the secure element, used in place (MAC), so the host can confirm it is talking to a genuine unit. This does not detect a compromised bitstream (R22).
 3. **Fault-injection hardening** of the loader's security checks (R16). Countermeasures and test campaigns are planned in `doc/test.md` section 6.
 4. **Pairing key rotation sequencing** under power failure (`doc/arch.md`, Open Question 1).

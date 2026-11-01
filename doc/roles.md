@@ -115,9 +115,9 @@ Since developer builds never moved counter 1, the device accepts the same produc
 
 ## Hardware and test impact
 
-- **Hardware:** the SHA-256 core's key insertion (`doc/hw.md`, Key paths) must accept a key unwrapped from the secure element, not only the pairing key,
+- **Hardware:** the SHA-256 core's key insertion (`doc/hw.md`, Key paths) accepts a key unwrapped from the secure element, not only the pairing key,
   so developer-package HMACs and the image key derivation run without exposing keys. No other new hardware is needed.
-- **Tests** (to add to `doc/test.md`): a developer package for another device is rejected; a developer build cannot read production user data, and the reverse;
+- **Tests** (in `doc/test.md`, Developer builds): a developer package for another device is rejected; a developer build cannot read production user data, and the reverse;
   counter 1 is unchanged after any number of developer installs; a production release installs normally after developer builds;
   two developer builds with the same version number produce different image keys; after a production release that starts a new epoch,
   the old working key is rejected and developer data from the old epoch is unreadable, while a release within the epoch keeps both working.
