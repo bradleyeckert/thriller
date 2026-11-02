@@ -22,7 +22,7 @@ The guidance asks for at least four views:
 
 Section 5 maps the design to the guidance's security control categories, and section 6 lists the gaps a submission would have to close.
 
-Terms are defined in the README and `doc/arch.md`. Risk IDs (R1–R27) refer to the Risk Assessment in `doc/arch.md`.
+Terms are defined in the README and `doc/arch.md`. Risk IDs (R1–R30) refer to the Risk Assessment in `doc/arch.md`.
 Roles (manufacturer, application owner, developer, user) are defined in `doc/roles.md`.
 
 ## 1. Global System View
@@ -40,7 +40,8 @@ Roles (manufacturer, application owner, developer, user) are defined in `doc/rol
 | ECP5 FPGA | Peripheral configured by the application at power-up; holds no secrets | Untrusted (R17) |
 | MicroSD card | Encrypted user data, event log copies, offline update packages | Untrusted storage |
 | Temperature sensor | Replaceable, outside the box; certificate from its manufacturer, paired to the device | Trusted for its readings once authenticated |
-| Host PC | Opens data sessions, relays to the server, delivers updates. Holds the host key and host data secret | Trusted by its user; authenticated by the TEE |
+| Host PC or phone | Opens data and CLI sessions over the UART or BLE, relays to the server, delivers updates. Holds the host key and host data secret | Trusted by its user; authenticated by the TEE |
+| Wi-Fi network | Carries over-the-air updates and server contact, if the application owner enables Wi-Fi | Untrusted |
 | Enrollment and update server | Records devices, sensors and pairings; detects unknown identities; serves updates | Manufacturer-controlled |
 | HSMs | Release RSA keys, LMS keys, sensor CA keys, master keys, distribution key | Manufacturer-controlled, highest trust |
 | Factory enrollment station | Programs images, burns the device root key, records the device | Manufacturer-controlled |
@@ -75,7 +76,8 @@ flowchart LR
   HSM --> MFG
   SRV -->|packages| DIST --> HOST
   SRV <-->|"via host"| HOST
-  HOST <-->|"UART / USB, authenticated + encrypted"| TEE
+  HOST <-->|"UART or BLE serial, authenticated + encrypted"| TEE
+  SRV <-->|"Wi-Fi + TLS (if enabled)"| APP
   SENS <-->|"sensor link, MAC per frame"| TEE
   MFG -.->|"factory only"| C5
   ROM --> BL --> TEE --> APP
@@ -89,12 +91,14 @@ flowchart LR
 | Interface | Between | What crosses it | Protection |
 |---|---|---|---|
 | QSPI | C5 ↔ flash | Images, TEE storage | XTS-AES flash encryption, per-device key generated on chip; images RSA-signed and checked at boot (R2, R6) |
-| Host link (UART or USB serial) | Host ↔ TEE (through the application) | Session traffic, update packages, server relay | Mutual authentication under the host key, AES-256-GCM frames with counters; packages LMS-signed (R3, R9) |
+| UART | Host ↔ TEE (through the application) | Status reports; fallback sessions, packages and CLI | Status is read-only and holds nothing secret (R30); everything else as for BLE |
+| BLE serial service (GATT) | Host or phone ↔ TEE (through the application) | CLI and host sessions, update packages | Mutual authentication under the host or developer key, AES-256-GCM frames with counters, attempt limits; BLE pairing not relied on; advertising only after a user action (R9, R28) |
+| Wi-Fi | Application ↔ update and enrollment server | Over-the-air packages, log upload, pairing confirmation | Outbound TLS; server authenticated under the device identity key; packages LMS-signed and version-checked by the TEE (R23, R29) |
 | Sensor link | Sensor ↔ TEE (through the application) | Pairing, readings, commands | Certificate and ML-KEM pairing; per-frame MAC under session keys with nonces from both ends; maximum reading age (R11–R14) |
 | SPI2 to the ECP5 | Application ↔ FPGA | Plain bitstream at power-up, then data | None needed: no secrets cross it; build ID and self-test detect wrong logic (R17) |
 | SPI2 to the MicroSD card | Application ↔ card, carrying the TEE's records | User data, logs, packages | AES-256-GCM records; MAC-chained logs; LMS-signed packages (R1, R26) |
 | JTAG and download mode | Factory ↔ C5 | Initial programming | Disabled by eFuse after enrollment (R7) |
-| Radios | — | — | Not initialized in the base design (R23) |
+| Radio policy | Application owner → TEE | Which radios may run | Part of the signed build descriptor |
 
 **Integrator adds:** the host software and its environment (operating system, network, cloud services),
 the device's clinical interfaces and safe states, and any additional data flows.
@@ -186,8 +190,8 @@ The server marks the device retired; an authorized wipe erases TEE storage and t
 | Code, data and execution integrity | Secure boot every boot; TEE isolation; anti-rollback in three layers; FPGA build check | No integrity check of flash reads after boot (R6) |
 | Confidentiality | Flash, PSRAM, card and host sessions encrypted; user data needs the host | Package contents fleet-readable without the Code Secrecy Profile (R18) |
 | Event detection and logging | HMAC-chained event log in the TEE, copied to the card, read by the host and uploaded to the server | Event list to be completed |
-| Resiliency and recovery | A/B slots with confirmation and fallback; recovery bootloader; safe state on sensor loss | Behavior under denial of service on the host link to be defined |
-| Firmware and software updates | Signed, encrypted, interruption-safe updates online and offline; out-of-cycle patches | Sensor firmware updates not yet designed |
+| Resiliency and recovery | A/B slots with confirmation and fallback; recovery bootloader; safe state on sensor loss; UART fallback when radios are off or failing | Behavior under denial of service on the host link to be defined |
+| Firmware and software updates | Signed, encrypted, interruption-safe updates over the air, through the host, or from a card; out-of-cycle patches, including fixes to the radio stacks | Sensor firmware updates not yet designed |
 
 ## 6. Gaps for a submission
 
@@ -200,7 +204,7 @@ The server marks the device retired; an authorized wipe erases TEE storage and t
    Espressif's PSIRT advisories feed vulnerability monitoring.
 7. **Testing evidence:** security requirements, threat mitigation and vulnerability testing as planned in `doc/test.md`; independent penetration testing to be arranged.
 8. **Risk scoring:** the Risk Assessment rates likelihood; FDA asks for an exploitability-based, non-probabilistic approach with scores before and after mitigation.
-9. **Radios:** if Wi-Fi is adopted for updates, its exposure must be added to every view.
+9. **Wireless:** FDA's guidance on radio frequency wireless technology in medical devices also applies: coexistence testing, wireless quality of service, and the risk analysis of a lost link. The clinical function must not depend on Wi-Fi or BLE.
 
 ## Source
 

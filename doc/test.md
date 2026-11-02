@@ -1,6 +1,6 @@
 # Test Plan
 
-How `thriller` is tested, from reference models to fault injection. Risk IDs (R1–R27) refer to `doc/arch.md`.
+How `thriller` is tested, from reference models to fault injection. Risk IDs (R1–R30) refer to `doc/arch.md`.
 
 ## 1. Approach
 
@@ -35,7 +35,8 @@ The sensor's firmware is tested against the same models.
 ## 3. Hardware-in-the-loop rig
 
 - A production-configured C5 board with the ECP5 and a MicroSD card, plus boards with the eFuses left open for debugging.
-- **Host simulator** on the host link, driven by test scripts.
+- **Host simulator** on the UART and over BLE, driven by test scripts.
+- **Controllable Wi-Fi access point and server simulator**, able to impersonate the real server.
 - **Sensor simulator** on the sensor link: a microcontroller that runs the sensor protocol and can misbehave on command (bad certificates, wrong MACs, replays, delays, silence).
 - **Link interposer** between the device and the sensor simulator, able to delay, drop, replay and alter frames with controlled timing.
 - **Server simulator** reached through the host simulator.
@@ -59,7 +60,11 @@ The sensor's firmware is tested against the same models.
 | Enrollment | Unenrolled device cannot install updates or authenticate; enrollment cannot be repeated; server flags unknown and duplicate identities | R16 |
 | Developer builds | Build for another device refused; old-epoch builds refused after an epoch release; version record and eFuses unchanged by developer installs; developer image cannot boot from a TEE slot | R21, R22 |
 | Event log | Removed or altered entries detected by the host and the server | R26 |
-| Radios | Production image does not initialize the radios (unless Wi-Fi is adopted) | R23 |
+| Radio policy | A release with a radio disabled never initializes it; the TEE withholds Wi-Fi credentials when Wi-Fi is off | R23, R28 |
+| BLE and CLI | Fuzz the GATT serial service and the BLE stack (malformed PDUs, connection floods); no advertising without the user action; CLI refuses commands without a session; attempt limits and logging; developer commands absent from production builds | R28 |
+| Over-the-air updates | Fake access point and fake server: forged, old and truncated packages refused; interrupted download leaves the old image active; server authentication failure stops the exchange | R29 |
+| UART status | Status output contains no user data or keys | R30 |
+| Wireless coexistence | Sensor timing and safe-state behavior unaffected by Wi-Fi and BLE load | R13, R23 |
 
 ## 5. Fault injection
 
@@ -100,6 +105,7 @@ Espressif advisory AR2023-007 shows this works on the C3 and C6 with voltage gli
 | ESP-IDF with its Unity test framework and Linux host target | Unit tests |
 | Python (`cryptography`, reference implementations of LMS, ML-KEM, ML-DSA, Ascon) | Reference models and vectors |
 | pytest-embedded | Driving the rig |
+| A BLE fuzzer and a controllable Wi-Fi access point | Radio tests |
 | ChipWhisperer-Husky, a voltage glitch stage, an EMFI probe | Fault injection |
 | A scope or ChipWhisperer for power traces | TVLA |
 | Verilator | The FPGA's register block and self-test logic |

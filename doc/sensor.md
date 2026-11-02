@@ -115,6 +115,8 @@ The link runs on the C5's peripherals: a UART for a byte-oriented link, the RMT 
 and compare outputs where the protocol needs precise timing. ETM can connect GPIO edges and timers without software. The choice depends on the
 sensor's existing interface and the cable (open question). The protocol above does not depend on it.
 
+The sensor link is wired, and nothing in it depends on Wi-Fi or BLE being up.
+
 ## Calibration
 
 If calibration coefficients live in the sensor, their hash is in the certificate, and the coefficients themselves come over an authenticated session.

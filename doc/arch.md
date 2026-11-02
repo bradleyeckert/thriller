@@ -14,7 +14,7 @@ Chip configuration is in `doc/c5.md`, the sensor in `doc/sensor.md`, and enrollm
 | External flash, PSRAM | Nothing | Encrypted by the C5; integrity comes from secure boot and the TEE's own checks |
 | MicroSD card | Nothing | Everything on it is encrypted and authenticated by the TEE |
 | ECP5 | Nothing | Holds no secrets. Its identity check catches mistakes, not attacks (`doc/fpga.md`) |
-| Sensor link and host link | Nothing | Every frame authenticated end to end |
+| Sensor link, UART, BLE and Wi-Fi | Nothing | Every session authenticated end to end by the TEE. The Wi-Fi and BLE stacks run in the application, so an exploit in them reaches the application but no key |
 | Sensor | Its own readings, once its certificate and pairing check out | Replaceable; one broken sensor exposes only itself |
 | Host | Its user's data | Holds the host key and the host data secret |
 | HSMs, enrollment database, update server | Keys and records for the whole fleet | The crown jewels (R19) |
@@ -51,7 +51,8 @@ The sensor certificates use ML-DSA (FIPS 204) and the pairing uses ML-KEM (FIPS 
 | Attacker | Capability |
 |---|---|
 | Remote | Talks to the device over the host link, or sends it a file on the MicroSD card |
-| Link attacker | Can watch, inject, delay or cut traffic on the sensor cable or the host link |
+| Link attacker | Can watch, inject, delay or cut traffic on the sensor cable or the UART |
+| Radio attacker | Within BLE range, or on the same network as the device's Wi-Fi: can scan, connect, send malformed packets, and run a fake access point or server |
 | Board prober | Opens the box: probes or interposes on the flash, SPI and sensor lines, reflashes the external flash, replaces parts |
 | Thief | Has the device and unlimited time, but the legitimate host never connects to it again |
 | Evil maid | Has the device for a while, then returns it to the legitimate user, who connects their host |
@@ -68,6 +69,10 @@ The sensor certificates use ML-DSA (FIPS 204) and the pairing uses ML-KEM (FIPS 
 | Images | Safe | Safe | Can restore an old flash image; versions blocked by eFuse stay blocked | Same as board prober | Same as board prober | Can run modified code on that unit | Could forge RSA, but still needs physical flash access |
 | Device identity | Safe | Safe | Safe | Can use it while holding the unit | Same | Can extract that unit's keys | Safe (symmetric) |
 | Other units and sensors | Safe | Safe | Safe | Safe | Safe | Safe (per-device and per-sensor keys) | Safe |
+
+A **radio attacker** has the link attacker's reach over CLI and server sessions, which are authenticated end to end, plus one thing more:
+a bug in the Wi-Fi or BLE stack can give them code execution in the application (R23, R28). That reaches the device's function but not its keys, user data or images.
+The application must therefore keep the sensor safety path independent of its network code.
 
 ### Not protected
 
@@ -106,7 +111,7 @@ FDA asks for an exploitability-based rating rather than likelihood; the table is
 | R6 | External flash at run time | Board prober with an interposer | Change flash contents after secure boot has checked them | XTS-AES has no per-read integrity check | High | Low | Edits produce unpredictable 16-byte blocks, not chosen code; TEE code and data are checked or authenticated by the TEE before use; a C5 with flash in the package would remove the probe point (open question) |
 | R7 | Debug and download ports | Hobbyist | Attach JTAG or the ROM download mode to read memory or load code | Ports exist on every C5 | Critical | High | eFuses disable JTAG (pad and USB) and direct boot; download mode is secure download mode or permanently disabled (`doc/c5.md`) |
 | R8 | Keys in the C5 | Malicious or buggy application, including a developer build | Read TEE memory or use key peripherals directly | Application and TEE share one core | Critical | Medium | ESP-TEE: the application runs in user mode; memory, the HMAC peripheral, eFuse and flash regions belong to the TEE by permission (APM/PMP); keys never leave the TEE |
-| R9 | Host session | Link attacker | Impersonate the host, or replay or alter session traffic | The host link is open | Critical | Medium | Mutual authentication under the host key with nonces from both ends; every frame encrypted and authenticated with a counter |
+| R9 | Host and CLI sessions | Link or radio attacker | Impersonate the host, or replay or alter session traffic on the UART or BLE | Both transports are open | Critical | Medium | Mutual authentication under the host key with nonces from both ends; every frame encrypted and authenticated with a counter |
 | R10 | User data freshness | Thief or evil maid | Put an old copy of the card back | Every old record still authenticates | High | High | The device gives the host an authenticated digest of the data state at the end of each session; the host presents it at the next one, and a mismatch is reported |
 | R11 | Temperature readings | Link attacker | Forge readings or commands on the sensor cable | The cable is outside the box | Critical | High | Every frame, in both directions, carries a MAC under a session key derived from the pairing key and fresh nonces from both ends |
 | R12 | Temperature readings | Link attacker | Replay old readings, or delay them | MACs do not prove freshness or timeliness | Critical | Medium | Per-session nonces and frame counters; the TEE enforces a maximum reading age; late or missing readings put the device in its safe state |
@@ -120,11 +125,14 @@ FDA asks for an exploitability-based rating rather than likelihood; the table is
 | R20 | Host key | Thief of the host | Use a stolen host to open sessions | The host holds the keys | Critical | Medium | Host-side protection (user authentication, encrypted key storage) is the host's job; a compromised host means retiring the device, since its keys cannot be changed |
 | R21 | Developer builds | Developer | Run a developer build on someone else's device, or read production user data | Developer builds are signed through the release signing service | High | Medium | Each developer build names one device and one developer epoch; the TEE refuses it anywhere else; developer builds use separate data keys (`doc/roles.md`) |
 | R22 | Developer epoch | Developer with a programmer | Restore an old flash image to revive an expired developer build | The epoch record lives in TEE storage in flash | Medium | Medium | Accepted: it harms only the developer's own device, and production data keys never reach developer builds |
-| R23 | Radios | Remote attacker | Attack the Wi-Fi, Bluetooth or 802.15.4 stack | The C5 has radios | Critical | Medium | Radios not initialized in the base design; using Wi-Fi for updates is an open question |
+| R23 | Wi-Fi stack | Radio attacker on the network | Exploit a bug in the Wi-Fi, TCP/IP or TLS stack to run code in the application | Large network stacks | Critical | Medium | Enabled only if the application owner enables it; outbound connections only, no listening ports; stacks run in user mode, so keys stay in the TEE; stacks kept current by OTA; the sensor safety path does not depend on the application's network code (to be enforced by the application design) |
 | R24 | Boot root | Quantum-capable attacker with flash access | Forge an RSA-3072 image signature | The ROM supports only RSA and ECDSA | High | Low | The update path needs LMS; a forged image still needs physical flash access. Accepted |
 | R25 | C5 boot ROM | Researcher | A ROM bug (as in AR2023-007's buffer overflow) | ROM cannot be patched | High | Low | Follow Espressif advisories; per-device keys; eFuse settings chosen against published attacks |
 | R26 | Event log | Evil maid or thief | Erase or alter the security event log | The log lives in flash or on the card | Medium | Medium | HMAC-chained entries under a TEE key; the host and the server read it and notice gaps |
 | R27 | Signing keys | Insider, or loss | A signing key is lost or leaks | Keys are long-lived | Critical | Low | Main and backup RSA keys in eFuse, each revocable; main and backup LMS keys in the TEE image, replaceable by a TEE update signed with the other key; keys held in separate HSMs |
+| R28 | BLE stack and CLI | Radio attacker within range | Exploit a BLE stack bug, or brute-force or abuse the CLI | BLE answers anyone in range; ESP-IDF has had BLE stack CVEs | Critical | Medium | Enabled only by the application owner; advertising only after a user action and for a limited time; one connection; every CLI session authenticated by the TEE under the host or developer key, with attempt limits and logging; stacks in user mode; kept current by OTA |
+| R29 | OTA updates and server contact | Radio attacker running a fake access point or server | Offer old or forged packages, or block updates | The network is not trusted | High | Medium | Packages verified by LMS signature and version in the TEE whatever the source; the server proves itself under the device's identity key; TLS for privacy. Blocking updates cannot be prevented; the server reports units that fall behind |
+| R30 | UART status | Anyone with a cable | Learn something from the unauthenticated status reports | Status needs no session | Low | High | Status limited to versions, build mode, faults and pairing state; no user data and no keys; everything else needs a session |
 
 ## Optional: Code Secrecy Profile
 

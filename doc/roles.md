@@ -8,7 +8,7 @@ a developer can run their own application build on their own device, and nowhere
 | Role | Holds | Can |
 |---|---|---|
 | **Manufacturer** | The HSMs: device and host data masters, release RSA keys, platform LMS keys, distribution key, sensor CA keys (unless the sensor maker holds them) | Build and sign the bootloader and TEE; sign every image for secure boot; enroll devices; issue host and developer keys |
-| **Application owner** | The application LMS keys (in an HSM) | Approve production application releases. May be the manufacturer or a customer (open question) |
+| **Application owner** | The application LMS keys (in an HSM) | Approve production application releases, including their radio policy (Wi-Fi and BLE on or off). May be the manufacturer or a customer (open question) |
 | **Developer** | A developer key for each device they own, for the current epoch | Have builds signed for those devices only, and install them |
 | **User** | A host, with its host key and host data secret | Open host sessions, which unlock user data; pair sensors; install signed updates |
 
@@ -23,12 +23,13 @@ would boot on every device. So a developer cannot sign their own builds. Instead
 2. They submit it to the manufacturer's **developer signing service**, with the target device's ID and a MAC under that device's developer key.
 3. The service checks the MAC (the HSM derives the same key), writes a build descriptor into the image (mode *developer*, the device ID, the current epoch),
    signs it with the release RSA key, and returns it with a package MAC under the developer key.
-4. The developer installs the package on their device, offline if they like.
+4. The service delivers the package over the air to that device, or the developer installs it over the UART or from a card.
+
+Developers are assumed to always have a network, so needing the service is not a burden, and the build-sign-install loop can be fully automated.
 
 The device-binding is enforced on the device, by the TEE, at install and at every boot: a developer build whose device ID or epoch does not match is refused,
 and the bootloader falls back to the other slot. An image signed for one device is useless on any other.
 
-Signing needs the service to be reachable from the developer's workstation, but installing does not.
 Developers never hold a key that would work on another device, and no revocation is needed: a leaked developer key exposes only its own device.
 
 The service signs only application images in developer mode, never a bootloader or TEE image. The image type is part of the signed descriptor,
@@ -72,6 +73,8 @@ block production releases.
   production build, and the reverse.
 - **Visible state.** The TEE reports developer mode to the application and to the host, and can drive a status indicator the application cannot control.
   Labeling should say that a device running a developer build is not for clinical use.
+- **CLI.** A developer session (BLE or UART, authenticated with the developer key) adds the application's debug commands. Production builds do not offer them.
+  A developer build's radio policy is set by the developer, since the build is theirs, but it runs only on their device.
 - **Same isolation.** The developer build runs in user mode under the TEE like any application. It cannot reach keys, change the TEE, or move counters.
 
 ## Returning to production

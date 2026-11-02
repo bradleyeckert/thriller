@@ -14,7 +14,7 @@ that much of its complexity came from building a root of trust out of parts that
 
 | Document | Contents |
 |---|---|
-| This README | Overview: chipset, keys, boot, updates, sensor, host sessions |
+| This README | Overview: chipset, keys, boot, updates, sensor, host sessions, radios and the CLI |
 | `doc/arch.md` | Trust boundary, threat model, risk assessment, algorithm bill of materials |
 | `doc/c5.md` | ESP32-C5 configuration: eFuse key map, boot chain, TEE, flash partitions, anti-rollback, debug lockdown |
 | `doc/sensor.md` | Replaceable temperature sensor: certificates, offline pairing, authenticated sessions, fail-safe behavior |
@@ -28,13 +28,14 @@ that much of its complexity came from building a root of trust out of parts that
 
 ## Chipset
 
-- **ESP32-C5HR8**: single-core 240 MHz RISC-V, 384 KB SRAM, 8 MB PSRAM in the package, Wi-Fi 6, Bluetooth LE and 802.15.4 radios (unused by default).
-  The HR8 has no flash in the package, so it needs an external part.
+- **ESP32-C5HR8**: single-core 240 MHz RISC-V, 384 KB SRAM, 8 MB PSRAM in the package, Wi-Fi 6, Bluetooth LE and 802.15.4 radios.
+  Wi-Fi and BLE are enabled or disabled by the application owner (see Radios); 802.15.4 is not used.
+  The HR8 has no flash in the package, so it needs an external part. Its PSRAM leaves room for the Wi-Fi and BLE stacks alongside the TEE.
 - **QSPI NOR flash**, external, 16 MB proposed: bootloader, TEE and application images (each in A/B slots), TEE secure storage. Encrypted by the C5 (`doc/c5.md`).
 - **Lattice ECP5**, configured by the C5 over SPI at power-up, then used as an SPI peripheral (`doc/fpga.md`). Its configuration flash is no longer needed.
 - **MicroSD card socket**: encrypted user data, the security event log, and offline update packages. It shares the C5's general-purpose SPI bus with the ECP5.
 - **Sensor connector**: a two-way link to a replaceable temperature sensor outside the box, driven by the C5's UART, RMT or MCPWM capture/compare peripherals (`doc/sensor.md`).
-- **Host link**: a UART, or the C5's built-in USB serial port, to the host PC.
+- **UART** (through a USB-UART bridge, or the C5's built-in USB serial port): status reports, and a wired fallback for host sessions, updates and the CLI.
 - Voltage regulators, oscillators, and a test connector that is not populated in production (JTAG is disabled by eFuse).
 
 No secure element: the C5's eFuses, HMAC peripheral and TEE take its place (`doc/c5.md`).
@@ -72,7 +73,9 @@ The application never sees a key. It asks the TEE for services: user data, senso
 One chain covers everything on the device, because the bitstream is part of the application image:
 
 - Each release image carries an RSA-3072 signature (for secure boot) and its package carries an LMS signature (for the update path, `doc/arch.md`).
-- Packages arrive offline on the MicroSD card or through the host, or online from the update server.
+- Packages arrive offline on the MicroSD card or through the host, or over the air from the update server when Wi-Fi is enabled.
+  An over-the-air package streams straight into the inactive slot; that is safe because the slot is never selected until every check passes,
+  and the bootloader runs only RSA-signed images anyway.
 - The TEE checks the LMS signature, decrypts the package with the distribution key, writes the inactive slot, and lets the bootloader try the new image.
   The new image is confirmed only after it passes its self-test, including the FPGA check; otherwise the bootloader falls back to the old one.
 - The TEE refuses any package older than the newest version it has installed. Security fixes also advance the anti-rollback eFuses,
@@ -92,6 +95,28 @@ under a session key. User data on the MicroSD card is encrypted under a key deri
 sends in each session. The device never stores that secret, so a stolen device cannot decrypt its card, even if its chip is broken open.
 
 A lost host is replaced by re-deriving its keys in the HSM. A compromised host means retiring the device (`doc/arch.md`, R20).
+
+## Radios and the CLI
+
+**The application owner decides** whether Wi-Fi and BLE are enabled. The setting is part of the signed build descriptor of each production release,
+so a user cannot change it, and a release can turn a radio off in the field. The radio stacks run in the application, never in the TEE.
+
+- **Wi-Fi** carries over-the-air updates and contact with the enrollment server. The device only makes outbound connections; it never listens.
+  TLS to the server keeps traffic private, but the security comes from the package signatures and the device's identity MAC (`doc/enrollment.md`).
+- **BLE** carries the CLI through a serial service over GATT (the C5 has Bluetooth LE only, so true SPP, a Bluetooth Classic profile, is not available).
+  BLE is treated as an untrusted transport: every CLI session runs our own authenticated, encrypted session over it, under the host key or a developer key,
+  so nothing depends on BLE pairing. The device advertises only after a user action, for a limited time, with rotating private addresses, one connection at a time.
+- **The UART** gives anyone with a cable read-only status reports (no user data, no keys) and the same authenticated sessions as BLE, as a wired fallback.
+
+**What the CLI allows** depends on who authenticated:
+
+| Session | Commands |
+|---|---|
+| None (UART status only) | Read-only status: versions, build mode, faults, pairing state |
+| Host (host key) | User data, sensor pairing, updates, log export, Wi-Fi credentials if Wi-Fi is enabled |
+| Developer (developer key, developer builds only) | The above, plus the application's debug commands |
+
+No CLI command reaches past the TEE's normal services. The sensor link is wired, and nothing about it depends on a radio being up.
 
 ## ASIC conversion
 

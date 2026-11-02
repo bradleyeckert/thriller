@@ -7,7 +7,7 @@ Every device and every sensor is entered into the manufacturer's enrollment data
 - confirm sensor pairings and catch cloned sensors;
 - refuse updates to anything not enrolled.
 
-A device does not need to be online to work. It reports to the server when it can, through the host or through Wi-Fi if that is enabled.
+A device does not need to be online to work. It reports to the server when it can: over Wi-Fi if the application owner has enabled it, otherwise through the host.
 
 ## Keys held by the manufacturer
 
@@ -82,8 +82,10 @@ Updates do not need a network, but they do need enrollment:
 
 - **Offline packages** (on the MicroSD card or from the host) are encrypted under the distribution key, which only enrolled devices hold.
   The TEE checks the LMS signature and the version (`doc/c5.md`, Anti-rollback).
-- **Online updates** come from the update server after the device has authenticated. The server sends only to enrolled devices in good standing,
-  and only current releases.
+- **Online updates** come from the update server after the device has authenticated, over Wi-Fi or through the host. The server sends only to enrolled
+  devices in good standing, and only current releases. Over Wi-Fi the device connects out over TLS and never listens; a fake access point or server
+  can withhold updates but cannot get a forged or old package past the TEE (R29).
+- **Developer builds** are delivered over the air to the one device they were signed for (`doc/roles.md`).
 - **Code Secrecy Profile:** packages are wrapped to each device's own key instead (`doc/arch.md`).
 
 ## Hosts
