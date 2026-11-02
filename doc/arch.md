@@ -1,18 +1,36 @@
-# Architecture: Algorithm Bill of Materials
+# Architecture
 
-This document lists every cryptographic and support algorithm that `thriller` needs for signing,
-provisioning, booting and updating, and where each one runs.
+This document covers the trust boundary, the threat model, the risk assessment and the algorithm bill of materials.
+Chip configuration is in `doc/c5.md`, the sensor in `doc/sensor.md`, and enrollment and updates in `doc/enrollment.md`.
 
-## Two update chains
+## Trust boundary
 
-`thriller` authenticates two independent kinds of update:
+| Component | Trusted for | Notes |
+|---|---|---|
+| C5 boot ROM | Verifying the bootloader | Fixed silicon. Bugs cannot be patched (R25) |
+| Second-stage bootloader | Verifying the TEE and application, anti-rollback, slot fallback | Signed; updatable through the C5's recovery bootloader mechanism (`doc/c5.md`) |
+| **TEE** (ESP-TEE, machine mode) | Every key, every cryptographic protocol, update installation, secure storage, the event log | The only code that uses the device root key and the TEE storage key |
+| Application (user mode) | Device function, within the limits the TEE enforces | Can be a developer build. Never sees a key; a bug in it must not expose one (R8) |
+| External flash, PSRAM | Nothing | Encrypted by the C5; integrity comes from secure boot and the TEE's own checks |
+| MicroSD card | Nothing | Everything on it is encrypted and authenticated by the TEE |
+| ECP5 | Nothing | Holds no secrets. Its identity check catches mistakes, not attacks (`doc/fpga.md`) |
+| Sensor link and host link | Nothing | Every frame authenticated end to end |
+| Sensor | Its own readings, once its certificate and pairing check out | Replaceable; one broken sensor exposes only itself |
+| Host | Its user's data | Holds the host key and the host data secret |
+| HSMs, enrollment database, update server | Keys and records for the whole fleet | The crown jewels (R19) |
 
-- **Platform updates** replace the FPGA bitstream (hardware and boot ROM), the updatable loader image in flash, or both, under one platform version.
-  On an ASIC they replace only the loader image.
-- **Application updates** replace the application code stored encrypted in SPI NOR flash. They exist on FPGAs and on an ASIC conversion.
+## Two signature schemes
 
-Each chain has its own LMS signing key, its own secure element counter and its own package format.
-Rows about the bitstream (marked "platform only" or "—" below) disappear in an ASIC conversion; the platform chain itself remains, for the loader.
+The C5's ROM verifies RSA-3072 (secure boot v2) and nothing can change that. ECDSA is also offered, but Espressif's documentation says it does not work for
+certain input vectors on the C5 and recommends RSA. So:
+
+- **RSA-3072** signs every image, because the ROM and bootloader require it. The manufacturer's HSM holds the key, and the eFuses hold digests
+  of a main and a backup key, either of which can be revoked.
+- **LMS** (RFC 8554, NIST SP 800-208) signs every update package. The TEE checks it before it decrypts or installs anything.
+
+A quantum-capable attacker could forge an RSA signature, but would still need to write the forged image into the device's flash, which takes physical access:
+the update path accepts only LMS-signed packages. That residual risk is accepted (R24).
+The sensor certificates use ML-DSA (FIPS 204) and the pairing uses ML-KEM (FIPS 203), so the sensor is quantum-safe too (`doc/sensor.md`).
 
 ## Threat model
 
@@ -21,69 +39,52 @@ Rows about the bitstream (marked "platform only" or "—" below) disappear in an
 | Asset | Goal |
 |---|---|
 | User data on the MicroSD card | Confidentiality and integrity. **The primary asset.** |
-| Application image | Integrity, and only the genuine signed versions run. Packages are encrypted in transit so they show no plaintext, but keeping the code secret from a determined attacker is not a goal of the base model; see the optional Code Secrecy Profile. |
-| Device identity | A unit cannot be cloned or impersonated. |
-| Update signing keys | Never exposed. They stay offline in an HSM. |
-| The rest of the fleet | Compromising one unit exposes nothing about another. |
+| Temperature readings | Integrity and freshness: a reading the device acts on is genuine, from the paired sensor, and recent |
+| Application and platform images | Only genuine signed versions run, and no older vulnerable version. Packages are encrypted so they show no plaintext, but code secrecy is not a goal of the base model (see Code Secrecy Profile) |
+| Device identity | A unit cannot be cloned or impersonated, and an unknown unit is noticed |
+| Sensor identity | A sensor cannot be cloned or counterfeited without being noticed |
+| Signing keys and master keys | Never exposed; they stay in HSMs |
+| The rest of the fleet | Compromising one unit or one sensor exposes nothing about another |
 
 ### Attackers
 
 | Attacker | Capability |
 |---|---|
-| Remote | Talks to the device over the UART only. |
-| Bus prober | Can watch and inject traffic on the I2C bus to the secure element. |
-| Thief | Has the device and unlimited time, but the legitimate host never connects to it again. |
-| Evil maid | Has the device for a while, then returns it to the legitimate user, who connects their host. |
-| Quantum-capable | Can break ECDSA and RSA, but not AES-256, SHA-256 or LMS. |
-
-The design assumes the bitstream **may be compromised**: replaced with a foreign design, or a genuine encrypted
-bitstream modified blindly (on Tier B, AES-CBC style encryption without a MAC can allow targeted bit flips).
-It limits what a compromised bitstream can reach rather than relying on preventing it.
+| Remote | Talks to the device over the host link, or sends it a file on the MicroSD card |
+| Link attacker | Can watch, inject, delay or cut traffic on the sensor cable or the host link |
+| Board prober | Opens the box: probes or interposes on the flash, SPI and sensor lines, reflashes the external flash, replaces parts |
+| Thief | Has the device and unlimited time, but the legitimate host never connects to it again |
+| Evil maid | Has the device for a while, then returns it to the legitimate user, who connects their host |
+| Lab attacker | Power analysis and fault injection on one C5, as in Espressif advisory AR2023-007 |
+| Insider | Has access to the factory, the HSMs or the enrollment database |
+| Quantum-capable | Can break RSA and ECDSA, but not AES, SHA-256, HMAC, LMS, ML-KEM or ML-DSA |
 
 ### Outcomes
 
-| Asset | Remote | Bus prober | Thief | Evil maid | Quantum-capable |
-|---|---|---|---|---|---|
-| User data | Safe | Safe (MAC'd and encrypted transfers, loader nonce) | **Safe on both tiers**: the data key needs the host | Tier A: safe unless the bitstream is compromised. Tier B: exposed if a bitstream compromise succeeds | Same as without the quantum computer (all symmetric) |
-| Application image | Safe | Safe | Can run modified code on that unit only | Can run modified code on that unit | Same |
-| Device identity | Safe | Safe | Can use the identity while holding the unit, cannot clone it | Same | Same (symmetric keys) |
-| Update signing keys | Safe | Safe | Safe | Safe | Safe (LMS) |
-| Other units | Safe | Safe | Safe (per-device keys) | Safe | Safe |
-
-The difference between the tiers is only the evil-maid column: how expensive it is to plant a compromised
-bitstream that will be running when the user next authenticates.
-
-### Bitstream compromise on Tier B
-
-Without the AES key, an attacker can only flip bits in the encrypted bitstream. In CBC mode each targeted
-edit also turns a whole 16-byte block into unpredictable garbage, and the result must still pass the
-configuration engine's CRC. How hard that is depends on the CRC:
-
-- A 16-bit CRC can be satisfied by brute force in about 65,000 configuration attempts, about an hour at tens of milliseconds per configuration.
-- A 32-bit CRC makes blind edits impractical.
-
-The ECP5's encryption mode and CRC width are open questions. Even a successful edit is targeted at one unit,
-and the attacker must then return it and wait for the user to authenticate.
+| Asset | Remote | Link attacker | Board prober | Thief | Evil maid | Lab attacker | Quantum-capable |
+|---|---|---|---|---|---|---|---|
+| User data | Safe | Safe (sessions encrypted and authenticated) | Safe (card and flash encrypted) | **Safe**: the data key needs the host's secret, which the device never stores | Safe unless the attacker also planted code that runs during the user's next session (needs a lab attack or a signing key) | Safe for a thief; the evil-maid case as left | Safe |
+| Temperature readings | Safe | Safe from forgery and replay; can delay or cut them, which raises the alarm | Same as link attacker | n/a | Can swap the sensor for one the attacker controls only if it is a genuine paired sensor | Breaking one sensor lets it forge its own readings | Safe |
+| Images | Safe | Safe | Can restore an old flash image; versions blocked by eFuse stay blocked | Same as board prober | Same as board prober | Can run modified code on that unit | Could forge RSA, but still needs physical flash access |
+| Device identity | Safe | Safe | Safe | Can use it while holding the unit | Same | Can extract that unit's keys | Safe (symmetric) |
+| Other units and sensors | Safe | Safe | Safe | Safe | Safe | Safe (per-device and per-sensor keys) | Safe |
 
 ### Not protected
 
-- User data on a unit while the evil maid's compromised bitstream is running a legitimate session.
-  Mitigation: tamper-evident enclosures and custody of the hardware.
-- Remote attestation. A compromised bitstream that holds the pairing key looks identical to a good one,
-  so a host cannot tell from the protocol alone.
-- Denial of service, including a permanent one. A compromised bitstream can erase flash, and anything on the I2C bus can advance the secure element's
-  counters, which take no authentication, up to their maximum, after which no update can ever be accepted (R30). Physical protection of the secure element and its bus is the only defense.
-- Secrecy of the application code, unless the Code Secrecy Profile is enabled.
+- **Denial of service.** Anyone who can reach the board can erase the flash or cut the sensor cable. Cutting the cable or blocking readings
+  is detected and puts the device in its safe state (`doc/sensor.md`), but it is not prevented.
+- **Restoring an old flash image** with a programmer, for versions that were not security releases. Only security releases advance the anti-rollback
+  eFuses, which have 9 bits in total (R4).
+- **The C5 against a lab attacker.** Espressif lists no fix for AR2023-007 on the C3 and C6; the C5 adds glitch detectors and AES dummy rounds,
+  but these raise the cost rather than remove the attack. Per-device keys keep it to one unit (R5).
+- **Secrecy of the application code,** unless the Code Secrecy Profile is enabled.
 
 ## Risk Assessment
 
-The Outcomes table above summarizes which assets survive each attacker. This table breaks the same ground
-down into individual risks, one per attack, so each can be rated, owned and tracked.
-
-Ratings are for the base model (no Code Secrecy Profile) unless a row says otherwise.
+Each row is one attack, so each can be rated, owned and tracked. Ratings are for the base model.
 
 **Impact:**
-- **Critical:** user data exposed or forged, arbitrary code execution, or any fleet-wide compromise.
+- **Critical:** user data exposed or forged, a forged temperature reading acted on, arbitrary code execution, or any fleet-wide compromise.
 - **High:** a single unit compromised or rolled back to a vulnerable version.
 - **Medium:** loss of service, a bricked unit, or a weakened but not broken protection.
 - **Low:** exposure of information the model does not treat as secret.
@@ -93,413 +94,63 @@ Ratings are for the base model (no Code Secrecy Profile) unless a row says other
 - **Medium:** needs physical access plus specialist skill, or sustained effort against one unit.
 - **Low:** needs a well-equipped lab, an insider, or capabilities that do not yet exist.
 
+FDA asks for an exploitability-based rating rather than likelihood; the table is to be re-scored in that form before a submission (`doc/fda.md`, gap 8).
+
 | # | Asset / Component | Threat Actor | Attack Vector / Threat Description | Vulnerability Exploited | Impact | Likelihood | Mitigation / Countermeasure |
 |---|---|---|---|---|---|---|---|
-| R1 | MicroSD card: user data | Thief with a card reader | Remove the card and read user data offline | The card is removable and readable | Critical | High | AES-256-GCM under a per-device data key that the secure element releases only after host authorization (CheckMac) |
-| R2 | External SPI flash: application image | Casual hobbyist with a flash programmer | Dump the flash and inspect the application | Flash is external and readable | Low | High | AES-256-GCM under a per-device application key; a copied image will not run on another board |
-| R3 | External SPI flash: version state | Insider or thief with physical access | Restore an older, vulnerable bitstream, loader or application image | Flash contents are not bound to a version | High | Medium | Secure element monotonic counters (0: platform, covering bitstream and loader; 1: application), checked by the boot ROM and the loader; pairing key rotation retires old bitstreams |
-| R4 | UART update path | Advanced remote attacker | Send a forged or modified update package | UART accepts update packages from anyone | Critical | Medium | LMS signature (through the release manifest) verified by the loader over the ciphertext, before decrypting or installing anything; the ciphertext is re-hashed during decryption and must match, so a package swapped on the card after verification is caught |
-| R5 | Update packages in transit | Casual hobbyist | Hex dump an update file or capture it on the UART | Packages travel over open channels | Low | High | AES-256-GCM under the fleet-wide distribution key (obfuscation). For real secrecy, per-device package keys (Code Secrecy Profile) |
-| R6 | Distribution key | Attacker with one compromised unit | Read the distribution key and decrypt all past and future packages | Key is the same on every unit and readable by the loader | Low (High with the Code Secrecy Profile) | Medium | Accepted in the base model. Code Secrecy Profile replaces it with per-device package keys |
-| R7 | I2C bus to the secure element | Casual hobbyist with a logic analyzer | Sniff keys as the loader reads them | Bus is external and unencrypted | High | High | Encrypted key reads (EncRead) under the pairing key; keys never cross the bus in clear |
-| R8 | I2C bus to the secure element | Insider with a bus interposer | Replay or forge counter values and read results, or alter keys in transit | Bus is external; responses could be replayed; encrypted reads carry no MAC | High | Medium | Counter and public key hash responses MAC'd under the pairing key over a fresh loader-generated nonce, with random nonces required for every use of the pairing key; every unwrapped key checked before use (header HMAC, key check values) |
-| R9 | UART host session | Advanced remote attacker | Guess or brute-force the host authorization to unlock user data | UART is an open channel; the secure element has no retry lockout | Critical | Low (high-entropy key); High (short PIN) | High-entropy host authorization key checked inside the secure element; if a PIN is ever used, attempts must be limited another way, since both secure element counters are allocated (`doc/se.md`) |
-| R10 | Bitstream (Tier A) | Advanced attacker with a lab | Forge or modify a bitstream that the FPGA will accept | Requires breaking the vendor signature and the AES key | Critical | Low | Vendor signature plus AES-256 with encrypted-only configuration. Damage limited by the pairing key and host-authorized data key |
-| R11 | Bitstream (Tier B, ECP5) | Skilled attacker with physical access | Blind bit-flip edits to the encrypted bitstream, brute-forcing the configuration CRC | No hardware authentication; CBC-style encryption without a MAC | High (code execution on that unit; user data exposed in a later evil-maid session) | Medium (Low if the CRC is 32-bit; see Open Question 9) | Host-authorized data key (a stolen unit still protects data), per-device keys, tamper-evident enclosure |
-| R12 | Bitstream: foreign design | Casual hobbyist with a JTAG pod | Load their own design and talk to the secure element and flash | JTAG configuration open, or plaintext bitstreams accepted | High (denial of service, including the permanent counter brick of R30) | High on Tier B, Low on Tier A | Pairing key gates every secure element key; encrypted-only configuration and JTAG lockout where the FPGA supports them |
-| R13 | Bitstream: configuration readback | Casual hobbyist with a JTAG pod | Read back the running configuration and extract the pairing key | Readback left enabled | Critical | High if enabled, Low once fused | Readback permanently disabled at manufacturing (FPGA Requirement 4) |
-| R14 | FPGA bitstream encryption key | Advanced attacker with a lab | Side-channel or invasive extraction of the AES key from one FPGA, then decryption of its bitstream | Physical access to the configuration engine | High (that board only, or that batch with per-batch keys) | Low | Per-board (or per-batch) eFuse keys and per-board pairing keys patched into each board's bitstream; host-authorized data key keeps user data on the stolen board safe even so |
-| R15 | Loader: soft CPU debug paths | Casual hobbyist with a JTAG pod | Use a soft CPU debug port or user-JTAG primitive to read keys from internal memory | Debug logic left in a production bitstream | Critical | Medium | No debug ports or user-JTAG primitives in production bitstreams |
-| R16 | Loader: security checks | Advanced attacker with physical access | Voltage or clock glitching to skip the LMS check, the counter check or the tag check | A single check is a single point of failure | Critical | Low | Multi-bit decisions, hardware comparators and key gating, duplicated checks, flow counter, random delays, glitch detectors, fail closed. Tested by fault-injection campaigns A to D (`doc/test.md` section 6) |
-| R17 | Loader: AES core | Evil maid or thief with power or EM analysis equipment | Recover the loader or application image key from traces collected on cache misses, then forge loader lines with valid tags (or, for code secrecy, decrypt the application) | AES decryption of every cache fill is observable | Critical (loader takeover on Tier A without a bitstream compromise) | Low (lab) | **Masked AES core in the base design**, with leakage evaluation (`doc/test.md`); image keys change with every install |
-| R18 | Secure element | Advanced attacker with a lab | Invasive or side-channel attack on the ATECC608B to extract its keys | Physical access to the secure element | High (one unit only) | Low | Per-device key diversification limits the result to one unit |
-| R19 | Update process | Any user, or an attacker cutting power | Power failure during a platform or application update | Update is not atomic | Medium (bricked unit) | Medium | A/B flash slots. Pairing key rotation sequencing is still open (Open Question 1) |
-| R20 | LMS signing infrastructure | Insider, or an operator error | Reuse an LMS leaf (for example after restoring the signer from backup), enabling forgery | LMS is stateful | Critical (fleet-wide forged updates) | Low | Signing state kept in an HSM that enforces one-time use (SP 800-208); no restores of signer state |
-| R21 | Vendor bitstream signature (Tier A) | Future quantum-capable attacker | Break the vendor's ECDSA or RSA signature with Shor's algorithm | Vendor signature is not quantum-safe | Medium (Tier A falls back to Tier B protection) | Low (today) | Encrypted-only configuration (AES-256), LMS for all of our own signatures, all data protection symmetric |
-| R22 | Remote attestation | Advanced remote attacker controlling a compromised unit | Pass a compromised unit off as genuine to a host or server | A bitstream holding the pairing key is indistinguishable from a good one | High | Low | Accepted. Not protected by this design (see Not protected) |
-| R23 | MicroSD card | Casual hobbyist, or anyone who can insert a card | Insert a card with malformed files to exploit the loader's file handling, or with forged or old update packages | Removable media is fully attacker-controlled; filesystem parsing is complex | Critical (code execution in the loader if parsing is exploitable) | High | Minimal fixed-format parsing with strict bounds checks, fuzz-tested; packages verified by LMS and checked against the counters exactly as on the UART |
-| R24 | Security event log on MicroSD | Insider or thief | Remove the card, or edit, truncate or reorder log records to hide an attack | Card is removable and writable | Medium | High | Log records MAC'd and hash-chained under a per-device log key; editing, reordering and gaps are detected and reported. Truncating the tail or restoring an older card is not detected without an anchor in the secure element (slot 11, Open Question 12) |
-| R25 | Application code | Customer-written application, or an attacker who has compromised it | Read keys, drive the secure element, write the flash or change the loader's state | Shared hardware between the loader and the application | Critical | Low, with separate cores (High if they shared a CPU) | Separate loader and application cores; the application core has no wiring to keys, the secure element, the security block or flash writing, which can be checked from the netlist (`doc/hw.md`) |
-| R26 | Mailbox between the cores | Compromised application | Malformed or changing requests to exploit the loader's message parser | The mailbox is the only path into the loader | Critical | Medium | Small fixed set of services and formats; each request copied out of shared RAM before checking; every field checked against fixed limits; no pointers from messages; fuzz-tested |
-| R27 | Developer sideloading | Developer, or anyone holding a leaked developer key or an old flash dump | Install code that reads production user data, block future production updates, or restore an old developer build | Developer builds are not signed by the application owner and skip the version check | High (one device) | Medium | Developer keys are per device; developer builds get a separate user data key and never advance counter 1; developer headers carry the epoch and boot refuses older epochs; a production install erases any developer image in the other slot (`doc/roles.md`) |
-| R28 | MicroSD card: user data freshness | Insider or thief with a card reader | Copy the card, and later restore the old copy so the device accepts rolled-back data | Old records still decrypt and authenticate under the same data key | High (one device) | High | Reserved: a digest of the latest user data in secure element slot 11, written at the end of each session that changes data (`doc/se.md`); to be decided per application (Open Question 12) |
-| R29 | UART host session | Attacker in the middle of the host link | Read user data in transit, or take over a session after the host has authenticated | CheckMac authenticates the host once; the session's traffic is not yet encrypted or authenticated | Critical | Medium | **Not yet designed:** a session key derived inside the secure element from the host authorization key and the session nonce (Open Question 13) |
-| R30 | Secure element counters | Anyone with access to the I2C bus, or a foreign bitstream | Advance counter 0 or 1 past the installed versions, or to the maximum of 2,097,151 | The Counter command takes no authentication (as cryptoauthlib's interface shows) | Critical (permanent brick of one device) | Medium (physical access; High on Tier B with a foreign bitstream) | **Accepted.** Physical protection of the secure element and its bus (potting, or the same package as the FPGA); counters above the installed version are reported as a fault rather than silently refusing to boot |
-| R31 | Application signing key | Loss or failure of the HSM holding the main application LMS key | Application updates for the whole fleet become impossible | LMS state cannot be restored from a backup | High (fleet-wide, no updates) | Low | Backup LMS key in a separate offline HSM, its public key hash in a never-writable slot (`doc/se.md`) |
+| R1 | MicroSD card: user data | Thief with a card reader | Remove the card and read or alter user data | The card is removable | Critical | High | AES-256-GCM under a key derived from both the device's data key and the host's data secret; the device never stores the secret |
+| R2 | External flash: images and TEE storage | Hobbyist with a flash programmer | Dump the flash and read code or keys | The HR8 has no flash in the package | Medium | High | XTS-AES flash encryption with a per-device key generated on chip; keys in TEE storage are also encrypted under the TEE storage key |
+| R3 | Update path | Remote attacker | Send a forged or modified package | Packages arrive from anyone, on the card or the host link | Critical | Medium | LMS signature checked by the TEE before decryption; the RSA image signature checked again by the bootloader at every boot |
+| R4 | Version state | Board prober | Write an older, vulnerable image back into flash with a programmer | Flash has no freshness | High | Medium | The TEE refuses older packages on the update path. Security releases advance the anti-rollback eFuses (6 steps for the application, 3 for the TEE, 4 for the bootloader), which the bootloader enforces even after a flash restore. Restoring a non-security release is accepted |
+| R5 | C5 secrets | Lab attacker | Power analysis on flash encryption, and voltage or EM glitches on secure boot (AR2023-007) | Published attacks with no silicon fix on the C3 and C6 | High | Low | C5 glitch detectors and AES pseudo-rounds enabled; per-device keys only, so one break exposes one unit; host data secret not on the device; tamper-evident enclosure |
+| R6 | External flash at run time | Board prober with an interposer | Change flash contents after secure boot has checked them | XTS-AES has no per-read integrity check | High | Low | Edits produce unpredictable 16-byte blocks, not chosen code; TEE code and data are checked or authenticated by the TEE before use; a C5 with flash in the package would remove the probe point (open question) |
+| R7 | Debug and download ports | Hobbyist | Attach JTAG or the ROM download mode to read memory or load code | Ports exist on every C5 | Critical | High | eFuses disable JTAG (pad and USB) and direct boot; download mode is secure download mode or permanently disabled (`doc/c5.md`) |
+| R8 | Keys in the C5 | Malicious or buggy application, including a developer build | Read TEE memory or use key peripherals directly | Application and TEE share one core | Critical | Medium | ESP-TEE: the application runs in user mode; memory, the HMAC peripheral, eFuse and flash regions belong to the TEE by permission (APM/PMP); keys never leave the TEE |
+| R9 | Host session | Link attacker | Impersonate the host, or replay or alter session traffic | The host link is open | Critical | Medium | Mutual authentication under the host key with nonces from both ends; every frame encrypted and authenticated with a counter |
+| R10 | User data freshness | Thief or evil maid | Put an old copy of the card back | Every old record still authenticates | High | High | The device gives the host an authenticated digest of the data state at the end of each session; the host presents it at the next one, and a mismatch is reported |
+| R11 | Temperature readings | Link attacker | Forge readings or commands on the sensor cable | The cable is outside the box | Critical | High | Every frame, in both directions, carries a MAC under a session key derived from the pairing key and fresh nonces from both ends |
+| R12 | Temperature readings | Link attacker | Replay old readings, or delay them | MACs do not prove freshness or timeliness | Critical | Medium | Per-session nonces and frame counters; the TEE enforces a maximum reading age; late or missing readings put the device in its safe state |
+| R13 | Temperature readings | Link attacker | Cut or jam the sensor link | Availability cannot be enforced | High | High | Detected within the maximum reading age; safe state and alarm. Not preventable |
+| R14 | Sensor identity | Counterfeiter | Make sensors that pair as genuine | Sensors pair offline | Critical | Low | ML-DSA certificate from the sensor manufacturer's HSM, checked by the TEE; the sensor must prove it holds the certified ML-KEM key |
+| R15 | Sensor identity | Lab attacker | Extract one sensor's key and clone it | A sensor is a small microcontroller | High | Low | Each sensor has its own key; the enrollment server sees the same serial paired to several devices and adds it to the denylist delivered with updates and online |
+| R16 | Device identity | Counterfeiter or cloner | Build or clone devices that use the service | Devices may be offline for long periods | High | Low | Device root key in a read-protected eFuse; the server authenticates every device it sees and flags unknown identities; a device that was never enrolled has no distribution key, so it cannot install updates |
+| R17 | ECP5 | Board prober | Replace or reprogram the FPGA, or interpose on its SPI link | The FPGA is a peripheral on the board | Medium | Medium | The FPGA holds no secrets and the sensor does not go through it; the identity register and self-test catch wrong or corrupted bitstreams. The FPGA's own function is trusted only as far as the application checks its results |
+| R18 | Update packages in transit | Hobbyist | Hex dump a package | Packages travel over open channels | Low | High | AES-256-GCM under the fleet-wide distribution key (obfuscation). Code Secrecy Profile for real secrecy |
+| R19 | HSMs, enrollment database, update server | Insider or intruder | Use master keys or records to derive any device's keys, unlock any host's data secret, or issue rogue sensors | Per-device keys are derived from master keys | Critical | Low | HSMs with dual control and audit; the database holds no secret key material; signing and derivation only inside HSMs; separate masters per key type |
+| R20 | Host key | Thief of the host | Use a stolen host to open sessions | The host holds the keys | Critical | Medium | Host-side protection (user authentication, encrypted key storage) is the host's job; a compromised host means retiring the device, since its keys cannot be changed |
+| R21 | Developer builds | Developer | Run a developer build on someone else's device, or read production user data | Developer builds are signed through the release signing service | High | Medium | Each developer build names one device and one developer epoch; the TEE refuses it anywhere else; developer builds use separate data keys (`doc/roles.md`) |
+| R22 | Developer epoch | Developer with a programmer | Restore an old flash image to revive an expired developer build | The epoch record lives in TEE storage in flash | Medium | Medium | Accepted: it harms only the developer's own device, and production data keys never reach developer builds |
+| R23 | Radios | Remote attacker | Attack the Wi-Fi, Bluetooth or 802.15.4 stack | The C5 has radios | Critical | Medium | Radios not initialized in the base design; using Wi-Fi for updates is an open question |
+| R24 | Boot root | Quantum-capable attacker with flash access | Forge an RSA-3072 image signature | The ROM supports only RSA and ECDSA | High | Low | The update path needs LMS; a forged image still needs physical flash access. Accepted |
+| R25 | C5 boot ROM | Researcher | A ROM bug (as in AR2023-007's buffer overflow) | ROM cannot be patched | High | Low | Follow Espressif advisories; per-device keys; eFuse settings chosen against published attacks |
+| R26 | Event log | Evil maid or thief | Erase or alter the security event log | The log lives in flash or on the card | Medium | Medium | HMAC-chained entries under a TEE key; the host and the server read it and notice gaps |
+| R27 | Signing keys | Insider, or loss | A signing key is lost or leaks | Keys are long-lived | Critical | Low | Main and backup RSA keys in eFuse, each revocable; main and backup LMS keys in the TEE image, replaceable by a TEE update signed with the other key; keys held in separate HSMs |
 
 ## Optional: Code Secrecy Profile
 
-The base model protects the application's integrity, not its secrecy. Some users will also want to keep
-their code secret. This profile lists what that adds and what it costs. Enable it only if code secrecy is a requirement.
+Flash contents are already encrypted under a key unique to each device. The weak point for code secrecy is the fleet-wide distribution key (R18):
+breaking one device exposes every package. The profile replaces it with **per-device packages**: the update server wraps each package's content key
+to the device's own key, derived from the device root. That needs the server, so offline updates would carry per-device packages too, prepared for
+one device. The profile changes nothing else in the design.
 
-### Why code is harder than user data
+## Algorithm bill of materials
 
-User data is per device and per user. Application code is the **same plaintext on every unit**, so breaking
-any one unit leaks it for the whole fleet. Per-device key diversification does not help: it stops one unit's key
-from decrypting another unit's flash, but every unit's flash holds the same code.
-
-User data is also gated by the host authorization key. Code cannot be: the loader must decrypt the application
-at boot with no host present, or the device cannot run on its own. A compromised bitstream on any unit
-can therefore reach the code.
-
-### Added asset
-
-| Asset | Goal | Scope |
-|---|---|---|
-| Application confidentiality | The plaintext application never leaves the device | Fleet-wide: one leak exposes every unit |
-
-### Outcomes for application confidentiality
-
-| Tier | Remote | Bus prober | Thief | Evil maid | Quantum-capable |
-|---|---|---|---|---|---|
-| Tier A | Safe | Safe | Safe unless the bitstream is compromised | Same as thief | Reduces to the bitstream encryption mode: still strong with authenticated encryption (Ti60 AES-GCM), unconfirmed for CrossLink-NX |
-| Tier B | Safe | Safe | **Exposed if a blind bitstream modification succeeds** | Same as thief | Same as without the quantum computer |
-| ASIC | Safe | Safe | Safe against bitstream attacks; side channels remain | Same as thief | Safe |
-
-The thief is now the main attacker. For user data, a Tier B bitstream compromise only mattered to an evil maid
-who also had to return the unit and wait for the user. For code, a thief with any unit and unlimited time
-needs only one success, and the reward is the whole fleet's code. The ECP5's configuration CRC (Open Question 9)
-becomes the entire defense of the code on Tier B.
-
-**Recommendation:** use Tier A for code secrecy, preferably an FPGA with an authenticated-encryption bitstream
-format such as the Ti60's, or an ASIC. On Tier B, code secrecy is best effort only.
-
-### Changes the profile requires
-
-**Per-device package keys.** The base model already encrypts application packages in transit, but under a
-fleet-wide distribution key that the loader reads from the secure element. That stops a casual hex dump, not
-an attacker: a compromised bitstream on one unit can decrypt every future release. The profile replaces it:
-
-| | Base model | Code Secrecy Profile |
-|---|---|---|
-| Package key | Fleet-wide distribution key, the same in every secure element | Package key = KDF(distribution master key, SE serial number). The master stays in the HSM |
-| Packages built | One per release | One per unit per release |
-| One compromised unit exposes | Every release, past and future | Only the releases that unit received |
-
-Both are symmetric, so both are quantum-safe. In both, the package is signed (LMS) over the ciphertext,
-so the loader can reject a forged package before decrypting anything.
-
-**Side-channel hardening.** The base design already uses a masked AES core (R17), because power analysis of an unmasked core would let an attacker
-forge loader code. For code secrecy it matters even more: a thief can collect traces on every cache miss without rebooting, and recovering one unit's
-key reveals the fleet's code. The profile adds leakage evaluation of the application's decryption to the same standard as the loader's.
-
-**No in-use readout paths.** These become hard requirements instead of hygiene:
-- No debug port on the soft CPU in production bitstreams.
-- No user-JTAG primitives in the design (for example the ECP5's JTAGG) that can reach internal memory.
-- Configuration readback permanently disabled (already required).
-- Fabric JTAG disabled where the FPGA allows it.
-
-**Separate key owners.** If a customer owns the application and needs it secret from the platform vendor too,
-the profile cannot provide that: the platform's loader decrypts the customer's code, so the customer must trust
-the platform. The profile can only protect the code from everyone else.
-
-### Added algorithms
-
-| Algorithm | Host | Loader | Secure element | Used for |
-|---|:-:|:-:|:-:|---|
-| KDF (HMAC-SHA256 based, for example HKDF) | derive from master | | | Per-device package keys |
-| Leakage evaluation of application decryption | | yes | | Every application cache fill (the masked core is already in the base design) |
-| Package key slot | | read over MAC'd channel | store | Per-device package key, replacing the fleet-wide distribution key |
-
-Package encryption itself (AES-256-GCM) is already in the base model.
-
-## Where algorithms run
-
-| Location | What it is | Who provides it |
-|---|---|---|
-| **Host** | Signing and provisioning tools, and the field update client | Us (scripts and an HSM) and the FPGA vendor (bitstream tools) |
-| **Config engine** | The FPGA's hardened configuration logic | FPGA vendor, fixed in silicon (platform only) |
-| **Loader** | RTL cores and the boot ROM in the bitstream (or silicon on an ASIC), and the loader image executed in place from flash | Us |
-| **Secure element** | ATECC608B (or MOD8ID) | Microchip / Modsemi, fixed in silicon |
-
-The design goal is that every algorithm in the loader is built from **SHA-256 and AES**: no bignum or
-elliptic-curve arithmetic. LMS signatures make this possible, because verifying one is just hashing.
-
-## Summary
-
-| Algorithm | Host | Config engine | Loader | Secure element | Used for | ASIC |
-|---|:-:|:-:|:-:|:-:|---|:-:|
-| Bitstream signature (ECDSA P-256 or RSA-4096, per family; Tier A only) | sign | verify | | | Stage 0 bitstream authentication | — |
-| Bitstream encryption (AES, mode per family; per-board key) | encrypt | decrypt | | | Bitstream confidentiality, and quantum-safe Stage 0 | — |
-| LMS (RFC 8554), platform key | sign (stateful, HSM) | | **verify** | | Platform package signatures (bitstream and loader image) | ✓ (loader only) |
-| LMS (RFC 8554), application key | sign (stateful, HSM) | | **verify** | | Application package signatures | ✓ |
-| SHA-256 | yes | | **yes** | yes | LMS, package digests, MACs, nonce and key derivation | ✓ |
-| SE MAC protocol (SHA-256 based) | | | **yes** | yes | Authenticated counter reads and public key reads | ✓ |
-| SE host authorization (CheckMac, SHA-256 based) | yes | | forwards only | **check** | Host proves itself to the SE; unlocks the data key | ✓ |
-| AES-256-GCM | | | **yes** | | Application (per cache line, `doc/xip.md`) and user data encryption and authentication | ✓ |
-| AES-256-GCM, distribution key | encrypt | | **decrypt** | store | Application packages in transit (obfuscation) | ✓ |
-| Key wrap / encrypted write | wrap | | **yes** | yes | Installing the next pairing key | — |
-| Monotonic counter 0 | | | | yes | Platform anti-rollback (bitstream and loader image) | ✓ (loader only) |
-| Monotonic counter 1 | | | | yes | Application anti-rollback | ✓ |
-| TRNG | | | | yes | Key generation, SE nonces | ✓ |
-| Loader nonce source | | | **yes** | | Freshness the SE and bus cannot control | ✓ |
-| CRC-16 (poly 0x8005) | | | **yes** | yes | SE I2C packet integrity | ✓ |
-| CRC-32 | yes | | yes | | UART transport framing (not security) | ✓ |
-
-## Host
-
-**Bitstream signing and encryption (platform only).** Done by the FPGA vendor's tools, so the algorithm depends on the family:
-ECDSA with AES-256 on Lattice Nexus, RSA-4096 with AES-GCM-256 on Efinix Titanium. These signatures are not
-quantum-safe, so the device must also be locked to accept only encrypted bitstreams (README, FPGA Requirements item 5).
-
-**LMS signing (both chains).** Each chain has its own LMS key pair. Platform packages hold a bitstream (with the next pairing key
-wrapped under the current one), a loader image (encrypted under a content key wrapped under the board's current pairing key), or both,
-and the platform version, the target board's serial number and pairing key version, and an inclusion proof in the release manifest.
-Both key wraps are authenticated (AES-256-GCM). Application packages hold the application image, encrypted
-under the distribution key (AES-256-GCM), and its version; the LMS signature covers the ciphertext.
-Because the loader verifies the platform signature before writing a bitstream to flash, every bitstream is signed
-twice: LMS by us, and the vendor's own format checked by the config engine at boot.
-
-Platform packages are built per board (or per batch), because each board's bitstream is encrypted under its own
-eFuse key and carries its own pairing key, and each loader image's content key is wrapped under the board's pairing key.
-That keeps a second barrier in place for loader-only packages: a stolen platform signing key alone cannot build a package
-that installs on any board. Synthesis and place and route still run once per release; only the
-block RAM patch and encryption are repeated per board.
-
-**One signature per release.** Signing every per-board package would exhaust an LMS tree: one release to 32,768 boards would use a whole
-H15 tree. Instead the HSM signs a **release manifest** once: the root of a Merkle tree over the SHA-256 digests of every per-board package.
-Each package carries its inclusion proof, which the loader checks with the SHA-256 core it already has. Per-unit packages under the
-Code Secrecy Profile work the same way.
-
-LMS is stateful, and the signing side must be built around that:
-- Each one-time key (leaf) signs exactly once. Reusing a leaf lets an attacker forge signatures.
-- The signer's state (next leaf index) must survive crashes and must never be restored from an older backup.
-- SP 800-208 expects key generation and signing in a hardware security module that enforces this.
-- A tree of 2^10 to 2^15 leaves covers far more releases than a product line will ever ship, since each release takes one signature.
-  HSS (multi-level trees, also in RFC 8554) is available if one key must last longer; its public key is 60 bytes instead of 56.
-- The application owner also keeps a **backup LMS key** in a separate, offline HSM. Its public key's hash is provisioned in a never-writable
-  slot, so losing the main key or its HSM does not end application updates (`doc/se.md`).
-
-The application key can be held by a different party than the platform key, for example a customer who ships
-their own application on our platform.
-
-**Provisioning.**
-- Write and lock the secure element configuration zone.
-- Write the application LMS public key, the first pairing key, the host authorization key, the distribution key,
-  the device-unique application key, data key, developer key (`doc/roles.md`) and log key into their slots, then lock the data zone.
-- Configure the data key slot to require authorization by the host authorization key, and make the host
-  authorization key non-readable, so it can only be used inside the secure element.
-- The platform LMS public key needs no provisioning: it is built into the boot ROM image in the bitstream.
-- Diversify every key per device, derived in the HSM as KDF(master key, secure element serial number) so no key database is needed.
-  This is mandatory: it is what keeps a compromised unit from exposing the rest of the fleet.
-  The one exception is the distribution key, which must be the same on every unit so one package installs everywhere.
-  The pairing key also takes a key version, KDF(pairing master, serial, key version), because it rotates with bitstream updates. The key version
-  is the platform version at which the key was issued; it is public, patched into the bitstream next to the key, and reported by the loader,
-  so the HSM can recompute the key a board holds.
-- Program a per-board (or per-batch) bitstream encryption key into the FPGA's eFuses. Patch the board's pairing key
-  into its copy of the bitstream (block RAM initialization; `ecpbram` on the ECP5) and encrypt that copy under the board's key.
-- Give the host its copy of the host authorization key (or the means to derive it) over a channel separate from the device.
-- Program and lock the FPGA's key fuses (see the FPGA Requirements in the README).
-
-**Field update client and host session.** Sends platform and application packages over the UART, and answers
-the secure element's challenge with a MAC under the host authorization key to open a data session.
-
-## Config engine (platform only)
-
-Fixed in silicon; we only choose and lock it.
-
-- Bitstream signature verification (ECDSA or RSA, per family; Tier A only)
-- Bitstream decryption (AES, per family; both tiers)
-- Key storage in one-time fuses
-- Port and readback lockout, and encrypted-only configuration
-
-## Loader
-
-This is the part we write. It should be small, identical across FPGA families, and suitable for an ASIC.
-It has two parts: the boot ROM, which checks and starts the loader image, and the loader image itself, which runs in place from flash
-(`doc/hw.md`, Boot and lockdown).
-
-**SHA-256 (required, RTL core strongly recommended).** Everything else in the loader is built on it:
-LMS verification, package digests, the secure element MAC protocol, HMAC, and key derivation.
-LMS verification alone runs hundreds to thousands of SHA-256 compressions, so a hardware core matters.
-One shared core can serve all users.
-
-**LMS verification.** Recomputes the one-time public key from the signature by walking the Winternitz hash
-chains, then climbs the Merkle tree to the root and compares it with the stored public key. Only SHA-256 is needed.
-Sizes for the common parameter sets (n = 32, SHA-256):
-
-| Parameter set | Signature size | Max chain hashes to verify | Signatures per key |
+| Algorithm | Standard | Runs in | Used for |
 |---|---|---|---|
-| LMS_SHA256_M32_H10 + LMOTS_SHA256_N32_W4 | 2,508 bytes | about 1,000 | 1,024 |
-| LMS_SHA256_M32_H10 + LMOTS_SHA256_N32_W8 | 1,452 bytes | about 8,700 | 1,024 |
-| LMS_SHA256_M32_H15 + LMOTS_SHA256_N32_W4 | 2,668 bytes | about 1,000 | 32,768 |
+| RSA-3072 PSS | Secure boot v2 | C5 ROM and bootloader (hardware RSA accelerator) | Image signatures |
+| XTS-AES-128 | IEEE 1619 | C5 flash and PSRAM encryption hardware | Everything in external flash and PSRAM |
+| SHA-256, HMAC-SHA256 | FIPS 180-4, FIPS 198-1 | C5 SHA and HMAC peripherals | Key derivation from eFuse keys, MACs, hash chains |
+| HKDF-SHA256 | RFC 5869 | TEE (software over the SHA peripheral) | Session keys, labelled key derivation |
+| AES-256-GCM | SP 800-38D | TEE (C5 AES accelerator with pseudo-rounds) | User data, host sessions, update packages |
+| LMS (HSS) | RFC 8554, SP 800-208 | TEE (Mbed TLS includes an LMS verifier) | Update package signatures |
+| ML-DSA-44 | FIPS 204 | TEE (verify only) | Sensor certificates |
+| ML-KEM-768 | FIPS 203 | TEE (encapsulate) and sensor (decapsulate) | Sensor pairing |
+| Ascon-AEAD128, or HMAC-SHA256 | SP 800-232, FIPS 198-1 | TEE and sensor | Sensor link frames (choice open) |
+| TRNG | | C5 RNG; a TRNG on the sensor | Nonces |
 
-W = 4 is the natural choice: signatures are larger but still small next to an image, and verification is about
-eight times faster. Public keys are 56 bytes for every parameter set. SP 800-208 also defines 192-bit (M24/N24)
-variants with smaller signatures.
+Implementations for ML-KEM and ML-DSA are to be chosen; portable C libraries such as the PQ Code Package's mlkem-native and mldsa-native are candidates.
+The FPGA needs none of these.
 
-Where the public keys come from:
-- **Platform key:** a constant in the boot ROM (block RAM in the bitstream on the FPGA, authenticated by the configuration engine on Tier A and protected only by bitstream encryption on Tier B; mask ROM on the ASIC).
-- **Application key:** carried in each package and checked against its SHA-256 hash, read from its secure element slot over the MAC'd channel,
-  so a device on the I2C bus cannot substitute its own. (A 56-byte key cannot be authenticated in place: GenDig covers only 32 bytes of a slot.)
+## Open questions
 
-**Secure element MAC protocol.** The loader recomputes the MACs that the secure element returns, so the I2C bus
-cannot forge or replay results. Needed for:
-- Counter reads: Nonce, then GenDig over the counter, then MAC with the pairing key.
-- Public key hash reads: an authenticated read of the application (or backup) public key hash slot.
-- Encrypted reads and writes of keys (EncRead/EncWrite, which use SHA-256 derived keystreams). An encrypted read carries no MAC, so each
-  unwrapped key is checked before use (`doc/hw.md`, Encrypted reads carry no MAC).
-
-The exact digest layouts are defined by Microchip's command formats. Implement them from cryptoauthlib
-and test each one against real parts before any zone is locked.
-
-**Loader nonce source.** The loader must put its own fresh value into each Nonce command (NumIn).
-If it only uses the secure element's random output, a device on the bus can replay an old exchange.
-The source is a ring-oscillator TRNG with health tests. There is no counter fallback: it would need persistent storage that the design
-does not have, and a repeated value could repeat an install salt and with it GCM nonces. If the TRNG's health tests fail, the loader refuses to
-install packages or open sessions until they pass.
-
-**AES-256-GCM.** Decrypts and authenticates each cache line of the application as it is fetched (`doc/xip.md`),
-and encrypts the application on install. The same engine, through its install port, encrypts user data records, each under a fresh random
-96-bit nonce from the TRNG. GCM needs an AES core (encrypt direction only, masked; R17) plus a GHASH multiplier;
-see AES mode under Implementation partition for why it was chosen over CTR with HMAC-SHA256.
-The secure element's AES is single-block over I2C and too slow for whole images. AES-256 is quantum-safe.
-
-**Key wrap for pairing key rotation (platform only).** The platform package carries the board's next pairing key,
-encrypted under the current one. The loader unwraps it and writes it to the secure element with an
-authorized encrypted write. Sequencing across power failures still needs to be designed (see Open Questions).
-
-**Host authorization relay.** The loader does not check the host itself. It asks the secure element for a
-challenge, mixes in its own nonce, passes the challenge to the host, and forwards the host's answer to the
-secure element's CheckMac. Only after a successful CheckMac will the secure element release the data key.
-The loader never sees the host authorization key, so a compromised bitstream cannot learn it.
-The loader must clear the data key from the AES key registers when the session ends.
-
-**Support logic (not cryptographic).**
-- I2C master with the secure element's CRC-16 (polynomial 0x8005, initial value 0, LSB first), wake, idle and sleep handling.
-- QSPI flash driver with A/B slots for the bitstream, the loader and the application, so a failed update never leaves the device without a bootable image (`doc/flash.md`).
-- UART framing with CRC-32.
-
-## Implementation partition
-
-The loader runs on a LiteForth CPU in the fabric. A hardware LiteForth CPU has no C library behind it: the C API
-calls that a simulated LiteForth uses (`RFcall` and `AFcall`) do not exist in hardware. Every algorithm the
-loader needs must therefore be written in the LiteForth ISA, built in Verilog, or split between the two.
-
-### Crypto ports
-
-The Verilog cores appear to the CPU as I/O ports, reached with `>sys` and `sys>`, the same way LiteForth's
-non-blocking math unit is (`src/iomap.c` in LiteForth). Each port has a C implementation too:
-
-| Platform | Ports implemented by |
-|---|---|
-| FPGA (and ASIC) | Verilog cores |
-| Desktop LiteForth (`vm.c`) | C models, the reference for the Verilog cores (`doc/test.md` section 3) |
-| MCU LiteForth (CH32H417 and others) | C, or the MCU's own crypto hardware where it supports the algorithm |
-
-The loader's Forth code is then identical on every platform, and it never makes a C API call.
-The same port set replaces the C crypto libraries in LiteForth itself.
-
-### Partition
-
-| Function | Verilog | Forth | Why |
-|---|---|---|---|
-| SHA-256 compression | **Core**, iterative, about 65 cycles per 64-byte block | Message padding, block feeding, final digest | Everything depends on it; see the cost estimate below |
-| LMS chain hashing | **Chain sequencer** on the SHA-256 core: runs a Winternitz chain from step a to step b on one 55-byte message without CPU involvement | Parameter parsing, checksum digits, Merkle path, driving the sequencer | About 500 to 1,000 chain steps per verification; one CPU round trip per step would dominate |
-| LMS root comparison | **Comparator** that outputs a 32-bit pass or fail constant | Feeds it the computed and stored roots | Fault-injection countermeasure (`doc/test.md` rules 1 and 2) |
-| HMAC-SHA256 | — | Inner and outer hash on the SHA-256 core | Two extra blocks per MAC; no hardware needed |
-| AES-256 | **Core**, encrypt direction only, masked against power and EM analysis | Counter blocks, framing | Speed, key gating in hardware, and side-channel resistance (R17) |
-| GHASH and execute-in-place fill controller | **Hardware** (`doc/xip.md`) | — | Authenticates each cache line as fast as the flash delivers it |
-| AES key gate | **Hardware**: the AES core loads the application or data key only with its pass token set | Requests the key | Countermeasure rule 3: a skipped software check leaves the key unusable |
-| Authentication tag comparison | **Comparator** | — | Countermeasure rules 1 and 2 |
-| Secure element MAC formats (Nonce, GenDig, MAC, CheckMac, EncRead, EncWrite) | — | Builds each message, uses the SHA-256 core | Fixed short formats; easy to get right in Forth and to test against cryptoauthlib |
-| Secure element MAC comparison | **Comparator** | — | Countermeasure rules 1 and 2 |
-| I2C master | **Byte-level core** (start, stop, bytes, acknowledge, wake pulse) | Command packets, CRC-16, retries, wake, idle and sleep | Timing in hardware, protocol in software |
-| CRC-16 (I2C), CRC-32 (UART) | Optional, inside the I2C and UART cores | Otherwise a short table-free loop | Small either way; not security |
-| QSPI flash | **Core**, with burst reads (the prefetch buffer described in LiteForth's `doc/hdl.md`) | Erase, program, slot management | Throughput for hashing and decrypting whole images |
-| MicroSD (SPI mode) | **SPI shifter** | SD commands, fixed-format file handling | Parsing stays small and in one language for fuzzing |
-| UART | **Core** | Framing | Standard |
-| TRNG | **Ring-oscillator source with health tests** (SP 800-90B repetition count and adaptive proportion) | Conditioning through the SHA-256 core | Entropy and its health checks must be hardware |
-| Glitch detectors, flow counter check | **Hardware** | Feeds the flow counter | Countermeasure rules 5 and 7 |
-| Random delays | — | Delay loops seeded by the TRNG | Countermeasure rule 6 |
-| Version against counter | **Comparator** that outputs a 32-bit pass or fail constant | Reads the counter and the version, feeds both | Countermeasure rules 1 and 2 |
-| Key wrap, log chaining, A/B slot logic | — | All | Control logic |
-
-### Cost estimates
-
-These are rough, to be replaced by Yosys and simulation measurements.
-
-| | Forth on the LiteForth CPU | Verilog core |
-|---|---|---|
-| SHA-256, one block | About 6,000 to 8,000 instructions (the ISA has shifts but no rotate, so each rotate takes several instructions) | About 65 cycles |
-| LMS verification (W = 4) | About 0.2 to 0.4 seconds | A few milliseconds |
-| Hashing a 256 KB application (at install; execute in place checks lines as they are fetched instead) | About 1 to 2 seconds | Limited by flash reads, roughly 10 milliseconds |
-| AES-256, a 256 KB application | Seconds, with large tables | Limited by flash reads |
-| Area | Code space only | SHA-256 roughly 1,000 to 2,500 LUT4s; an unmasked AES-256 about the same, and a masked one two to four times that; against 24K (LFE5U-25) or 17K (LIFCL-17) |
-
-The two crypto cores together are a modest fraction of either target, and they are needed anyway for the key gate
-and the comparators. Software-only crypto would work but makes every boot seconds slower.
-
-### AES mode
-
-Executing the application in place from flash (`doc/xip.md`) needs each cache line authenticated as fast as the flash delivers it.
-**AES-256-GCM applied per line** does that: its AES work depends only on the address and runs during the flash read, and GHASH
-streams with the data. CTR with HMAC-SHA256 would add no hardware but would more than double the cache miss time.
-The recommendation is therefore AES-256-GCM, at the cost of a GHASH multiplier.
-
-### Changes to LiteForth
-
-LiteForth's sealed update format and data logs move to the same algorithms:
-
-| LiteForth today | Used for | Becomes |
-|---|---|---|
-| Ed25519 (Monocypher, with SHA-512) | Package signatures, release key certificates | LMS, with HSS (RFC 8554 multi-level trees) in place of the root-to-release-key certificate |
-| X25519 | Wrapping package content keys to a board's key; data logs to the server's key | Per-device symmetric keys derived in the HSM as KDF(master, serial), which the server can derive too. No public-key step remains, so nothing breaks under quantum attack |
-| BLAKE2s | Package hashes, block hash tables, stage 1 MACs | SHA-256 and HMAC-SHA256 |
-| Poly1305 | Data log record tags | HMAC-SHA256 |
-| AES-128 and SM4 in CTR mode | Package and data log encryption | AES-256-GCM |
-
-The C libraries remain useful on the host and as the C implementations of the crypto ports on MCU targets,
-but none of them is called from Forth code through the C API.
-
-## Secure element
-
-Fixed in silicon; we only configure and lock it. With LMS, it no longer checks signatures. Its jobs are:
-
-- Two monotonic counters (maximum 2,097,151): counter 0 for the platform, counter 1 for the application (which also carries the developer key epoch, `doc/roles.md`)
-- Key storage: application LMS public key, pairing key, host authorization key, distribution key, and the device-unique application key, data key, developer key and log key
-- Host authorization: CheckMac against the non-readable host authorization key, gating use of the data key slot
-- SHA-256 and the Nonce, GenDig, MAC, CheckMac, EncRead and EncWrite commands for the authenticated channel
-- TRNG
-- Configuration and data zone locks
-
-Its ECDSA engine goes unused. On an ASIC, counter 0 protects the updatable loader instead of the bitstream (`doc/ics55.md`).
-
-## Not needed
-
-These are deliberately absent from the loader:
-
-- ECDSA, Ed25519 and RSA (no bignum or elliptic-curve arithmetic, and none are quantum-safe)
-- PUF and fuzzy extractor on the FPGA (the secure element holds device-unique keys). An ASIC with no on-chip NVM needs an SRAM PUF to bind its pairing key (`doc/ics55.md`)
-- Any algorithm specific to one FPGA family
-
-## Open Questions
-
-All open questions, from every document, are collected with priorities in `doc/questions.md`, which also proposes how to close 1 and 13.
-
-1. **Pairing key rotation sequencing (platform only).** The order of operations for writing a new bitstream and loader image, installing the next pairing key and advancing counter 0, such that a power failure at any point leaves a bootable, non-rollbackable device.
-2. **Secure element protocol details.** Confirm the slot map in `doc/se.md`, and that GenDig over the counter zone, authenticated reads of the public key slot, and EncWrite of the pairing key slot all work as expected on the ATECC608B, and separately on the MOD8ID.
-3. **AES mode choice.** AES-256-GCM per cache line is recommended for execute in place (`doc/xip.md`). Confirm the GHASH multiplier's area on the smallest target FPGA.
-4. **TRNG reliability.** Whether a ring-oscillator TRNG with health tests is reliable enough across the supported FPGA families and an ASIC process (there is no fallback source).
-5. **ASIC pairing key.** A pairing key in mask logic is the same on every chip and can be recovered from one die, and the open ICS55 PDK has no one-time-programmable cells. The proposed answer is an SRAM PUF wrapping a per-device pairing key stored in flash (`doc/ics55.md`).
-6. **Separate key owners.** If the application key belongs to a customer, how they provision their LMS public key into the secure element without needing access to the platform key.
-7. **LMS parameter set and signing infrastructure.** Final choice of tree height and Winternitz parameter (W = 4 assumed), whether to use SHA-256/192, and which HSM or signing service manages LMS state for each key owner.
-8. **Host authorization on the ATECC608B.** Confirm that a slot can require authorization by another key
-   (the ReqAuth and AuthKey configuration fields in cryptoauthlib), how long the authorization lasts, and how it is cleared
-   at session end. Also decide how to limit attempts if the host key is ever derived from a PIN, since both counters are allocated (`doc/se.md`).
-9. **ECP5 bitstream security.** The ECP5's AES key size and mode, the width of the configuration CRC
-   (Project Trellis documents the bitstream format), whether encrypted-only configuration and readback lockout can be fused,
-   and whether a bitstream built with Yosys and nextpnr can be encrypted, and with which tool.
-10. **Code Secrecy Profile.** Whether per-device package keys fit the intended update distribution (one build per unit),
-   and how much area a masked AES core costs on the smallest target.
-11. **Per-board or per-batch bitstream keys.** Per-board keys contain a key extraction to one board but need one platform
-   package per board; per-batch keys cut packaging work but widen the blast radius to the batch. Also confirm the eFuse
-   programming flow for unique keys on each target family, and that `ecpbram` patching works on encrypted ECP5 builds
-   (patch first, then encrypt).
-12. **User data freshness.** Whether applications need protection against an old copy of the MicroSD card being restored, and if so whether
-   the secure element's write endurance allows a freshness digest in slot 11 to be written at the end of each session that changes data (`doc/se.md`).
-13. **Host session protection.** How the host and the device protect a session's traffic after CheckMac: a session key derived inside the
-   secure element from the host authorization key and the session nonce (the ATECC608B's KDF command is a candidate, to confirm), handed to the
-   AES key registers through the private key path, with the host deriving the same key (R29).
-14. **Masked AES.** The masking scheme, its area on the smallest target, and the leakage evaluation (TVLA) it must pass (R17).
-15. **Release manifest.** The manifest format, how inclusion proofs are carried in packages, and how manifests for Code Secrecy per-unit packages scale.
+All open questions are collected in `doc/questions.md`.

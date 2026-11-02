@@ -12,142 +12,47 @@ These would fit chips with pin counts of 44-64, 80-100, and 144-208 pins.
 
 ## Commentary: `thriller` on ICS55
 
-These notes assume ICS55 is the ultimate target, and look at what changes when the loader moves from an FPGA to an
-ASIC with mask ROM but no on-chip non-volatile memory.
+With the root of trust in the ESP32-C5, the ASIC's job is the ECP5's job: a peripheral of the C5. That changes the migration completely.
+The earlier design (on the `archive/fpga-rot-v0` branch) put the root of trust in the ASIC itself, which needed a mask ROM boot chain,
+a PUF for per-device keys and decrypting caches, because the ICsprout 55nm open PDK lists no OTP, eFuse or embedded flash cells. None of that is needed now.
 
-As of its first public release, the ICsprout 55nm open PDK contains IO and standard cell libraries. It lists no OTP,
-eFuse or anti-fuse cells. The foundry offers 55nm embedded flash as a process option, but it is not part of the open release.
-These notes therefore assume **no on-chip NVM of any kind**: every per-device secret and every piece of state must live off chip
-(in the secure element or external flash), or be derived from the die itself.
+### What the ASIC needs
 
-### What gets simpler
+- **No secrets and no non-volatile memory.** Keys, versions, pairings and records all stay in the C5.
+- **No security logic.** It holds no keys, so it needs no crypto cores, no side-channel or glitch hardening, no lifecycle states and no debug lockdown for security's sake.
+- **A build ID register** in fixed logic, read by the C5 after reset, as the FPGA does now (`doc/fpga.md`). On an ASIC it identifies the silicon revision.
+- **A self-test** the C5 can trigger.
+- **The same SPI data link** as the FPGA, so the application talks to either without change.
 
-An ASIC removes a whole class of problems that the FPGA tiers exist to manage:
+### What changes from the FPGA
 
-- **No bitstream.** The bitstream, its encryption key, readback, JTAG configuration and Tier A versus Tier B all disappear. The platform update chain remains, for the loader image.
-- **No vendor signature.** The non-quantum-safe ECDSA or RSA bitstream signature (R21) is gone. Every signature in the system is LMS.
-- **Malleable bitstreams are gone** (R11, R12, R13, R14).
-- **Counter 0 changes role.** On the FPGA it covers the platform: the bitstream and the updatable loader together. On the ASIC it covers the updatable loader alone.
+| | ECP5 | ASIC |
+|---|---|---|
+| Configuration | The C5 sends the bitstream at every power-up | None; the logic is fixed |
+| Logic updates | Through application updates | Not possible; only the C5's software can change |
+| Programmable parts | The whole design | Any programmable part (for example a small soft CPU) gets its code from the C5 over SPI at reset, into SRAM |
+| Mask ROM | n/a | Only if a soft CPU needs boot code; no keys |
 
-### Mask ROM
+Because logic cannot be updated on the ASIC, anything that might need fixing in the field should stay in the C5's software or in loadable code.
 
-Mask ROM is the ASIC's Stage 0. It is truly immutable, which is both its strength and its risk.
+### Memory budget
 
-**Nothing secret in ROM.** Mask ROM bits can be read from a die by delayering and imaging, and every chip in the run has the same contents.
-A secret in ROM is a fleet-wide secret recoverable from one die. ROM may hold only code and public values: the root LMS public key
-(56 bytes), the secure element's expected configuration, and constants.
-
-**Keep ROM small, and make the rest updatable.** A bug in ROM is permanent for the whole production run, and FDA's patchability view will
-ask how it gets fixed. So ROM should hold only what must be immutable:
-
-| In mask ROM (immutable) | In external flash (signed, updatable) |
-|---|---|
-| Reset, clocking, SRAM test | The rest of the loader: host sessions, application updates, logging, the MicroSD path, executed in place through the loader's cache |
-| SHA-256 and AES-256 core drivers, LMS verification | The application, executed in place through the application's cache |
-| Secure element protocol: pairing exchange, authenticated counter read, EncRead of the application key | |
-| On the ASIC: PUF key derivation and pairing key unwrap | |
-| Lockdown path, including the security event log entry | |
-| Check the loader's header, derive its image key, configure and lock XIP port 0 | |
-| Flash programming primitives (nothing fetched from flash can run while it is busy) | |
-| Recovery: receive a signed loader over the UART if flash holds no valid one | |
-
-This is a two-stage chain, and a cheap one: the ROM checks the updatable loader, whose anti-rollback counter is the secure element's counter 0,
-and the loader then runs from flash through its own cache on the shared XIP engine, so it needs no SRAM copy (`doc/hw.md`, `doc/xip.md`).
-The FPGA runs the same chain, with the boot ROM in block RAM, so the ASIC's boot chain is tested from the first FPGA build.
-
-**Recovery must be in ROM.** If the flash loader is corrupt and there is no recovery path in ROM, the chip is a brick. LiteForth's stage 1
-recovery terminal on the CH32H417 (YMODEM into a staging file, then install) is the model: small, signed input only, nothing else.
-
-**Code density helps.** LiteForth's 16-bit instructions are dense, and the ROM's job is narrow, so a ROM of 8 to 16 KB looks plausible.
-Mask ROM's smaller area per bit makes that cheap.
-
-### No on-chip NVM: where per-device secrets come from
-
-The FPGA design needed per-device secrets on the FPGA side for one thing above all: the **pairing key** that authenticates the secure element's
-responses on the I2C bus (R7, R8). On the FPGA it was patched into each board's bitstream. On an ASIC with only mask ROM, there is nowhere
-to put a per-device secret. This is `doc/arch.md` Open Question 5, and it is the central problem of an ICS55 port.
-
-Options, in order of preference:
-
-1. **SRAM PUF.** On an FPGA the PUF was dropped because configuration initializes block RAM. On an ASIC, SRAM powers up uninitialized,
-   so an SRAM PUF becomes available, and it needs no special cells. The PUF yields a device-unique key on every power-up:
-   - A fuzzy extractor (for example a repetition code concatenated with a BCH or Golay code) corrects bit errors, using public helper data stored in external flash.
-   - The PUF key does not itself become the pairing key. At provisioning, the factory station derives the pairing key in the HSM as
-     KDF(master, secure element serial number, key version), with a fixed key version on the ASIC, writes it to the secure element, and gives it to the ASIC, which wraps it under the PUF key
-     and stores the wrapped blob in external flash (`doc/flash.md`, ASIC key blob). On each boot the ASIC regenerates the PUF key and unwraps the pairing key.
-   - A wrapped blob copied to another board will not unwrap there.
-   - Risks: the reliability of the open SRAM compiler's cells as a PUF is unknown (bit error rate across temperature, voltage and aging),
-     and helper data manipulation is a known attack class. Both need characterization on silicon.
-2. **Poly fuses or anti-fuses designed from standard layers.** Possible in principle, but nothing like this is in the open PDK today,
-   and it would be its own research project. The foundry's own OTP or eFlash IP, if it is ever licensed for open designs, would be the practical version.
-3. **No device secret on the ASIC side.** The I2C channel is then unauthenticated, and R7 and R8 reopen. Putting the secure element in the same
-   package as the ASIC (a system in package) makes probing much harder but does not remove the attack. Not recommended.
-
-**Why not a key in ROM or in gate-level constants?** A common zero-flash approach stores a unique wrapped header in external flash and
-hardcodes the unwrapping key in mask ROM or synthesized logic. The headers differ per chip, but the key that opens them is the same on
-every chip, so recovering it from one die (ROM imaging, or netlist extraction for logic constants, which is harder but routine for a lab)
-opens every header in the fleet. That is obfuscation, not a per-device secret. A public key, or its hash, in ROM is fine because it is not secret;
-this design stores the root LMS public key itself (56 bytes). The SRAM PUF keeps the wrapped-header structure but makes the unwrapping key unique to the die.
-A ROM constant can still be mixed into the PUF key derivation, so that an attacker needs both the die's PUF response and the ROM contents.
-
-The PUF does not replace the secure element. The secure element still provides the monotonic counters, the host-authorized data key and key storage.
-The PUF only replaces the per-board bitstream key's role of binding the pairing key to one die.
-
-### Lifecycle and debug without fuses
-
-FPGAs and MCUs usually lock debug access with a one-time fuse. Without one:
-
-- **Scan chains are an attack path.** Entering scan mode must clear every security register (keys, tokens, PUF output, the AES key) before scan
-  clocks are applied. This is a standard ASIC countermeasure and must be designed in from the start.
-- **Debug unlock by challenge-response.** Any debug port stays locked unless the requester answers a challenge signed by the HSM.
-  The ASIC keeps no lock state; it is locked on every reset by default.
-- **Lifecycle state in the secure element.** Whether a device is in manufacturing or in the field can be held in a secure element slot and read over
-  the authenticated channel, in place of a fuse.
-- **Unbonded test pads.** Production packages can leave the test pads unbonded, so scan and test access are not reachable without opening the package.
-
-### Memory budget and executing the application
-
-At 2 to 3 mm2 per Mb, SRAM is expensive: 64 KB (0.5 Mb) takes about 1 to 1.5 mm2, a large share of a 1.5 x 1.5 mm or 2.0 x 2.0 mm block
-if those dimensions are the core area. A whole application cannot be decrypted into SRAM unless it is small. That suggests:
-
-- **Execute in place from QSPI flash, for both cores, through small decrypting and authenticating caches.** The design is worked out in `doc/xip.md`:
-  AES-256-GCM per cache line, under an image key unique to each image and install and a nonce that binds each line to its slot and address,
-  so lines are checked on every fill without a Merkle tree. One XIP engine serves both cores through two ports, and the loader's RAM plus both caches
-  need about 11 to 12 KB of SRAM, including the mailbox.
-
-### Things only silicon can answer
-
-Several parts of the security design depend on the process, and the FPGA prototypes cannot validate them:
-
-- SRAM PUF reliability and uniqueness with the ICS55 SRAM compiler's cells.
-- Ring-oscillator TRNG entropy and its health-test thresholds.
-- Delay-line glitch detector sensitivity and false alarm rate.
-- Power and EM side-channel leakage of the AES core (for the Code Secrecy Profile).
-
-A small test chip on an early shuttle, carrying just these structures, would settle them before committing the full design.
+At 2 to 3 mm2 per Mb, SRAM is expensive: 64 KB (0.5 Mb) takes about 1 to 1.5 mm2. With no decrypting caches and no loader,
+the ASIC needs SRAM only for its own function, and any loadable code it receives from the C5.
 
 ### Migration hooks in the FPGA design
 
-The FPGA design is not complicated for the sake of the ASIC beyond one deliberate choice: it mirrors the ASIC's boot chain
-(boot ROM, updatable loader in flash, shared two-port XIP engine), at an estimated cost of 0.5K to 1.1K LUTs and a net saving in block RAM
-(`doc/hw.md`, Resource estimate). Otherwise it only leaves hooks: choices that cost nothing on the FPGA and avoid rework later.
-The PUF and scan clearing are built only for the ASIC.
-
 | Hook | On the FPGA | On the ASIC |
 |---|---|---|
-| **Memory and clock wrappers.** Every block RAM, ROM, S-box table and clock primitive sits in a thin module | Instantiates the FPGA primitive | Instantiates an ASIC macro or synthesized logic |
-| **Pairing key source.** The pairing key reaches the loader through one module with a fixed interface | A constant patched into the bitstream's block RAM, as now | PUF key derivation and unwrapping of the blob in flash |
-| **Secret-clear input.** The security registers (keys, pass tokens, AES key, both XIP caches and port configuration) share one clear input | Driven by resets, the loader watchdog and lockdown | Also driven by scan entry and by the glitch detectors |
-| **Boot ROM.** The code that becomes mask ROM (core drivers, LMS verification, counter read, loader header check, flash programming primitives, UART recovery) is a separate image | Block RAM in the bitstream; the rest of the loader runs from flash | Moves to mask ROM unchanged |
-| **Package component types.** The update package format has component types for "bitstream", "loader" and "application" | Platform packages carry a bitstream, a loader, or both, under counter 0 | Platform packages carry the loader only, under counter 0 |
-| **No reliance on initialized RAM.** Nothing except the boot code's image assumes block RAM starts with known contents | No effect | SRAM powers up random, and is needed that way for the PUF |
+| **Memory and clock wrappers.** Every block RAM and clock primitive sits in a thin module | Instantiates the FPGA primitive | Instantiates an ASIC macro or synthesized logic |
+| **One register map** for the SPI link, including the build ID and self-test | Same | Same |
+| **No reliance on initialized RAM** | No effect | SRAM powers up random |
+| **Reset and configuration status** visible to the C5 | DONE and INITN | A ready flag after reset |
 
 ### Open questions
 
-1. Whether the ICS55 SRAM is usable as a PUF, and the fuzzy extractor's parameters for its error rate.
-2. Whether OTP or eFlash IP will become available to open designs on this process.
-3. ROM size, SRAM size and both cache sizes, from measurements on the FPGA prototype.
-4. Whether a system in package with the secure element is practical for the target packages.
+1. Whether the ASIC needs a programmable part at all, which depends on the FPGA's eventual function.
+2. Pin count and package, once the SPI link and the device's I/O are known.
 
 ### Sources
 

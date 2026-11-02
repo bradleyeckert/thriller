@@ -1,126 +1,92 @@
 # Roles
 
-This document defines who can do what to a `thriller` device, and how the developer role works:
-a developer can sideload their own encrypted, authenticated application onto their own device, and nowhere else.
+This document defines who can do what to a `thriller` device, and how developer builds work:
+a developer can run their own application build on their own device, and nowhere else.
 
 ## Roles
 
 | Role | Holds | Can |
 |---|---|---|
-| **Manufacturer** | The HSM: KDF master keys, the platform LMS key, the developer master key | Build and sign platform updates; provision devices; issue developer keys |
-| **Application owner** | The production application LMS key (in an HSM) | Sign production application releases for the whole fleet. May be the manufacturer or a customer (`doc/arch.md`, Open Question 6) |
-| **Developer** | A developer key for each device they own | Sideload developer builds onto those devices only |
-| **User** | The host authorization key for their device | Open host sessions, which unlock user data; install signed updates |
+| **Manufacturer** | The HSMs: device and host data masters, release RSA keys, platform LMS keys, distribution key, sensor CA keys (unless the sensor maker holds them) | Build and sign the bootloader and TEE; sign every image for secure boot; enroll devices; issue host and developer keys |
+| **Application owner** | The application LMS keys (in an HSM) | Approve production application releases. May be the manufacturer or a customer (open question) |
+| **Developer** | A developer key for each device they own, for the current epoch | Have builds signed for those devices only, and install them |
+| **User** | A host, with its host key and host data secret | Open host sessions, which unlock user data; pair sensors; install signed updates |
 
 A person can hold several roles. A developer is usually also the user of their own device.
 
+## Why developer builds go through the signing service
+
+Secure boot accepts only images signed with a release RSA key, and those keys must stay in the manufacturer's HSM, because an image signed with them
+would boot on every device. So a developer cannot sign their own builds. Instead:
+
+1. The developer builds their application with the normal toolchain.
+2. They submit it to the manufacturer's **developer signing service**, with the target device's ID and a MAC under that device's developer key.
+3. The service checks the MAC (the HSM derives the same key), writes a build descriptor into the image (mode *developer*, the device ID, the current epoch),
+   signs it with the release RSA key, and returns it with a package MAC under the developer key.
+4. The developer installs the package on their device, offline if they like.
+
+The device-binding is enforced on the device, by the TEE, at install and at every boot: a developer build whose device ID or epoch does not match is refused,
+and the bootloader falls back to the other slot. An image signed for one device is useless on any other.
+
+Signing needs the service to be reachable from the developer's workstation, but installing does not.
+Developers never hold a key that would work on another device, and no revocation is needed: a leaked developer key exposes only its own device.
+
+The service signs only application images in developer mode, never a bootloader or TEE image. The image type is part of the signed descriptor,
+and the bootloader checks it, so a developer image cannot be placed in a TEE slot (to confirm in ESP-IDF's image format, `doc/questions.md`).
+
 ## The developer key
 
-**One key per device.** A device's developer key is derived in the HSM:
+> developer key = HMAC(device root, "developer" ‖ epoch)
 
-> developer key = KDF(developer master key, secure element serial number)
-
-It is written into a locked slot of every secure element at provisioning, readable only by encrypted read into the loader's hardware key path, so any device can later be used for development
-without being changed. It is never handed out directly. What a developer receives is the device's working developer key for the current epoch
-(see Rotating developer keys), when they show they own that device; how ownership is shown is a business process.
-
-**It works only on that device.** A developer package is authenticated and encrypted under keys derived from that device's developer key.
-No other device holds the same key, so the package is rejected everywhere else. A leaked developer key exposes only the one device it belongs to,
-which is why no revocation is needed.
-
-**It is symmetric.** Developer packages use HMAC-SHA256 and AES-256, not LMS. That keeps the developer's tools simple and stateless:
-LMS needs careful one-time-key state management (`doc/arch.md`, LMS signing), which is reasonable for an HSM producing a few releases a year,
-but not for a developer building many times a day. Symmetric keys are also quantum-safe.
-
-## Developer packages
-
-A developer package carries:
-- the application image, encrypted with AES-256-GCM under a package encryption key derived from the developer key;
-- a header naming the target device's secure element serial number, marked as a developer build;
-- an HMAC-SHA256 over the whole package under a package MAC key derived from the developer key.
-
-Here "the developer key" means the working key for the current epoch. The developer's build tools derive both package keys from it with KDF labels,
-so one key from the HSM is all the developer needs.
+The TEE derives it on the device; the HSM derives the same value when it issues a key to a developer who has shown they own the device. How ownership is shown is a business process.
 
 ## Rotating developer keys
 
-A production release can invalidate every developer key in the field, forcing developers to get new ones. It needs no extra storage and no secure element writes.
+A production release can invalidate every developer key in the field. Each production release says whether it **starts a new epoch**.
+When the TEE installs such a release, it advances the developer epoch in its secure storage. From then on:
 
-**The epoch is part of the production version number.** Production versions carry an epoch in their high bits:
+- every developer key issued for the old epoch stops matching;
+- every developer build signed for the old epoch is refused at boot;
+- developer-mode user data from the old epoch is unreadable, because the developer data key includes the epoch;
+- developers must ask for new keys.
 
-> epoch = counter 1 ÷ 1024
-
-That allows 1,024 releases per epoch and about 2,000 epochs within the counter's maximum of 2,097,151.
-
-**The working developer key depends on the epoch.** The loader reads counter 1 over the authenticated channel at every boot, computes the epoch,
-and derives the working key through the private key path:
-
-> working developer key = KDF(developer key, epoch)
-
-The HSM computes the same value when it issues a key to a developer for a given serial number and epoch.
-
-**To rotate,** a production release takes a version number at the start of the next epoch (the next multiple of 1,024). Advancing counter 1 there
-takes one increment per version step, up to 1,024 (`doc/se.md`, Counters). Once a device installs it,
-counter 1 is in the new epoch, every working key issued before stops matching, and developers must ask the HSM for new ones.
-A release that stays within the current epoch leaves developer keys alone, so rotation is chosen release by release.
-
-**Why it can't be undone:** counter 1 only moves forward, and developer installs never touch it (see below), so no developer can return a device
-to an earlier epoch to revive an old key.
-
-**Developer user data rotates too.** The developer data key also includes the epoch (see Running a developer build), so a rotation makes
-developer-mode data from earlier epochs unreadable. Production user data is not affected.
-
-**HSM policy (optional).** If the HSM issues working keys only for the newest epoch, a developer must install the latest production release
-before getting a key, which keeps developers on current firmware.
-
-A developer build's header records the epoch it was installed under, and boot refuses a developer image from an older epoch.
-After a rotation, no developer build from before it can run, even if an old flash dump is written back. The production release that
-rotates the epoch replaces the developer build anyway, and erases any developer image left in the other slot.
+The epoch lives in TEE secure storage, not in eFuse, because eFuse anti-rollback bits are too few. A developer who restores an old flash image with a programmer
+could revive an old epoch on their own device. That harms only their own device, and production data never reaches developer builds, so it is accepted (R22).
 
 ## Installing a developer build
 
-The loader handles a developer package like a production one, with four differences:
-
 | Step | Production package | Developer package |
 |---|---|---|
-| Authenticate | LMS signature against the application public key | HMAC-SHA256 under a package MAC key derived from this device's working developer key for the current epoch, checked through the private key path |
-| Decrypt | Distribution key | Package key derived from the working developer key |
-| Rollback check | Version must not be older than counter 1, which then advances to it | No check, and counter 1 is not touched |
-| Mark | Header mode: production | Header mode: developer |
+| Authenticate the package | LMS signature from the application owner | MAC under this device's developer key |
+| Decrypt | Distribution key | Key derived from the developer key |
+| Version check | Not older than the newest installed version | None; the TEE's version record is not touched |
+| Boot check (TEE) | Descriptor says *production* | Descriptor says *developer*, with this device's ID and the current epoch |
+| Secure boot (bootloader) | Release RSA signature | Release RSA signature (from the signing service) |
 
-In both cases the loader re-encrypts the image per line into the inactive slot under a fresh install salt (`doc/xip.md`, Per-line GCM),
-and records the install in the security event log.
-
-**Counter 1 must not move for developer builds.** Developers pick version numbers freely. If a developer build could advance counter 1, a build marked
-version 9999 would block every future production release. Rollback protection is for users, and a developer installing their own old build harms only themselves.
+**Developer builds never move the version record or the anti-rollback eFuses.** Developers pick version numbers freely; a build numbered 9999 must not
+block production releases.
 
 ## Running a developer build
 
-- **Separate user data.** While a developer build runs, the loader's user data service uses a separate data key, derived from the data key with a "developer" label and the epoch.
-  A developer build cannot read data written under a production build, and the reverse. A device that was used in production and then for development
-  does not hand its production data to sideloaded code.
-- **Visible state.** The loader tells the application, through the mailbox status service, that it is running a developer build, and can drive a status
-  indicator the application cannot control. For a medical device, labeling should say that a device running a developer build is not for clinical use.
-- **Everything else is unchanged.** The application core has the same isolation as for a production build, and the loader's protections all still apply.
+- **Separate user data.** The TEE derives a separate data key with a "developer" label and the epoch, so a developer build cannot read data written by a
+  production build, and the reverse.
+- **Visible state.** The TEE reports developer mode to the application and to the host, and can drive a status indicator the application cannot control.
+  Labeling should say that a device running a developer build is not for clinical use.
+- **Same isolation.** The developer build runs in user mode under the TEE like any application. It cannot reach keys, change the TEE, or move counters.
 
 ## Returning to production
 
-Installing any production package replaces the developer build, with the usual rule: its version must not be older than counter 1.
-The install also erases any developer image left in the other application slot, so the device holds no developer build that could become a fallback (`doc/flash.md`).
-Since developer builds never moved counter 1, the device accepts the same production releases it would have accepted before.
+Installing any production package replaces the developer build. The TEE then erases any developer image left in the other slot, so no developer build can
+become a fallback.
 
 ## What developers cannot do
 
-- Install a developer build on a device whose developer key they do not have.
-- Change the platform (bitstream or loader). Platform updates are signed by the manufacturer only.
-- Read or change counters, keys, or production user data.
-- Produce a package that installs on any other device.
+- Run a build on a device whose developer key they do not have.
+- Change the bootloader, the TEE, or the anti-rollback state.
+- Read keys or production user data.
+- Produce an image that runs on any other device.
 
-## Hardware and test impact
+## Tests
 
-- **Hardware:** the SHA-256 core's key insertion (`doc/hw.md`, Key paths) accepts a key unwrapped from the secure element, not only the pairing key,
-  so developer-package HMACs and the image key derivation run without exposing keys. No other new hardware is needed.
-- **Tests** (in `doc/test.md`, Developer builds): a developer package for another device is rejected; a developer build cannot read production user data, and the reverse;
-  counter 1 is unchanged after any number of developer installs; a production release installs normally after developer builds;
-  two developer builds with the same version number produce different image keys; after a production release that starts a new epoch,
-  the old working key is rejected and developer data from the old epoch is unreadable, while a release within the epoch keeps both working.
+In `doc/test.md`: a developer build for another device is refused; a developer build cannot read production data, and the reverse; the version record and eFuses
+are unchanged after developer installs; a release that starts a new epoch makes old developer builds and keys fail; a developer image cannot boot from a TEE slot.

@@ -1,271 +1,99 @@
 # It's all about the ROT
-Root-of-trust for FPGAs with bitstream encryption, with or without hardware bitstream authentication.
+Root of trust for an FPGA-based medical device, built on an Espressif ESP32-C5.
 
-`thriller` is vendor-neutral. It protects **data confidentiality and integrity** on any FPGA whose
-configuration engine decrypts the bitstream, and adds strong protection against bitstream tampering
-on FPGAs that also authenticate it (see FPGA Tiers). Everything above the configuration engine is
-plain logic: SHA-256, LMS signature verification (which is built from SHA-256), AES, MAC checks,
-and I2C to a secure element.
+The ESP32-C5 is the root of trust and runs the application. It holds every key, verifies every update,
+keeps the secure file system on the MicroSD card, authenticates the replaceable temperature sensor, and
+configures the FPGA at power-up. The FPGA (a Lattice ECP5) is a peripheral: it holds no secrets, its bitstream
+is built with the open Yosys flow, and nothing in the security design depends on it.
 
-The design assumes a bitstream may be compromised and limits what that can expose:
-user data is unlocked only with a secret held outside the device. See `doc/arch.md` for the threat model.
+An earlier design put the root of trust in FPGA fabric with an ATECC608B secure element. Three review rounds showed
+that much of its complexity came from building a root of trust out of parts that were not made for it. That design is kept on the
+`archive/fpga-rot-v0` branch.
 
 ## Documents
 
 | Document | Contents |
 |---|---|
-| This README | Overview: chipset, FPGA tiers, keys, update chains, boot stages, supported FPGAs |
-| `doc/arch.md` | Threat model, risk assessment, Code Secrecy Profile, algorithm bill of materials, Verilog/Forth partition |
-| `doc/hw.md` | Hardware modules, buses, the two cores and mailbox, the shared XIP engine, key paths, boot sequence, resource estimate |
-| `doc/xip.md` | Execute in place: per-line AES-GCM, flash layout, caches, install and boot, RAM budget |
-| `doc/se.md` | Secure element slot map, counters, version rule |
-| `doc/flash.md` | Flash map, boot record, install order, staging on the MicroSD card |
-| `doc/roles.md` | Manufacturer, application owner, developer and user; developer keys and their rotation |
+| This README | Overview: chipset, keys, boot, updates, sensor, host sessions |
+| `doc/arch.md` | Trust boundary, threat model, risk assessment, algorithm bill of materials |
+| `doc/c5.md` | ESP32-C5 configuration: eFuse key map, boot chain, TEE, flash partitions, anti-rollback, debug lockdown |
+| `doc/sensor.md` | Replaceable temperature sensor: certificates, offline pairing, authenticated sessions, fail-safe behavior |
+| `doc/enrollment.md` | Device and sensor enrollment, the enrollment database, detecting unknown devices and sensors, updates |
+| `doc/fpga.md` | The ECP5 as a peripheral: configuration over SPI, identity check, data link |
+| `doc/roles.md` | Manufacturer, application owner, developer and user; device-bound developer builds |
 | `doc/test.md` | Test plan and fault-injection campaigns |
 | `doc/fda.md` | FDA security architecture views |
 | `doc/ics55.md` | ASIC migration to the ICS55 55 nm process |
-| `doc/questions.md` | Every open question in one matrix, with proposals for the most urgent |
+| `doc/questions.md` | Every open question in one matrix, and the decisions taken by default |
 
-## chipset
+## Chipset
 
-- An FPGA with bitstream encryption, ideally also hardware bitstream authentication (see FPGA Tiers)
-- A secure element such as an ATECC608B (or a pin-compatible MODSEMI MOD8ID as second source), physically protected together with its I2C bus
-  (potting, or the same package as the FPGA), because its counters can be advanced by anyone on that bus (`doc/arch.md`, R30)
-- Voltage regulators
-- Oscillator module
-- QSPI NOR flash (for bitstreams and encrypted loader and application images; written only during updates and development; see `doc/flash.md`)
-- USB-UART bridge (for connection to host PC or terminal)
-- JTAG port (for connection to ISP tools)
-- MicroSD card socket (for encrypted user data, security event logs and offline update packages)
+- **ESP32-C5HR8**: single-core 240 MHz RISC-V, 384 KB SRAM, 8 MB PSRAM in the package, Wi-Fi 6, Bluetooth LE and 802.15.4 radios (unused by default).
+  The HR8 has no flash in the package, so it needs an external part.
+- **QSPI NOR flash**, external, 16 MB proposed: bootloader, TEE and application images (each in A/B slots), TEE secure storage. Encrypted by the C5 (`doc/c5.md`).
+- **Lattice ECP5**, configured by the C5 over SPI at power-up, then used as an SPI peripheral (`doc/fpga.md`). Its configuration flash is no longer needed.
+- **MicroSD card socket**: encrypted user data, the security event log, and offline update packages. It shares the C5's general-purpose SPI bus with the ECP5.
+- **Sensor connector**: a two-way link to a replaceable temperature sensor outside the box, driven by the C5's UART, RMT or MCPWM capture/compare peripherals (`doc/sensor.md`).
+- **Host link**: a UART, or the C5's built-in USB serial port, to the host PC.
+- Voltage regulators, oscillators, and a test connector that is not populated in production (JTAG is disabled by eFuse).
 
-## FPGA Tiers
-
-| | Tier A: authenticated configuration | Tier B: encrypted-only configuration |
-|---|---|---|
-| Examples | Lattice CrossLink-NX, Efinix Titanium | Lattice ECP5 |
-| Bitstream protection | Vendor signature plus encryption, checked in hardware | Encryption only |
-| Cost to compromise the bitstream | Break the vendor signature *and* the AES key | Get the AES key, or modify the encrypted bitstream blindly (see `doc/arch.md`) |
-| User data on a stolen device | Safe | Safe |
-| User data on a tampered-and-returned device | Safe unless the bitstream is compromised | Exposed if the attacker managed a bitstream compromise first |
-| Open toolchain | No (vendor tools) | Yes: Yosys and nextpnr |
-
-Both tiers use the same loader, the same secure element configuration and the same update chains.
-Tier B trades protection against targeted tampering for lower cost and an open toolchain.
+No secure element: the C5's eFuses, HMAC peripheral and TEE take its place (`doc/c5.md`).
 
 ## Keys and what unlocks them
 
-| Key | Held in | Unlocked by | Protects |
-|---|---|---|---|
-| Pairing key | Bitstream and secure element (per device) | The bitstream itself | The authenticated channel between the loader and the secure element |
-| Application key | Secure element (per device) | Pairing key | Encryption and integrity of the loader and application images in flash (separate labels), and the boot record |
-| **Data key** | Secure element (per device) | Pairing key **and** host authorization | Encryption and integrity of user data on the MicroSD card |
-| Host authorization key | Secure element (non-readable) and the host | Never leaves either | Proving the host is present, and UART access |
-| Distribution key | Secure element (same on every unit) | Pairing key | Encrypting application packages in transit, so a hex dump shows no plaintext |
-| Developer key | Secure element (per device) | Pairing key, into hardware only. The developer never gets this key, only a working key for the current epoch from the HSM | Sideloading developer builds onto that one device (`doc/roles.md`) |
+| Key | Held in | Per device | Protects |
+|---|---|:-:|---|
+| Release signing keys (RSA-3072, main and backup) | Manufacturer HSM; SHA-256 of each public key in C5 eFuse | No | Secure boot: every bootloader, TEE and application image |
+| Package signing keys (LMS), main and backup | Manufacturer's HSM (platform packages) and the application owner's HSM (application packages); public keys in the TEE image | No | Update packages, verified before anything is decrypted or installed |
+| Flash encryption key (XTS-AES) | C5 eFuse, generated on chip, never readable | Yes | Everything in external flash and PSRAM |
+| TEE storage key | C5 eFuse, generated on chip, used only by the HMAC peripheral | Yes | TEE secure storage (keys and records listed below) |
+| Device root key | C5 eFuse, from the HSM at enrollment, used only by the HMAC peripheral inside the TEE | Yes | Root of the device identity, host, data and developer keys, each derived with its own label |
+| Distribution key | TEE secure storage, written at enrollment | No | Decrypting production update packages; a device that was never enrolled cannot install updates |
+| Host key | Host, and derived on the device from the device root | Yes | Host sessions |
+| Host data secret | Host only, never stored on the device; derived in the HSM from a separate master the device does not hold | Yes | Combined with the device's data key to unlock user data |
+| Sensor pairing key | TEE secure storage and the sensor | Per pairing | Sessions with one paired sensor (`doc/sensor.md`) |
 
-The distribution key is the one key that is not per device, because one package must install on every unit.
-It is obfuscation, not secrecy: a compromised bitstream on any unit can read it. Users who need real code
-secrecy switch to per-device package keys (see the Code Secrecy Profile in `doc/arch.md`).
+The HSM derives every per-device key from a master key and the C5's chip ID, so a replacement host can be issued without contacting the device,
+and the enrollment server can authenticate any device it has enrolled (`doc/enrollment.md`).
 
-The important row is the data key. The secure element releases it only after the host proves knowledge of
-the host authorization key **directly to the secure element** (CheckMac, with the data key slot configured
-to require that authorization). The loader forwards the bytes but never sees the host secret.
-A bitstream that has been replaced or modified still cannot unlock user data without the host.
+## Boot
 
-The application image is protected for integrity and so that a flash copy will not run on another board.
-Keeping the application code itself secret is not a goal.
+1. The C5's ROM checks the second-stage bootloader's RSA-3072 signature against the key digests in eFuse.
+2. The bootloader checks the TEE and application images the same way, and checks their versions against the anti-rollback eFuses.
+3. The TEE starts in machine mode, sets up memory and peripheral isolation, checks the application's build mode
+   (production, or a developer build bound to this device), and starts the application in user mode.
+4. The application configures the ECP5 from the bitstream embedded in its own signed image, then reads the FPGA's identity register and runs a self-test (`doc/fpga.md`).
+5. The application opens a session with the paired sensor and waits for the host.
 
-## Two things get updated
+The application never sees a key. It asks the TEE for services: user data, sensor sessions, update installation, the event log.
 
-`thriller` authenticates two independent kinds of update:
+## Updates
 
-| | Platform | Application |
-|---|---|---|
-| What it is | The FPGA bitstream (hardware and boot ROM) and the updatable loader image in flash, in one package or separately | The code the device runs, stored encrypted in SPI NOR flash |
-| Signing key | Platform LMS key | Application LMS key |
-| Anti-rollback counter | Secure element counter 0 | Secure element counter 1 |
-| Checked by | Loader (LMS) before install; at boot, the FPGA config engine (Tier A) and the boot ROM (loader header, counter 0), then every loader cache line as it is fetched | Loader (LMS) before install; every cache line's tag as it is fetched (`doc/xip.md`) |
-| After an ASIC conversion | Gone, replaced by a smaller updatable-loader chain on counter 0 (`doc/ics55.md`) | Unchanged |
+One chain covers everything on the device, because the bitstream is part of the application image:
 
-The two chains share nothing except the secure element. A platform update never touches the application,
-and an application update never touches the platform. The application key can belong to a different
-party than the platform key, for example a customer who ships their own application on our platform.
+- Each release image carries an RSA-3072 signature (for secure boot) and its package carries an LMS signature (for the update path, `doc/arch.md`).
+- Packages arrive offline on the MicroSD card or through the host, or online from the update server.
+- The TEE checks the LMS signature, decrypts the package with the distribution key, writes the inactive slot, and lets the bootloader try the new image.
+  The new image is confirmed only after it passes its self-test, including the FPGA check; otherwise the bootloader falls back to the old one.
+- The TEE refuses any package older than the newest version it has installed. Security fixes also advance the anti-rollback eFuses,
+  so a vulnerable version stays blocked even if someone writes an old flash image back with a programmer.
 
-The ATECC608B has exactly two monotonic counters, one per chain.
+## Sensor
 
-## Signatures: LMS
+The temperature sensor is replaceable and pairs offline. Each sensor carries a certificate from its manufacturer and an ML-KEM key pair.
+The C5 checks the certificate, agrees a pairing key with the sensor, and later reports the pairing to the enrollment server, which detects
+unknown or cloned sensors. Every frame in both directions carries a MAC under a fresh session key, and a missing, late or rejected reading
+puts the device in its safe state (`doc/sensor.md`).
 
-Update packages are signed with LMS (Leighton-Micali Signatures, RFC 8554 and NIST SP 800-208),
-a hash-based scheme that is secure against quantum computers.
+## Host sessions and user data
 
-- **Verification needs only SHA-256.** The loader verifies signatures itself with the same SHA-256 core it
-  already has, so it needs no bignum or elliptic-curve arithmetic. The secure element does not support LMS
-  and is not involved in signature checks.
-- **Public keys are small (56 bytes) and must be trusted, not secret.**
-  - The platform public key is built into the boot ROM (block RAM in the bitstream on the FPGA, mask ROM on the ASIC).
-  - The application public key travels in each application package; a locked secure element slot holds its SHA-256 hash, read over the
-    authenticated (MAC'd) channel, so it can be provisioned by a different party than the platform. A second slot holds the hash of a backup
-    key, kept offline by the application owner, for the day the main signing key or its HSM is lost (`doc/se.md`).
-    On an ASIC the hash can instead live in ROM if the same party owns both.
-- **Signing is stateful.** Each LMS one-time key may sign exactly once. The signer must never reuse a leaf,
-  including after a crash or a restore from backup, and SP 800-208 expects that state to be kept in a hardware
-  security module. Each release takes **one** signature: per-board packages are covered by a signed release manifest, a Merkle tree over
-  every package's digest, and each package carries its inclusion proof. A single tree of 2^10 to 2^15 signatures is then plenty;
-  multi-level trees (HSS) remain an option.
+The host and the device authenticate each other with the host key and fresh nonces from both sides, and every frame is encrypted and authenticated
+under a session key. User data on the MicroSD card is encrypted under a key derived from both the device's data key and a secret the host
+sends in each session. The device never stores that secret, so a stolen device cannot decrypt its card, even if its chip is broken open.
 
-### Quantum safety
-
-Everything that protects user data is symmetric (AES-256, SHA-256, HMAC) or hash-based (LMS),
-so none of it falls to a quantum computer. The one exception is the Tier A vendor bitstream signature
-(ECDSA or RSA). Against a quantum-capable attacker, a Tier A FPGA's bitstream protection reduces to its
-encryption, the same position as Tier B, so `thriller` never depends on that signature for data safety.
-
-## Stage 0
-
-Stage 0 is the FPGA's configuration engine, followed by the boot ROM inside the bitstream.
-On an ASIC, it is the silicon and its mask ROM, and truly immutable; on the FPGA the boot ROM can still change with a platform update.
-
-- **Tier A:** the engine authenticates and decrypts the bitstream before the design runs,
-  so a modified or forged bitstream never gets to execute.
-- **Tier B:** the engine only decrypts. A modified bitstream may run. `thriller` tolerates this:
-  a foreign bitstream has no pairing key, and even a modified genuine one cannot unlock user data without the host.
-- **Boot ROM:** a small image (8 to 16 KB) in block RAM, configured with the bitstream. It checks the loader image in flash
-  (header HMAC, version against counter 0) before running it, and holds the flash programming primitives, the lockdown path
-  and UART recovery (full list in `doc/hw.md`).
-  On the ASIC the same code is mask ROM (`doc/ics55.md`). The FPGA mirrors the ASIC's boot chain on purpose, so it is tested from the start (`doc/hw.md`).
-
-On the manufacturing side:
-
-- Program a unique bitstream encryption key into each FPGA's eFuses (or one key per batch of boards), then lock it.
-  Derive it in the HSM as KDF(bitstream master key, secure element serial number), so no key database is needed.
-  Disable readback, and enforce encrypted-only configuration where the device supports it.
-- Generate one bitstream per release. For each board, patch that board's own pairing key into the bitstream's
-  block RAM initialization, then encrypt it under that board's key (and on Tier A, sign it).
-  On the ECP5, Project Trellis's `ecpbram` can patch block RAM contents without re-running place and route.
-- Configure and lock the secure element (keys, slot policies, counters) according to the slot map in `doc/se.md`.
-- Diversify every secure element key per device, so one compromised unit exposes nothing about another.
-- Build the platform LMS public key into the boot ROM image in the bitstream, and store the application LMS public key in a locked secure element slot.
-- Store the board's pairing key in its secure element (it is already in that board's bitstream). Pairing keys are derived as
-  KDF(pairing master, secure element serial number, key version), where the key version is the platform version at which the key was issued.
-  The key version is public: it is patched into the bitstream next to the key, and the loader reports it with the serial number,
-  so the HSM can recompute the key a board holds. (Counter 0 cannot tell it, since loader-only updates advance the counter without rotating the key.)
-- Put the encrypted bitstream, the loader image and the application image in flash (the images encrypted per cache line, `doc/xip.md`).
-
-Because each board's bitstream is encrypted under its own key, a bitstream copied from one board will not
-configure another, and extracting one FPGA's key exposes only that board (or that batch).
-
-In the field:
-
-- The FPGA and secure element share a pairing key. Counter reads and public key hash reads are MAC'd over a fresh FPGA-generated nonce,
-  so a device on the I2C bus cannot replay or forge them. Key reads are encrypted but not authenticated by the secure element,
-  so every unwrapped key is checked before use (`doc/hw.md`, Encrypted reads carry no MAC).
-
-## Stage 1: the loader (part of the platform)
-
-The loader runs on its own LiteForth core, separate from the core that runs the application, and acts as the application's
-firewall (`doc/hw.md`). The boot ROM checks it and starts it, and it then executes in place from flash through its own cache
-(`doc/xip.md`). It talks to the secure element, holds every key in hardware, protects user data, and accepts updates over the UART.
-It is the same on every FPGA, and the ASIC runs the same boot ROM and loader.
-
-### Platform updates
-
-A platform package always carries a loader image, and may also carry a new bitstream, all under one platform version on counter 0.
-A package that changes only the bitstream carries the current loader image restamped with the new version, so the boot ROM's check
-against counter 0 still passes after the counter advances. On the ASIC a platform package carries only a loader image.
-
-- The update server builds a platform package for each board (or batch), selected by the secure element serial number and pairing key version
-  the loader reports. The package's signed header names that serial number and key version, so it installs on no other board, and a replayed
-  older package for the same board is refused.
-  - A bitstream carries that board's next pairing key, KDF(pairing master, serial, new platform version), is encrypted under that board's
-    bitstream key, and comes with the next pairing key wrapped under the current one with an authenticated wrap (AES-256-GCM). On Tier A it also carries the FPGA vendor's own signature, so it is signed twice.
-  - A loader image is encrypted under a content key wrapped, with an authenticated wrap, under the board's current pairing key. Platform packages are therefore
-    per board even without a bitstream, so a stolen platform signing key alone cannot produce a package that installs fleet-wide.
-  - Each package carries its inclusion proof in the release manifest, which is signed once per release with the platform LMS key.
-- The loader verifies the manifest signature against the platform public key in the boot ROM, and the package's inclusion proof.
-- The version must not be older than counter 0.
-- The loader writes the bitstream to the inactive bitstream slot and re-encrypts the loader image per cache line into the inactive loader slot,
-  through the boot ROM's flash primitives, installs the next pairing key if the package carries a bitstream, and advances counter 0.
-
-Platform rollback is blocked twice. An old bitstream can still configure the FPGA, but it holds a retired pairing key,
-so the secure element will not give it the application key or the data key. An old loader image is refused by the boot ROM,
-because its version is older than counter 0.
-
-### Application updates
-
-- The host sends an application package: the application image encrypted under the distribution key (AES-256-GCM), and its version, signed with the application LMS key over the ciphertext.
-- The loader checks the package's application public key against the hash in the secure element, read over the MAC'd channel, and verifies the
-  LMS signature against it, before decrypting anything. The ciphertext is hashed again as it is decrypted, and must match what was verified
-  (`doc/xip.md`, Install).
-- The loader decrypts the image with the distribution key, read from the secure element over the MAC'd channel.
-- The version is checked against counter 1. Older versions are refused.
-- The loader re-encrypts the application per cache line with AES-256-GCM, under a fresh image key derived from the device-unique application key, writes it to the inactive flash slot, and advances counter 1 (`doc/xip.md`).
-
-### Boot
-
-- The boot ROM authenticates to the secure element, checks the loader image's header and its version against counter 0,
-  derives the loader's image key, and starts the loader, which runs from flash through its own cache.
-- The loader checks the application image header, derives its image key into the AES key registers, compares the version with counter 1,
-  and then releases the application core, which executes from flash through its own cache.
-- Every cache line's tag is checked as it is fetched, so flash changed after boot is caught (`doc/xip.md`).
-- The application key is device-unique and reaches only the AES key registers, never software, so a flash image copied to another board will not run.
-- The application key survives platform updates: each new bitstream reaches it through its own pairing key.
-
-### Host sessions and user data
-
-The UART is the one insecure channel, so the host authenticates to the secure element, not to the loader:
-
-- The loader asks the secure element for a challenge, mixed with the loader's own fresh nonce, and passes it to the host.
-- The host answers with a MAC over the challenge, using the host authorization key.
-- The secure element checks the answer itself (CheckMac). Only on success does it release the data key to the loader.
-- The loader then decrypts and authenticates user data on the MicroSD card for the rest of the session, and clears the data key when the session ends.
-  Each user data record is encrypted with AES-256-GCM under a fresh random 96-bit nonce from the TRNG, never a counter kept on the card,
-  so restoring an old card cannot make nonces repeat.
-- **Not yet designed:** after CheckMac, the session's traffic over the UART must also be encrypted and authenticated, under a session key
-  that the host and the secure element derive from the host authorization key and the session nonce. Until then, user data crosses the UART
-  in clear and the session can be taken over by anyone in the middle (`doc/arch.md`, R29 and Open Question 13).
-
-Use a high-entropy host key. If it is derived from a short PIN, the secure element offers no retry lockout,
-so attempts must be limited another way; both secure element counters are already allocated (`doc/se.md`).
-
-The host authorization key is diversified from an HSM master, so a lost host key can be re-derived for an authorized replacement host.
-A compromised host key cannot be changed (its slot is never writable after lock), so a device whose host key leaks must be retired.
+A lost host is replaced by re-deriving its keys in the HSM. A compromised host means retiring the device (`doc/arch.md`, R20).
 
 ## ASIC conversion
 
-An ASIC removes the bitstream: no bitstream key, no vendor signature, no pairing key rotation. Mask ROM holds the boot ROM code,
-and verifies the same updatable loader in flash as on the FPGA, still under counter 0. Because the FPGA already runs this chain,
-the ASIC's boot chain will have been tested long before tape-out.
-The application chain, the host-authorized data key and the secure element carry over unchanged.
-
-One thing does change. A pairing key in mask-programmed logic is identical on every chip and can be recovered
-by reverse engineering one die, and the open ICS55 PDK has no one-time-programmable cells. The proposed answer is an
-SRAM PUF that wraps a per-device pairing key stored in flash. See `doc/ics55.md`.
-
-## FPGA Requirements
-
-Before porting `thriller` to an FPGA family, answer these from the vendor's security documentation.
-Items 1 and 2 decide the tier.
-
-1. **Hardware authentication.** Does the configuration engine verify a signature over the bitstream before it enters user mode, and stop on failure? Yes means Tier A.
-2. **Enforcement on every port.** Can the device be locked so it rejects unauthenticated bitstreams over every configuration path, including JTAG and slave interfaces? If not, treat the part as Tier B.
-3. **Key storage.** Is the encryption key (and on Tier A, the public key or its hash) held in one-time fuses that cannot be read back or reprogrammed after locking? Required for both tiers.
-4. **Readback lockout.** Can configuration readback be permanently disabled? Required for both tiers.
-5. **Encryption enforced.** Can the device be locked to accept only encrypted bitstreams? Strongly preferred for both tiers.
-6. **Tool licensing.** Can the toolchain you plan to use generate encrypted (and on Tier A, signed) bitstreams?
-
-## Supported FPGAs
-
-| | Lattice CrossLink-NX (e.g. LIFCL-17-9BG256C) | Efinix Titanium (e.g. Ti60) | Lattice ECP5 (e.g. LFE5U-25F) |
-|---|---|---|---|
-| Tier | A | A | B |
-| Toolchain | Lattice Radiant (Base license) | Efinity | Yosys, nextpnr and Project Trellis |
-| Encryption | AES-256 | AES-GCM-256, key in eFuses | AES (128-bit, to confirm) |
-| Authentication | ECDSA (Radiant 2.2 or later) | RSA-4096, public key hash in eFuses | None |
-| 1. Hardware authentication | Yes | Yes: configuration stops on an invalid signature | No |
-| 2. Enforcement on every port | **Open.** JTAG has priority over the other modes | JTAG can be fused off (IDCODE, status, boundary scan and BYPASS remain) | Not applicable |
-| 3. Key storage | **Open.** Expected OTP and P-256 | eFuses | **Open** |
-| 4. Readback lockout | **Open** | **Open** | **Open** |
-| 5. Encryption enforced | **Open** | **Open** | **Open** |
-| 6. Tool licensing | **Open.** Confirm the Base license covers security features | **Open** | **Open.** The open toolchain builds the bitstream; encrypting it may need Lattice's own tools |
-| Notes | ECDSA authentication disables Early I/O Release | Security is unavailable with compressed bitstreams and on W64 packages. Fuse JTAG off as the last manufacturing step | Blind-modification resistance depends on the bitstream CRC (see `doc/arch.md`) |
-| Reference | *Advanced Configuration Security User Guide for Nexus Platform* (FPGA-TN-02176) | Efinix *Titanium Security Feature* application note | Lattice ECP5 sysCONFIG documentation; Project Trellis bitstream documentation |
+The ECP5 is a peripheral, so an ASIC on the ICS55 process can take its place without changing the root of trust.
+The ASIC needs no keys and no non-volatile memory (`doc/ics55.md`).

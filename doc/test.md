@@ -1,326 +1,109 @@
 # Test Plan
 
-This document describes how `thriller` is tested, including fault injection. It follows the conventions
-already used in [LiteForth](https://github.com/bradleyeckert/LiteForth), the soft CPU the loader runs on:
-`vm.c` as the reference model, power cuts at every step, requirements traced to evidence, and a log of
-board test runs.
-
-Risk IDs (R1–R31) refer to the Risk Assessment in `doc/arch.md`. FDA control categories and gaps refer to `doc/fda.md`.
+How `thriller` is tested, from reference models to fault injection. Risk IDs (R1–R27) refer to `doc/arch.md`.
 
 ## 1. Approach
 
-### One loader, two execution platforms
+Most of the security now runs as software in the C5's TEE, on hardware Espressif has already characterized. Testing therefore concentrates on:
 
-The loader is LiteForth code running on its own LiteForth CPU in the FPGA fabric, next to a second core for the application (`doc/hw.md`).
-`vm.c` simulates that CPU; the software platform runs the two cores as two processes joined by a shared-memory mailbox,
-with one model of the shared XIP engine serving both. As on the ASIC, the loader core starts in a boot ROM image that checks the
-loader image in flash before running it.
-The crypto and peripheral cores (SHA-256, AES, LMS chain hashing, I2C, QSPI, SD, UART) appear to the CPU as
-I/O ports through `>sys` and `sys>`, the same way LiteForth's non-blocking math unit does (`src/iomap.c`).
-
-That gives two ways to run the same loader binary:
-
-| Platform | CPU | Cores and peripherals | Speed | Used for |
-|---|---|---|---|---|
-| **Software** | `vm.c` | C models behind `iomap` ports, plus device models (secure element, flash, SD card, host) | Millions of instructions per second | Protocol tests, attack tests, fuzzing, power-cut sweeps, fault-injection campaigns |
-| **RTL** | LiteForth CPU in Verilog | The real RTL cores, plus the same device models through Verilator | Thousands of cycles per second | Checking that the RTL matches the software platform, timing, hardware-level faults |
-
-The software platform runs nearly every test, quickly. The RTL platform's job is to prove that the software platform
-is a faithful model of the hardware, so the software results count as evidence for the hardware.
+- **our protocols and their implementation:** packages, host sessions, sensor pairing and sessions, user data, the event log;
+- **the C5 configuration:** eFuses, boot chain, TEE isolation;
+- **fault injection and side channels** on the checks we write, and confirming that Espressif's countermeasures are enabled and effective.
 
 ### Layers
 
-Each layer is checked against the one below it:
-
-```mermaid
-flowchart BT
-  L1["1. Reference models<br/>(Python, published test vectors)"]
-  L2["2. Core and CPU equivalence<br/>(RTL vs C models, RTL CPU vs vm.c)"]
-  L3["3. Loader system tests<br/>(software platform, then RTL platform)"]
-  L4["4. Hardware in the loop<br/>(real board, real secure element)"]
-  L5["5. Fault injection<br/>(all platforms)"]
-  L1 --> L2 --> L3 --> L4
-  L2 --> L5
-  L3 --> L5
-  L4 --> L5
-```
+| Layer | What | Where |
+|---|---|---|
+| 1. Reference models | Python models of every format and protocol: package layout and signatures, key derivations, host session, sensor pairing and session, user data records, event log chain | Workstation; produce test vectors |
+| 2. Unit tests | TEE and application components against the vectors | ESP-IDF unit tests (Unity) on the C5; portable logic also on ESP-IDF's Linux host target |
+| 3. System tests | Whole device against simulated host, sensor, server and card | Hardware-in-the-loop rig |
+| 4. Fault injection and side channels | Attacks on one unit | Lab bench |
+| 5. Penetration test | Independent team, whole system | External |
 
 ### Evidence
 
-- Every test names the requirements and risk IDs it verifies, so the test report is the evidence that each
-  mitigation was tested (FDA gap 8).
-- Requirements follow LiteForth's V-model (`doc/quality/` there): needs, system requirements, architecture, modules,
-  each with a **Verified by** line, and a traceability matrix generated and checked by a script like LiteForth's `rtm.py`.
-- Board runs are logged like LiteForth's `doc/admin/board-tests.md`: bitstream and loader hashes, package hashes,
-  steps, expected results, and the board's output word for word.
+Each test names the risk it covers. The catalogue below is the traceability matrix between risks and tests that an FDA submission needs (`doc/fda.md`).
 
-## 2. Layer 1: Reference models
+## 2. Reference models
 
-Python implementations that everything else is compared against. Each is checked against published vectors before use.
+- **Formats:** update package (header, LMS signature, encrypted payload), developer package, build descriptor, sensor certificate, pairing transcript, session frames, user data records, log entries.
+- **Cryptography:** known-answer tests for each algorithm from the standards (LMS from RFC 8554, ML-KEM and ML-DSA from the FIPS 203 and 204 vectors, Ascon from SP 800-232, AES-GCM, HKDF).
+- **Protocols:** both ends of the host session and the sensor protocol, so each end of the device can be tested against a model of the other.
 
-| Model | Implementation | Checked against |
-|---|---|---|
-| SHA-256 | `hashlib` | NIST CAVP SHA-256 vectors |
-| AES-256-GCM | `cryptography` | NIST CAVP GCM vectors |
-| LMS verify | A reference verifier, written from RFC 8554 | RFC 8554 Appendix F vectors, and signatures from the signing HSM's software |
-| ATECC608 MAC and digest formats | cryptoauthlib's host-side functions (`atcah_nonce`, `atcah_gen_dig`, `atcah_mac`, `atcah_check_mac`, and the encrypted read and write helpers), called from Python | Responses from real ATECC608B parts captured on the bench |
-| KDF (HKDF-SHA256) | `cryptography` | RFC 5869 vectors |
-| Package builder | The real signing and packaging tool, with the HSM replaced by a test key store | Round trip through the reference verifier |
+The sensor's firmware is tested against the same models.
 
-The cryptoauthlib host functions are the most valuable item here: they are Microchip's own software calculation
-of what the chip computes, so the loader's MAC checks can be tested without a chip and without the NDA datasheet.
+## 3. Hardware-in-the-loop rig
 
-## 3. Layer 2: Core and CPU equivalence
+- A production-configured C5 board with the ECP5 and a MicroSD card, plus boards with the eFuses left open for debugging.
+- **Host simulator** on the host link, driven by test scripts.
+- **Sensor simulator** on the sensor link: a microcontroller that runs the sensor protocol and can misbehave on command (bad certificates, wrong MACs, replays, delays, silence).
+- **Link interposer** between the device and the sensor simulator, able to delay, drop, replay and alter frames with controlled timing.
+- **Server simulator** reached through the host simulator.
+- **Power control** for power cuts at chosen points during updates and pairing.
+- A flash programmer on the external flash, for restore attacks.
 
-### Crypto and peripheral cores
-
-Each RTL core is tested with cocotb on Verilator (or Icarus), in two ways:
-- **Known-answer tests** from the Layer 1 vectors.
-- **Differential tests:** random inputs through the RTL core and through its C model (the one the software platform uses),
-  compared bit for bit, including the port protocol: busy status, results read while busy, back-to-back commands.
-
-This is what lets the C models stand in for the cores in Layer 3.
-
-The same differential tests run against the MCU implementations of the ports (C, or the MCU's crypto hardware),
-on the board, so LiteForth on an MCU is held to the same port behavior as the fabric.
-
-### No C API calls in the loader
-
-A hardware LiteForth CPU has no C library, so the loader must never use `RFcall` or `AFcall` (imm opcodes 14 and 15).
-A static check scans the loader image for those opcodes and fails the build if it finds any. The software platform also
-runs the loader with the API tables empty, so a call that slips past the scan fails at once.
-
-### Fault coverage follows the partition
-
-The partition in `doc/arch.md` puts some security decisions in Forth and some in Verilog. Both kinds are covered by
-campaign A on the software platform, because the small security modules run there as their real Verilog:
-
-| Where the decision is made | How the software platform models it | Fault campaign |
-|---|---|---|
-| Forth (MAC message assembly, version checks, flow counter updates) | `vm.c` | A |
-| Small security modules (comparators, key gate, flow counter check, TRNG health tests, XIP port selection and write-once locks) | The real Verilog, compiled by Verilator and linked into the port implementation | A, with B confirming |
-| Large cores (SHA-256, AES-256) | Fast C models | B (a corrupted digest or keystream already fails at a comparator) |
-| Glitch detectors (analog behavior), multi-bit timing faults | Not modeled | B and D |
-
-### Verilated security modules
-
-Verilator turns Verilog into C++. The small security modules are built that way and linked into the software platform's
-port implementations through a thin `extern "C"` wrapper, so the ports that `vm.c` reaches with `>sys` and `sys>` are driven
-by the same Verilog that goes into the bitstream. The C models of the large cores consult them: for example, the AES model
-loads a key only when the Verilated key gate's token is set.
-
-- **No model drift.** There is no hand-written model of these modules to disagree with the RTL.
-- **Speed.** The modules are a few hundred flip-flops, so simulating them costs little next to `vm.c` itself.
-- **Clocking.** `vm.c` is instruction-accurate, not cycle-accurate. The Verilated modules advance a fixed number of clocks per
-  VM instruction, matching the ratio in the RTL, so faults land between instructions. Finer timing is campaign B's job.
-- **Fault access.** The modules' flip-flops are exposed with Verilator's public signal access, so the fault hook can flip any of them.
-
-### The LiteForth CPU against `vm.c`
-
-LiteForth already compares two implementations of the VM: `unit_tests/vmasm/difftest.c` runs random states and random code
-through `vm.c`'s C `vmExec` and through `vm_rv32.S`, and compares state hashes. The RTL CPU gets the same treatment:
-
-- **Lockstep simulation.** Verilator builds the RTL CPU into a C++ model that links `vm.c` directly. Both run the same
-  random code from the same random state, and the full register set (T, N, PC, R, A, B, U, X, Y, prefix, shift_size, sp, rp, cy)
-  and the stacks are compared after every instruction group. The first difference stops the run and dumps both states.
-- **Same generator.** The random code and state generator comes from `difftest.c`, so all three implementations
-  (C, RV32 assembly, RTL) are held to one definition of the ISA.
-- **Programs as well as random code.** `scripts/regression.f`'s compiled image runs on the RTL CPU, with its
-  assertions checked through the terminal port.
-- **I/O ports.** The difftest's stub ports are replaced by the real port map, so the core interfaces are exercised from the CPU side.
-
-## 4. Layer 3: Loader system tests
-
-### Device models
-
-| Model | Behavior | Attack and failure controls |
-|---|---|---|
-| Secure element (ATECC608B) | Command packets, CRC-16, wake/idle/sleep, counters, Nonce, GenDig, MAC, CheckMac, EncRead, EncWrite, slot policies including authorization requirements | Replay a recorded response, alter any byte, drop or delay a response, report a wrong counter, refuse a command |
-| QSPI NOR flash | Erase and program semantics (bits only go from 1 to 0, sector erase) | Power cut at any erase or program, half-done (as LiteForth's `update` test does), bit errors, read disturb |
-| MicroSD card | SD (SPI mode) commands, card images built with LiteForth's `mkexfat.py` | Missing card, card removed mid-write, malformed files (from the fuzzer), slow card |
-| Host | Update client and session client, scriptable | Wrong key, replayed response, truncated or modified packages, packages for another board, old versions |
-
-The secure element model is trusted only after it is checked against real parts: a bench script runs the same command
-sequences on a real ATECC608B and on the model, and compares every response. This runs again whenever the model changes,
-and once more on the MOD8ID.
-
-### Test catalogue
+## 4. Test catalogue
 
 | Area | Tests | Risks |
 |---|---|---|
-| Application updates | Valid package installs. Every byte of a package flipped, one at a time: rejected before decryption. Wrong signing key. Old version (below counter 1) rejected; reinstalling the current version accepted. Truncated package. (LMS leaf reuse cannot be seen by the device; the signing tools are tested for it separately.); a package swapped on the card (or emulated) between verification and decryption is caught by the re-hash; a public key that does not match the stored hash is refused; a package signed with the backup key installs | R4, R3, R20, R31 |
-| Platform updates | As above, plus a package built for another board (fails to configure), pairing key rotation (the HSM recomputes the board's pairing key from its counter 0), loader images under counter 0, and a bitstream-only change carrying a restamped loader that still boots; a package for another board, or an older package replayed to the same board, is refused by its signed serial number and key version; a tampered key wrap is rejected | R3, R4, R14 |
-| Power cuts | Every update run is repeated with a cut at each step k, where every flash erase, flash program, secure element write and counter increment is one step, and the cut leaves that step half done. After each cut, the board must boot a valid image, and must never accept an older version | R19, Open Question 1 |
-| Boot | A corrupt active slot header falls back to the other slot; both corrupt enters update-only mode; a line tag failure while running locks the device down, marks the slot bad and never runs the line, and the next boot falls back to the other slot | R2, R19 |
-| Boot chain | The boot ROM refuses a modified loader image, a loader from another board, and a loader older than counter 0, using the other loader slot if it checks and otherwise entering UART recovery; recovery accepts only signed loader packages | R3, R4, R16 |
-| XIP ports | A fill on the application's port never uses the loader's key or window; each port's window and key cannot be changed once locked; a stream of application misses delays a loader miss by at most one fill; a miss on either port during a flash write stalls instead of locking down | R25 |
-| I2C channel | Replayed counter values, altered MACs, a stale nonce, responses from the wrong slot: all rejected; a key altered on the bus during an encrypted read is caught by its check value or HMAC before use; a pass-through nonce for slot 0 is refused by the secure element | R7, R8 |
-| Host sessions | Wrong host key, replayed response, response to a stale challenge: data key never released. Session end and timeout clear the data key from the AES key registers (checked through the Verilated key gate and, in RTL, the registers themselves). Once session protection is designed: modified, replayed or injected session frames are rejected | R1, R9, R29 |
-| MicroSD input | Fuzzing of every file the loader reads (packages, card metadata) with AFL++ or libFuzzer, through the software platform. Malformed inputs must be rejected cleanly: no `vm.c` trap, no out-of-range access, no stack overflow | R23 |
-| Security event log | Records appended for each security event; editing, reordering or removing records in the middle is detected at the next boot and reported; a lockdown record left in the boot record is logged on the next boot | R24 |
-| Mailbox | Fuzzing of the loader's message parser with malformed, oversized and changing requests from a simulated application core; every request outside the fixed formats rejected; no request reaches a key or the flash directly | R25, R26 |
-| Developer builds | A developer package for another device is rejected; a developer build cannot read production user data, and the reverse; counter 1 unchanged after any number of developer installs; a production release installs normally afterward; two builds with the same version get different image keys; a release starting a new epoch invalidates old working keys and old developer data, and a release within the epoch does not; a developer image from an older epoch, written back from a flash dump, is refused at boot; a production install erases the developer image in the other slot | R27 |
-| User data on MicroSD | Records modified, moved or truncated on the card are rejected; a card from another device does not decrypt; if slot 11 freshness is enabled, a restored older copy of the card is detected | R1, R28 |
-| Rollback of the platform | An old bitstream boots but cannot read the application or data keys | R3 |
+| Boot chain | Unsigned, wrongly signed and revoked-key images refused at each stage; recovery bootloader used when the bootloader fails; slot fallback when an image fails | R3, R27 |
+| Anti-rollback | Older packages refused by the TEE; equal accepted; after a security release, an older image written by programmer is refused by the bootloader; non-security restore boots (accepted risk, documented) | R4 |
+| Updates | Forged LMS signature, altered ciphertext, wrong distribution key, truncated package, all refused before any flash write; power cut at every step leaves a bootable device; a new image that fails its self-test (including the FPGA check) is rolled back | R3, R18 |
+| Debug lockdown | JTAG (pad and USB) unusable; download mode restricted or disabled as configured; direct boot disabled | R7 |
+| TEE isolation | Application attempts to read TEE memory, use the HMAC peripheral, write eFuses, or write TEE flash regions: each faults | R8 |
+| Host session | Wrong host key, replayed session, reordered, altered and replayed frames, all rejected; no user data access outside a session | R9 |
+| User data | Card read offline shows no plaintext; altered records rejected; an old copy of the card detected through the host's digest; developer and production data mutually unreadable | R1, R10, R21 |
+| Sensor pairing | Certificate signed by an unknown CA, altered certificate, denylisted serial, wrong private key (implicit rejection) all refused; power cut during pairing leaves the old pairing or none, never a half pairing; server rejection removes the pairing | R14, R15 |
+| Sensor session | Forged, replayed, reordered and delayed frames rejected; readings older than the maximum age rejected; link cut puts the device in its safe state within the maximum age | R11, R12, R13 |
+| FPGA | Wrong build ID, corrupted bitstream, configuration failure each detected and logged; an update with a bad bitstream rolls back | R17 |
+| Enrollment | Unenrolled device cannot install updates or authenticate; enrollment cannot be repeated; server flags unknown and duplicate identities | R16 |
+| Developer builds | Build for another device refused; old-epoch builds refused after an epoch release; version record and eFuses unchanged by developer installs; developer image cannot boot from a TEE slot | R21, R22 |
+| Event log | Removed or altered entries detected by the host and the server | R26 |
+| Radios | Production image does not initialize the radios (unless Wi-Fi is adopted) | R23 |
 
-Every test runs on the software platform in continuous integration. A tagged subset runs on the RTL platform nightly,
-and its results must match the software platform's exactly.
-
-## 5. Layer 4: Hardware in the loop
-
-The same Python test scripts drive a real board, with the device models replaced by real parts.
-
-| Equipment | Purpose |
-|---|---|
-| Relay-controlled bench supply | Power cuts during updates, thousands of cycles, at random and at chosen points (triggered from the loader's debug pin in test bitstreams) |
-| I2C interposer (a small FPGA or MCU in series with the bus) | Replay, alter, drop and delay secure element traffic, as the model does in Layer 3 |
-| Oscilloscope with current probe, or ChipWhisperer | Leakage evaluation (TVLA) of the masked AES core during cache fills (R17) |
-| USB-UART host | Update client and session client |
-| SD card multiplexer | Swaps card images between runs without unplugging |
-| JTAG pod | Checks lockout after manufacturing: configuration refused, readback refused |
-
-Hardware-in-the-loop runs are logged in `doc/board-tests.md` (to be created), in LiteForth's format.
-
-## 6. Fault injection
+## 5. Fault injection
 
 ### Threat
 
-An attacker with the device glitches the core supply or the clock, or uses EM pulses, to make the loader skip or corrupt
-one or more instructions at the moment it makes a security decision (R16). The decisions that matter:
+A lab attacker glitches the C5 to skip a check: a signature comparison, a version check, the build descriptor check, a MAC comparison in the sensor or host protocol.
+Espressif advisory AR2023-007 shows this works on the C3 and C6 with voltage glitches. The C5 adds glitch detectors, which these tests must also exercise.
 
-| Decision | Where | A successful fault would |
-|---|---|---|
-| Loader header and version check | Boot ROM | Run a modified or older loader |
-| Application header HMAC and version check | Loader, at boot | Run a modified or older application |
-| Production or developer mode | Loader, at boot | Skip the version check for a production image |
-| Developer package HMAC and epoch | Loader, at install and boot | Install or run an unauthenticated or old developer build |
-| XIP port selection | Every cache fill | Fill the application's cache from the loader's image, or the reverse |
-| LMS root comparison | Package verification | Install an unsigned update |
-| Version against counter | Package verification | Install an older, vulnerable version |
-| Authentication tag check | Every cache fill | Run modified code from flash |
-| Secure element MAC check | Every counter and key read | Accept a forged counter or response |
-| CheckMac result | Host session | Release the data key without the host (this one is in the secure element; the loader must still not act on a forged success) |
-| Key erasure | Session end | Leave the data key in the AES key registers |
+### Countermeasures to build into our code
 
-### Fault model
-
-Faults are described at the level of the LiteForth ISA, so the same model applies to `vm.c`, the RTL and the hardware.
-
-| Fault | Effect in the ISA |
-|---|---|
-| Instruction skip | One 16-bit instruction does not execute (for a micro-op group, all three slots are lost) |
-| Slot skip | One micro-op slot in a group does not execute |
-| Branch inversion | `if`, `-if` or `next` goes the wrong way |
-| Return skip | A `;` (return) in a micro-op group is not taken |
-| Register corruption | One bit, or one byte, flipped in T, N, R, A, B, PC, prefix, cy, sp or rp |
-| Stack corruption | One cell of the data or return stack corrupted |
-| Fetch corruption | Bits flipped in the fetched instruction pair (`inst32`) |
-| Core output corruption | A crypto core's result or comparison output flipped (RTL and hardware only) |
+1. Compare MACs and signatures in constant time, and check each security decision twice, with the second check on a complemented value.
+2. Encode success as a multi-bit value, never 0 or 1, so a single skipped instruction or zeroed register cannot produce it.
+3. Count loop iterations in signature and MAC checks, and check the count at the end.
+4. Random delays before critical checks (the TRNG is available).
+5. On any inconsistency, log it and halt into the safe state; never retry silently.
+6. Keep the glitch detectors enabled and log their resets.
 
 ### Campaigns
 
-**A. Software platform: exhaustive single faults.** `vm.c` gets a fault hook, compiled in only for this test. The hook runs
-before each instruction and can apply any fault at instruction count n: any fault from the ISA-level model above, or a flip of any
-flip-flop in the Verilated security modules. For each security decision, the campaign runs a scenario that should fail
-(a forged package, an old version, a modified image, a forged response), and applies every fault at every instruction in the
-decision's window, one fault per run.
+| Campaign | Method | Target | Pass |
+|---|---|---|---|
+| A. Package check | Voltage glitch (crowbar on the core supply) and EM pulses during the TEE's LMS check | Install a package with a bad signature | No bad package installed in the campaign budget; detections logged |
+| B. Boot descriptor | Same, during the TEE's build descriptor check | Boot a developer build for another device | Never boots |
+| C. Sensor MAC | Same, during frame verification | Accept a forged reading | Never accepted |
+| D. Secure boot | Same, during the bootloader's check (ROM checks are Espressif's) | Boot an unsigned application | Never boots |
+| E. Glitch detectors | Sweep glitch parameters | Find the detection boundary | Detectors fire before any of A to D succeed |
 
-The search space is practical. For example, 300 module flip-flops plus the CPU faults, over a 2,000-instruction window,
-is about a million runs, each a fast `vm.c` run.
+### Side channels
 
-The fault hook must never change normal behavior. Following LiteForth's existing practice:
-- **Separate build option.** Everything is behind one build option (`VM_FAULT`), set only by the fault-campaign build.
-  MCU builds and the normal desktop build never set it, and never link the Verilated modules.
-- **Identical normal build.** With `VM_FAULT` off, the object files and `bin/lf` must be byte-identical to a build without the
-  change (LiteForth's `cmp` check for refactors).
-- **No effect when idle.** With `VM_FAULT` on but no fault scheduled, `difftest` and `regression.f` must pass unchanged.
+- **Flash encryption:** test-vector leakage assessment (TVLA) on the XTS-AES engine with pseudo-rounds at the chosen level, to confirm it removes the leakage AR2023-007 used.
+- **AES and HMAC in the TEE:** TVLA on the operations that use the device root and the data key.
+- **Sensor:** TVLA on the sensor's ML-KEM decapsulation and MAC. A broken sensor exposes only itself (R15), so a modest result may be acceptable.
 
-Each run ends in one of these outcomes:
-
-| Outcome | Meaning | Acceptable |
-|---|---|---|
-| Rejected | The decision still failed safely | Yes |
-| Detected | A countermeasure caught the fault and the loader locked down | Yes |
-| Crash | `vm.c` trapped or the loader hung (a watchdog restarts it, failing safe) | Yes, but reviewed |
-| **Bypass** | The forged input was accepted | **No** |
-
-`vm.c` runs fast enough that every (instruction, fault type) pair in each window can be tried. Double faults are sampled
-randomly, with priority on pairs that each came close to a bypass on their own.
-
-**B. RTL platform: flip-flop faults.** Verilator forces bit flips into any flip-flop of the whole design at any cycle. Its jobs are
-what campaign A cannot do:
-- **Confirmation.** A sample of campaign A's faults, CPU and module alike, is replayed in the full RTL at the matching cycle.
-  Both platforms must reach the same outcome; a disagreement means the software platform's fault model is wrong and is fixed first.
-- **The large cores.** Faults inside SHA-256 and AES-256, sampled randomly.
-- **Sub-instruction timing.** Faults at every cycle within an instruction, and several flip-flops in the same clock, which is what a
-  single glitch tends to do.
-
-**C. On-FPGA emulation.** A test-only bitstream adds a fault controller that flips chosen flip-flops at a programmed cycle,
-armed over the UART. This runs at full hardware speed with real timing, so it reaches millions of trials per day.
-The fault controller must never ship: the production build is checked for its absence (a build option that cannot be set
-in a release build, and a list of approved bitstream hashes).
-
-**D. Physical injection (lab).** Voltage glitches on the FPGA core rail and clock glitches on the oscillator input, using a
-ChipWhisperer or similar, with EM fault injection as an option. Each target decision is attacked with a parameter sweep
-(glitch width, offset, voltage), using the trigger pin to synchronize. Results feed the risk assessment's exploitability rating.
-
-### Pass criteria
-
-- Campaign A: no bypass from any single fault, in the CPU or in a security module. Every crash is reviewed.
-- Campaign B: every replayed campaign A fault reaches the same outcome in the full RTL.
-- Campaigns A and B: every double-fault bypass is analyzed, and either fixed or recorded with its rarity.
-- Campaign D: no bypass in an agreed number of attempts per decision (to be set with the integrator). Detection rate recorded.
-
-### Countermeasures to build in
-
-These are design rules for the loader, written so that campaigns A to D have something to measure.
-
-1. **No single-bit decisions.** A security result is a 32-bit constant, such as `0x5A3C96E1` for pass, never 0 or -1, and is tested by
-   comparing with the expected constant (`xor` and `if`), not by a sign or zero test of a flag. The initial value of every result
-   variable is a fail constant.
-2. **Decide in hardware where possible.** The LMS root comparison, the tag comparison and the counter comparison run in RTL
-   comparators that output the 32-bit constants directly, so there is no instruction to skip.
-3. **Gate keys in hardware.** The AES core will not load the application or data key unless its own hardware pass token is set for
-   that boot or session. A skipped software check then still leaves the key unusable.
-4. **Check twice, differently.** Each decision is made twice by independent paths, for example the RTL comparator and a Forth comparison,
-   or the same comparison in a different order, and both must agree.
-5. **Flow counter.** Each step of the boot or update sequence adds a distinct value to a step counter. The final action (starting the
-   application, advancing a counter, releasing a key) proceeds only if the counter holds the exact expected sum.
-6. **Random delays.** Short random delays from the TRNG before each decision, so a glitch cannot be timed by counting cycles from a trigger.
-7. **Detectors.** A delay-line sensor that detects core supply dips, and a frequency check of the core clock against the external oscillator.
-8. **Fail closed.** On any detection or inconsistency, enter the boot ROM's lockdown path through a hardware vector (`doc/hw.md`, Boot and lockdown):
-   hold the application core in reset, clear the key registers and pass tokens through the secret-clear fan-out, wipe the loader's stacks and
-   registers, write a lockdown record (and for a tag failure, a bad-slot mark) into the flash boot record, and halt. The loader logs the record on the next boot. Repeated detections across boots can lock the device into update-only mode.
-
-## 7. Board design for testability
-
-These must be on the board from the first revision:
-
-- Test points on the FPGA core rail, with a series resistor that can be replaced by a glitch injector.
-- A way to bypass or replace the oscillator for clock glitching.
-- A trigger output driven only by test bitstreams.
-- A footprint for the I2C interposer (series resistors in SDA and SCL).
-- Current sense on the core rail for power analysis (also useful for R17).
-
-## 8. Tools
-
-Open source wherever possible, to match the Yosys flow. Tier A bitstreams also need the vendor's tools (Lattice Radiant, Efinix Efinity).
+## 6. Tools
 
 | Tool | Use |
 |---|---|
-| Yosys, nextpnr, Project Trellis | Build the RTL and the bitstreams |
-| Verilator | RTL simulation, lockstep with `vm.c`, flip-flop fault forcing, and the security modules linked into the software platform |
-| cocotb | Python test benches for the RTL cores |
-| gcc, LiteForth's makefile and Unity | Software platform, `vm.c` fault hook, C tests |
-| AFL++ or libFuzzer | Fuzzing the loader's file and package parsing |
-| cryptoauthlib (host functions) | Reference model of the secure element's MAC formats |
-| ChipWhisperer (or similar) | Physical voltage and clock glitching |
-| GitHub Actions | Layers 1 to 3 on every push; RTL subsets and campaign A nightly |
+| ESP-IDF with its Unity test framework and Linux host target | Unit tests |
+| Python (`cryptography`, reference implementations of LMS, ML-KEM, ML-DSA, Ascon) | Reference models and vectors |
+| pytest-embedded | Driving the rig |
+| ChipWhisperer-Husky, a voltage glitch stage, an EMFI probe | Fault injection |
+| A scope or ChipWhisperer for power traces | TVLA |
+| Verilator | The FPGA's register block and self-test logic |
 
-## 9. Open questions
+## 7. Open questions
 
-1. **Physical injection pass threshold.** The number of attempts without a bypass, agreed with the integrator.
-2. **Secure element model coverage.** How much of the ATECC608B to model, and whether a second model is needed for the MOD8ID.
-
-Settled: LiteForth moves to `thriller`'s algorithms (LMS, SHA-256, HMAC-SHA256, AES-256), and the split between Verilog
-and Forth is in `doc/arch.md`, Implementation partition. The reference models in section 2 serve both projects.
+See `doc/questions.md` (Test rows).
