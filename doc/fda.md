@@ -190,7 +190,7 @@ The server marks the device retired; an authorized wipe erases TEE storage and t
 | Code, data and execution integrity | Secure boot every boot; TEE isolation; anti-rollback in three layers; FPGA build check | No integrity check of flash reads after boot (R6) |
 | Confidentiality | Flash, PSRAM, card and host sessions encrypted; user data needs the host | Package contents fleet-readable without the Code Secrecy Profile (R18) |
 | Event detection and logging | HMAC-chained event log in the TEE, copied to the card, read by the host and uploaded to the server | Event list to be completed |
-| Resiliency and recovery | A/B slots with confirmation and fallback; recovery bootloader; safe state on sensor loss; UART fallback when radios are off or failing | Behavior under denial of service on the host link to be defined |
+| Resiliency and recovery | A/B slots with confirmation and fallback; recovery bootloader; safe state on sensor loss; UART fallback when radios are off or failing | Behavior under denial of service on the UART, BLE and Wi-Fi to be defined |
 | Firmware and software updates | Signed, encrypted, interruption-safe updates over the air, through the host, or from a card; out-of-cycle patches, including fixes to the radio stacks | Sensor firmware updates not yet designed |
 
 ## 6. Gaps for a submission

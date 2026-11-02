@@ -50,7 +50,7 @@ The sensor certificates use ML-DSA (FIPS 204) and the pairing uses ML-KEM (FIPS 
 
 | Attacker | Capability |
 |---|---|
-| Remote | Talks to the device over the host link, or sends it a file on the MicroSD card |
+| Remote | Talks to the device over the UART, BLE or Wi-Fi, or sends it a file on the MicroSD card |
 | Link attacker | Can watch, inject, delay or cut traffic on the sensor cable or the UART |
 | Radio attacker | Within BLE range, or on the same network as the device's Wi-Fi: can scan, connect, send malformed packets, and run a fake access point or server |
 | Board prober | Opens the box: probes or interposes on the flash, SPI and sensor lines, reflashes the external flash, replaces parts |
@@ -105,7 +105,7 @@ FDA asks for an exploitability-based rating rather than likelihood; the table is
 |---|---|---|---|---|---|---|---|
 | R1 | MicroSD card: user data | Thief with a card reader | Remove the card and read or alter user data | The card is removable | Critical | High | AES-256-GCM under a key derived from both the device's data key and the host's data secret; the device never stores the secret |
 | R2 | External flash: images and TEE storage | Hobbyist with a flash programmer | Dump the flash and read code or keys | The HR8 has no flash in the package | Medium | High | XTS-AES flash encryption with a per-device key generated on chip; keys in TEE storage are also encrypted under the TEE storage key |
-| R3 | Update path | Remote attacker | Send a forged or modified package | Packages arrive from anyone, on the card or the host link | Critical | Medium | LMS signature checked by the TEE before decryption; the RSA image signature checked again by the bootloader at every boot |
+| R3 | Update path | Remote attacker | Send a forged or modified package | Packages arrive from anyone, on the card, the UART, BLE or Wi-Fi | Critical | Medium | LMS signature checked by the TEE before decryption; the RSA image signature checked again by the bootloader at every boot |
 | R4 | Version state | Board prober | Write an older, vulnerable image back into flash with a programmer | Flash has no freshness | High | Medium | The TEE refuses older packages on the update path. Security releases advance the anti-rollback eFuses (6 steps for the application, 3 for the TEE, 4 for the bootloader), which the bootloader enforces even after a flash restore. Restoring a non-security release is accepted |
 | R5 | C5 secrets | Lab attacker | Power analysis on flash encryption, and voltage or EM glitches on secure boot (AR2023-007) | Published attacks with no silicon fix on the C3 and C6 | High | Low | C5 glitch detectors and AES pseudo-rounds enabled; per-device keys only, so one break exposes one unit; host data secret not on the device; tamper-evident enclosure |
 | R6 | External flash at run time | Board prober with an interposer | Change flash contents after secure boot has checked them | XTS-AES has no per-read integrity check | High | Low | Edits produce unpredictable 16-byte blocks, not chosen code; TEE code and data are checked or authenticated by the TEE before use; a C5 with flash in the package would remove the probe point (open question) |
