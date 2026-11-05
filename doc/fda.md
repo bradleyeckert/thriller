@@ -22,7 +22,7 @@ The guidance asks for at least four views:
 
 Section 5 maps the design to the guidance's security control categories, and section 6 lists the gaps a submission would have to close.
 
-Terms are defined in the README and `doc/arch.md`. Risk IDs (R1–R42) refer to the Risk Assessment in `doc/arch.md`.
+Terms are defined in the README and `doc/arch.md`. Risk IDs (R1–R43) refer to the Risk Assessment in `doc/arch.md`.
 Roles (manufacturer, application owner, developer, user) are defined in `doc/roles.md`.
 
 ## 1. Global System View
@@ -35,15 +35,15 @@ Roles (manufacturer, application owner, developer, user) are defined in `doc/rol
 | C5 bootloader | Verifies the TEE and C5 firmware, enforces anti-rollback, falls back between slots; recovery bootloader as fallback | Trusted; signed |
 | C5 TEE | ESP-TEE in machine mode. Holds the C5's keys; checks and installs every package; keeps version records; runs host, CLI, sensor and FPGA link sessions; issues recording segment keys | Trusted; signed |
 | C5 firmware | User mode. Wi-Fi, BLE, UART, MicroSD, FPGA configuration and transport, sensor I/O. Handles only ciphertext and authenticated frames | Untrusted by the TEE; signed |
-| ECP5 configuration engine | Lattice silicon. Decrypts the bitstream with its per-device eFuse key; refuses unencrypted bitstreams | Trusted, fixed; no bitstream authentication (R32) |
-| ECP5 fabric | LiteForth CPU running the application; XIP engine; link, recording and watermark engines; I2S, LCD | Trusted for the application and recordings; keys with no CPU read path |
+| ECP5 configuration engine | Lattice silicon. Decrypts the bitstream with its per-device on-chip key | Trusted, fixed; no bitstream authentication (R32) |
+| ECP5 fabric (LFE5U-25F) | LiteForth CPU running the application; XIP engine; link and recording engines; I2S, LCD | Trusted for the application and recordings; keys with no CPU read path |
 | LiteForth application | Device function, signal processing, display; runs from the FPGA's flash | Signed by the application owner, or a device-bound developer build |
 | C5 QSPI flash, PSRAM | C5 images, bitstreams, TEE storage | Untrusted storage, encrypted by the C5 |
 | FPGA QSPI flash | Application images, encrypted and authenticated per cache line | Untrusted storage |
 | CODECs, LCD, speaker | Acquisition, display, alarms; plaintext inside the sealed enclosure | Physically protected only (R38) |
 | MicroSD card | Recordings (encrypted to the host), user data, logs, offline packages | Untrusted storage |
 | Temperature sensor | Replaceable, outside the box; certificate from its manufacturer, paired to the device | Trusted for its readings once authenticated |
-| Host PC or phone | Data and CLI sessions over the UART or BLE; decrypts recordings and checks their watermark; relays to the server | Trusted by its user; authenticated by the TEE |
+| Host PC or phone | Data and CLI sessions over the UART or BLE; decrypts recordings; relays to the server | Trusted by its user; authenticated by the TEE |
 | Wi-Fi network | Over-the-air updates, recording uploads, server contact, if the application owner enables Wi-Fi | Untrusted |
 | Enrollment and update server | Records devices, sensors and pairings; detects unknown identities; serves updates | Manufacturer-controlled |
 | Bitstream build service | Builds and encrypts each device's bitstream | Manufacturer-controlled; handles per-device keys (R42) |
@@ -102,17 +102,17 @@ flowchart LR
 | Interface | Between | What crosses it | Protection |
 |---|---|---|---|
 | C5 QSPI | C5 ↔ its flash | C5 images, bitstreams, TEE storage | XTS-AES flash encryption with an on-chip key; RSA-signed images checked at boot; bitstreams also ECP5-encrypted (R2, R6) |
-| ECP5 configuration (SPI2) | C5 firmware → ECP5 | The device's bitstream | Encrypted under the ECP5's eFuse key; "encrypted only" (R31, R32) |
+| ECP5 configuration (SPI2) | C5 firmware → ECP5 | The device's bitstream | Encrypted under the ECP5's per-device key; a foreign bitstream fails the link handshake (R17, R31, R32) |
 | C5–FPGA link (SPI2) | TEE ↔ FPGA fabric, through the C5 firmware | Boot image messages, install lines, segment keys, sensor readings, commands | Mutual authentication under the per-device link key with nonces from both sides; AES-256-GCM frames (R36) |
 | Recording stream (PARLIO) | FPGA → C5 firmware | Recording ciphertext | Encrypted to the host by the FPGA (R39, R41) |
 | FPGA QSPI | FPGA ↔ its flash | Application lines | Per-line AES-256-GCM, per-install key, address in the nonce (R34, R35) |
-| I2S, LCD, watermark nets | FPGA ↔ CODECs and LCD | Samples, waveforms | Inside the sealed enclosure; watermark detects replay on I2S (R38, R40) |
+| I2S, LCD | FPGA ↔ CODECs and LCD | Samples, waveforms | Inside the sealed enclosure only (R38, R40) |
 | MicroSD (SPI2) | C5 firmware ↔ card | Recordings, user data, logs, packages | All encrypted and authenticated (R1, R26, R41) |
 | UART | Host ↔ TEE, through the C5 firmware | Status; fallback sessions, packages, CLI | Status read-only (R30); sessions as for BLE |
 | BLE serial service | Host or phone ↔ TEE, through the C5 firmware | CLI and host sessions, packages | Mutual authentication, AES-256-GCM, attempt limits; advertising only after a user action (R9, R28) |
 | Wi-Fi | C5 firmware ↔ server | Packages, recording uploads, logs, pairing confirmations | Outbound TLS; server authenticated under the identity key; everything inside already protected (R23, R29) |
 | Sensor link | Sensor ↔ TEE, through the C5 firmware | Pairing, readings, commands | Certificates, ML-KEM pairing, per-frame MACs, maximum reading age (R11–R14) |
-| JTAG and download mode | Factory ↔ C5 and ECP5 | Initial programming, ECP5 key | C5: disabled by eFuse; ECP5: encrypted-only, readback disabled, key locked (R7, R17) |
+| JTAG and download mode | Factory ↔ C5 and ECP5 | Initial programming, ECP5 key | C5: disabled by eFuse; ECP5: readback disabled, key in on-chip storage, boundary scan still available, connector not populated (R7, R17, R43) |
 
 **Integrator adds:** the host software and its environment, recording storage and review systems, the clinical interfaces and safe states, and any additional data flows.
 
@@ -173,9 +173,8 @@ and reports the bitstream version → TEE sends the boot image message → the F
 
 ### 4.2 Recording
 
-The TEE draws a segment key, encapsulates it with ML-KEM to the host, and sends it with the watermark key to the FPGA. The FPGA watermarks the CODEC inputs, encrypts the stream,
-and passes ciphertext to the C5, which writes it to the card or uploads it. At the end of the segment both erase the key. The host decrypts, checks order and the watermark,
-and flags any window whose watermark is missing, misplaced or wrong (`doc/acquisition.md`).
+The TEE draws a segment key, encapsulates it with ML-KEM to the host, and sends it to the FPGA. The FPGA encrypts the stream
+and passes ciphertext to the C5, which writes it to the card or uploads it. At the end of the segment both erase the key. The host decrypts and checks block and segment order (`doc/acquisition.md`).
 
 ### 4.3 Host session and user data
 
@@ -193,7 +192,7 @@ authenticated per frame, aged, and passed to the application over the link; late
 
 ### 4.6 Manufacturing and enrollment
 
-Program the C5, lock its eFuses, burn the device root key, program and lock the ECP5 key, build and install the device's bitstream, install the application, check the link handshake,
+Program the C5, lock its eFuses, burn the device root key, program the ECP5 key, build and install the device's bitstream, install the application, check the link handshake,
 record, close enrollment (`doc/enrollment.md`).
 
 ### 4.7 Decommissioning
@@ -207,25 +206,24 @@ The server marks the device retired; an authorized wipe erases TEE storage and t
 | Authentication | Secure boot (RSA-3072); LMS on every package; per-line tags on the application; mutual C5–FPGA link authentication; mutual host authentication; sensor certificates and per-frame MACs; device identity proven to the server | ECP5 bitstreams are not authenticated by the ECP5 (R32); no device certificate for the sensor to check |
 | Authorization | TEE services only; keys with no CPU read path in the FPGA; user data only with the host's secret; developer builds bound to one device and epoch; radio policy set by the application owner | Session timeouts to be set |
 | Cryptography | NIST algorithms: AES, SHA-256, HMAC, HKDF, AES-CMAC KDF, LMS, ML-KEM, ML-DSA, Ascon; per-device keys | C5 boot root is RSA-3072 (R24); ECP5 bitstream encryption is AES-128 without a MAC |
-| Code, data and execution integrity | Secure boot every boot; per-line authentication of the application on every fetch; TEE isolation; anti-rollback; watermark on acquired data | No integrity check of C5 flash reads after boot (R6) |
+| Code, data and execution integrity | Secure boot every boot; per-line authentication of the application on every fetch; TEE isolation; anti-rollback | No integrity check of C5 flash reads after boot (R6) |
 | Confidentiality | Recordings encrypted to the host inside the FPGA; flash, PSRAM, card, link and sessions encrypted | Plaintext on I2S and the LCD inside the sealed enclosure (R38) |
-| Event detection and logging | HMAC-chained event log in the TEE, copied to the card, read by the host and uploaded to the server; watermark findings | Event list to be completed |
+| Event detection and logging | HMAC-chained event log in the TEE, copied to the card, read by the host and uploaded to the server | Event list to be completed |
 | Resiliency and recovery | A/B slots for every component; recovery bootloader; safe state on sensor loss; UART fallback | Behavior under denial of service on the UART, BLE and Wi-Fi to be defined |
 | Firmware and software updates | Signed, encrypted, interruption-safe updates for the C5, the bitstream and the application, online and offline | Per-device bitstream packages must be prepared for each device; sensor firmware updates not yet designed |
 
 ## 6. Gaps for a submission
 
 1. **Event list** for the log, and how the host displays it.
-2. **Clinical parameters:** maximum reading age, behavior during an unconfirmed pairing, the safe state, and whether alarms need a path independent of the FPGA application.
-3. **Watermark validation:** its effect on signal quality against IEC 80601-2-26, and detection performance.
-4. **Fault-injection and side-channel evidence** on the C5, the ECP5 and the sensor (`doc/test.md`).
-5. **Sensor firmware update** path.
-6. **Decommissioning procedure** in detail.
-7. **SBOM:** ESP-IDF and ESP-TEE versions, Mbed TLS, the ML-KEM, ML-DSA and Ascon libraries, LiteForth and the FPGA's RTL, Yosys, nextpnr, prjtrellis and Lattice's `bitgen`,
+2. **Clinical parameters:** maximum reading age, behavior during an unconfirmed pairing, the safe state.
+3. **Fault-injection and side-channel evidence** on the C5, the ECP5 and the sensor (`doc/test.md`).
+4. **Sensor firmware update** path.
+5. **Decommissioning procedure** in detail.
+6. **SBOM:** ESP-IDF and ESP-TEE versions, Mbed TLS, the ML-KEM, ML-DSA and Ascon libraries, LiteForth and the FPGA's RTL, Lattice Diamond (production bitstreams), Yosys and nextpnr (development),
    the sensor firmware, with support status and end-of-support dates. Espressif's and Lattice's advisories feed vulnerability monitoring.
-8. **Testing evidence:** security requirements, threat mitigation and vulnerability testing as planned in `doc/test.md`; independent penetration testing to be arranged.
-9. **Risk scoring:** the Risk Assessment rates likelihood; FDA asks for an exploitability-based, non-probabilistic approach with scores before and after mitigation.
-10. **Wireless:** FDA's guidance on radio frequency wireless technology in medical devices also applies: coexistence testing, wireless quality of service, and the risk of a lost link.
+7. **Testing evidence:** security requirements, threat mitigation and vulnerability testing as planned in `doc/test.md`; independent penetration testing to be arranged.
+8. **Risk scoring:** the Risk Assessment rates likelihood; FDA asks for an exploitability-based, non-probabilistic approach with scores before and after mitigation.
+9. **Wireless:** FDA's guidance on radio frequency wireless technology in medical devices also applies: coexistence testing, wireless quality of service, and the risk of a lost link.
     The clinical function must not depend on Wi-Fi or BLE.
 
 ## Source

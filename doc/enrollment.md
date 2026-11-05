@@ -38,26 +38,30 @@ At the end of the production line:
    read-protects and write-protects it, and erases its copy. The station's link must be inside the controlled area, since the root crosses it once.
 5. **Write the distribution key** into TEE secure storage the same way.
 6. **Check.** The station sends a nonce; the TEE answers with a MAC under the identity key; the HSM checks it. This proves the root key took.
-7. **Program the ECP5** over JTAG: its AES configuration key (from the HSM), the "encrypted bitstreams only" setting, readback disable, and the key lock.
+7. **Program the ECP5** over JTAG: its AES configuration key (from the HSM) into on-chip key storage. Readback disable and AES encryption are bitstream settings.
    The ECP5 key crosses the JTAG link once, inside the controlled area.
 8. **Build the bitstream.** The bitstream build service makes this device's bitstream (below), and the station writes its signed package into the C5's bitstream slots.
 9. **Check the pair.** The C5 configures the ECP5; the link handshake must succeed, which proves the ECP5 key, the bitstream's keys and the C5's root all agree.
 10. **Install the application** through the TEE, which encrypts it per line under a fresh install salt and writes it over the link into the FPGA's flash (`doc/xip.md`).
 11. **Record** the chip ID, serial number, date, station, image and bitstream versions and an eFuse summary in the database.
 12. **Close enrollment.** The TEE records that enrollment is complete. It has no command to rewrite the root or the distribution key, KEY4
-    is write-protected, and the ECP5's key is locked, so neither chip can be enrolled or paired again. Replacing either chip means returning the board to the factory.
+    is write-protected, and the bitstream depends on the ECP5's key, so neither chip can be enrolled or paired again. Replacing either chip means returning the board to the factory.
 
 ## Bitstream build service
 
 Each device has its own bitstream, because its link and image keys are inside it (`doc/fpga.md`). For each FPGA release:
 
-1. One Yosys and nextpnr build produces the common bitstream, with placeholder key constants in block RAM.
+Encryption needs Lattice's `bitgen`, which takes only a design placed and routed by Lattice's own tools (an `.ncd` file) and needs a free Lattice software licence.
+So production bitstreams come from **Lattice Diamond**; the open flow (Yosys, nextpnr, `ecppack`) remains for development on unlocked boards.
+
+1. Diamond builds the common design once per FPGA release, with placeholder key constants in block RAM, producing an `.ncd`. Synthesis can stay with Yosys (EDIF into Diamond) or use Diamond's own.
 2. For each device, the HSM derives its link key, image key and ECP5 key and releases them to the build service for that job only.
-3. The service patches the keys into the block RAM contents with prjtrellis's `ecpbram`, encrypts the result with Lattice's `bitgen` under the ECP5 key, and erases the keys.
+3. The service writes the device's keys into the block RAM initialization of a copy of the `.ncd`, runs `bitgen` with encryption under the ECP5 key, and erases the keys.
 4. The HSM signs the package (device ID, bitstream version, link protocol version, the encrypted bitstream) with the manufacturer's LMS key.
 
-Patching needs no re-place-and-route, so a per-device build takes seconds. The service handles per-device keys in plaintext, so it is isolated, audited, dual-controlled,
-and gets keys only per job (R42). Whether `bitgen` runs headless on the build servers is an open question.
+How to change block RAM contents in an `.ncd` without placing and routing again, from a script, is an open question (Diamond's memory-initialization update, or ECO tooling).
+If it cannot be done, each device needs its own place-and-route, which takes minutes rather than seconds. The service handles per-device keys in plaintext, so it is isolated,
+audited, dual-controlled, and gets keys only per job (R42).
 
 Bitstream packages are delivered online to the one device, or prepared for one device for offline delivery on a card or through the host.
 

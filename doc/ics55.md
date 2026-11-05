@@ -19,12 +19,12 @@ So the ASIC's one hard problem is the same one the earliest design faced: **wher
 ### What stays the same
 
 - The C5 remains the root of trust, installer and gateway. Version records, package checks, networking and storage do not move.
-- The XIP engine, link engine, recording engine, watermark generator and key isolation are the same RTL.
+- The XIP engine, link engine, recording engine and key isolation are the same RTL.
 - The link protocol and the boot image message are the same, so the C5's software does not change.
 
 ### What gets simpler
 
-- No bitstream: no configuration bus to protect (R31), no blind bitstream edits (R32), no per-device bitstream builds (R42), no `bitgen`.
+- No bitstream: no configuration bus to protect (R31), no blind bitstream edits (R32), no per-device bitstream builds (R42), no Lattice Diamond.
 - Logic cannot be replaced or reconfigured on the board (R17).
 
 ### Where the keys come from

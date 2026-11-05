@@ -7,7 +7,7 @@ Recordings are health data that can identify a person, so they are the primary a
 - **The ESP32-C5 is the root of trust and the gateway.** It holds the device's root keys, verifies every update, keeps the version records,
   configures the FPGA, authenticates the replaceable temperature sensor, and does all storage and networking. Its own firmware never sees a recording in plaintext.
 - **The ECP5 runs the application:** a LiteForth CPU executing in place from the FPGA's own QSPI flash, the acquisition front end, the LCD and the speaker.
-  Its per-device keys travel in a bitstream encrypted by the ECP5's own eFuse key, and it encrypts recordings to the host before they leave it.
+  Its per-device keys travel in a bitstream encrypted under the ECP5's own on-chip key, and it encrypts recordings to the host before they leave it.
 
 The design has been through two earlier architectures: a root of trust in FPGA fabric with an ATECC608B secure element (commit `cecf901`),
 then the C5 alone running the application (commit `8c54b84`). This one keeps the C5 as root of trust and puts the application back in the FPGA.
@@ -21,7 +21,7 @@ then the C5 alone running the application (commit `8c54b84`). This one keeps the
 | `doc/c5.md` | ESP32-C5 configuration: eFuse key map, boot chain, TEE, flash partitions, anti-rollback, radios |
 | `doc/fpga.md` | The ECP5: per-device encrypted bitstream, key isolation, the link to the C5, TRNG, resources |
 | `doc/xip.md` | Execute in place: per-line AES-GCM, with the C5 as installer |
-| `doc/acquisition.md` | CODECs, data path, recording encryption, watermark, LCD, speaker and alarms |
+| `doc/acquisition.md` | CODECs, data path, recording encryption, LCD, speaker and alarms |
 | `doc/sensor.md` | Replaceable temperature sensor: certificates, offline pairing, authenticated sessions, fail-safe behavior |
 | `doc/enrollment.md` | Device and sensor enrollment, the bitstream build service, detecting unknown identities, updates |
 | `doc/roles.md` | Manufacturer, application owner, developer and user; device-bound developer builds |
@@ -34,14 +34,14 @@ then the C5 alone running the application (commit `8c54b84`). This one keeps the
 
 - **ESP32-C5HR8**: 240 MHz RISC-V, 384 KB SRAM, 8 MB PSRAM in the package, Wi-Fi 6 and Bluetooth LE (enabled by the application owner; see Radios).
 - **QSPI NOR flash for the C5**, 16 MB proposed: C5 bootloader, TEE and firmware (A/B), the FPGA's per-device bitstreams (A/B), TEE secure storage. Encrypted by the C5.
-- **Lattice ECP5** (LFE5U-25 or larger), configured by the C5 over SPI at every power-up with its encrypted bitstream (`doc/fpga.md`).
+- **Lattice ECP5, LFE5U-25F-6BG256C** (24K LUTs, 126 KB of block RAM), configured by the C5 over its slave SPI port at every power-up with its encrypted bitstream; the same pins then carry the link (`doc/fpga.md`).
 - **QSPI NOR flash for the ECP5**: the application images (A/B), encrypted and authenticated per cache line (`doc/xip.md`).
 - **2 × NAU88C22** stereo CODECs: four acquisition channels, and the speaker driver (`doc/acquisition.md`).
 - **LCD panel and speaker** inside the enclosure, which carries a tamper-evident seal.
 - **MicroSD card socket**: encrypted recordings and user data, the event log, offline update packages. On the C5's SPI2 bus, shared with FPGA configuration and the link.
 - **Sensor connector**: a wired, two-way link to a replaceable temperature sensor, driven by the C5 (`doc/sensor.md`).
 - **UART** (USB-UART bridge or the C5's built-in USB serial port): status reports, and a wired fallback for host sessions, updates and the CLI.
-- One oscillator for the C5, the ECP5 and the CODECs' master clock; voltage regulators; test connectors not populated in production.
+- Oscillators, voltage regulators, and test connectors (including the ECP5's JTAG) not populated in production.
 
 ## Keys and what unlocks them
 
@@ -52,7 +52,7 @@ then the C5 alone running the application (commit `8c54b84`). This one keeps the
 | C5 flash encryption key (XTS-AES) | C5 eFuse, generated on chip | Yes | The C5's external flash and PSRAM |
 | TEE storage key | C5 eFuse, generated on chip | Yes | TEE secure storage |
 | Device root key | C5 eFuse, from the HSM at enrollment, used only inside the TEE | Yes | Root of the identity, host, data, developer, FPGA link and FPGA image keys |
-| ECP5 configuration key (AES-128) | ECP5 eFuse; HSM | Yes | The bitstream, at rest and on the configuration bus |
+| ECP5 configuration key (AES-128) | ECP5 on-chip key storage; HSM | Yes | The bitstream, at rest and on the configuration bus |
 | FPGA link key | In the encrypted bitstream, and derived by the TEE | Yes | The C5–FPGA link |
 | FPGA image key | In the encrypted bitstream, and derived by the TEE | Yes | Application images in the FPGA's flash |
 | Distribution key | TEE secure storage, written at enrollment | No | Production application packages; a device never enrolled cannot install them |
@@ -93,8 +93,7 @@ into the FPGA's flash (`doc/xip.md`).
 ## Recordings
 
 The TEE gives each recording segment a fresh key, encapsulates it with ML-KEM to the host's public key, and hands it to the FPGA, which encrypts the stream.
-The segment key is then erased, so the device cannot read its own past recordings, and neither can a thief. The C5 firmware, with its network stacks, only moves ciphertext.
-A keyed, frequency-hopping watermark injected at LSB level into the CODEC inputs lets the host detect replayed or substituted data (`doc/acquisition.md`).
+The segment key is then erased, so the device cannot read its own past recordings, and neither can a thief. The C5 firmware, with its network stacks, only moves ciphertext. See `doc/acquisition.md`.
 
 ## Sensor
 

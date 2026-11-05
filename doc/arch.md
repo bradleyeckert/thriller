@@ -12,8 +12,8 @@ Chip configuration is in `doc/c5.md` and `doc/fpga.md`, recordings in `doc/acqui
 | **TEE** (ESP-TEE, machine mode) | The C5's keys, every package check, version records, installs (including into the FPGA's flash), the FPGA link, segment keys, secure storage, the event log | The only C5 code that uses the device root key and the TEE storage key |
 | C5 firmware (user mode) | Moving frames, records and ciphertext: Wi-Fi, BLE, UART, MicroSD, FPGA configuration and link transport, sensor link I/O | Never sees a key or a plaintext recording; a bug in it must not expose one (R8, R39) |
 | C5 external flash, PSRAM | Nothing | Encrypted by the C5; integrity comes from secure boot and the TEE's own checks |
-| ECP5 configuration engine | Decrypting the bitstream with its eFuse key; refusing unencrypted bitstreams | Vendor silicon. No bitstream authentication (R32) |
-| **ECP5 fabric** | The application, acquisition, recording encryption, the watermark; holding the link and image keys | Keys in fabric with no CPU read path (`doc/fpga.md`) |
+| ECP5 configuration engine | Decrypting the bitstream with its on-chip key | Vendor silicon. No bitstream authentication (R32); a plaintext or foreign bitstream may still load, but holds no link key (R17) |
+| **ECP5 fabric** | The application, acquisition, recording encryption; holding the link and image keys | Keys in fabric with no CPU read path (`doc/fpga.md`) |
 | LiteForth application | Device function, recordings in plaintext | Can be a developer build. Never sees a key (R37) |
 | FPGA QSPI flash | Nothing | Every cache line authenticated under a per-install key the C5 chooses (`doc/xip.md`) |
 | MicroSD card | Nothing | Everything on it is encrypted and authenticated by the TEE |
@@ -21,7 +21,7 @@ Chip configuration is in `doc/c5.md` and `doc/fpga.md`, recordings in `doc/acqui
 | Sensor | Its own readings, once its certificate and pairing check out | Replaceable; one broken sensor exposes only itself |
 | Host | Its user's data | Holds the host key and the host data secret |
 | HSMs, enrollment database, update server, bitstream build service | Keys and records for the whole fleet | The crown jewels (R19, R42) |
-| Inside the sealed enclosure | Plaintext on the I2S buses, the LCD bus and the watermark nets | Protected only by the tamper-evident seal (R38) |
+| Inside the sealed enclosure | Plaintext on the I2S buses and the LCD bus | Protected only by the tamper-evident seal (R38) |
 
 ## Two signature schemes
 
@@ -42,7 +42,7 @@ The sensor certificates use ML-DSA (FIPS 204) and the pairing uses ML-KEM (FIPS 
 
 | Asset | Goal |
 |---|---|
-| Recordings | Confidentiality (health data that can identify a person), integrity, and liveness: data came through this device's CODECs at the time it claims. **The primary asset.** |
+| Recordings | Confidentiality (health data that can identify a person) and integrity. **The primary asset.** |
 | Other user data on the MicroSD card | Confidentiality and integrity |
 | Temperature readings | Integrity and freshness: a reading the device acts on is genuine, from the paired sensor, and recent |
 | C5 images, bitstreams and application images | Only genuine signed versions run, and no older vulnerable version. Packages are encrypted so they show no plaintext, but code secrecy is not a goal of the base model (see Code Secrecy Profile) |
@@ -69,7 +69,7 @@ The sensor certificates use ML-DSA (FIPS 204) and the pairing uses ML-KEM (FIPS 
 
 | Asset | Remote | Link attacker | Board prober | Thief | Evil maid | Lab attacker | Quantum-capable |
 |---|---|---|---|---|---|---|---|
-| Recordings | Safe | Safe (encrypted to the host before leaving the FPGA) | Can read live data on the I2S buses while the device records; past recordings safe; replay on I2S detected by the watermark unless the injection net is also tapped | **Safe**: the device cannot decrypt its past recordings | Can watch the next recording live with taps inside the enclosure; seal evidence | Can extract that unit's keys, and so read segments recorded while it holds them, never earlier ones | Safe |
+| Recordings | Safe | Safe (encrypted to the host before leaving the FPGA) | Can read live data on the I2S buses while the device records; past recordings safe; can replay or substitute samples on I2S undetected (R40) | **Safe**: the device cannot decrypt its past recordings | Can watch the next recording live with taps inside the enclosure; seal evidence | Can extract that unit's keys, and so read segments recorded while it holds them, never earlier ones | Safe |
 | Other user data | Safe | Safe (sessions encrypted and authenticated) | Safe (card and flash encrypted) | **Safe**: the data key needs the host's secret, which the device never stores | Safe unless the attacker also planted code that runs during the user's next session (needs a lab attack or a signing key) | Safe for a thief; the evil-maid case as left | Safe |
 | Temperature readings | Safe | Safe from forgery and replay; can delay or cut them, which raises the alarm | Same as link attacker | n/a | Can swap the sensor for one the attacker controls only if it is a genuine paired sensor | Breaking one sensor lets it forge its own readings | Safe |
 | Images | Safe | Safe | Can restore an old flash image; versions blocked by eFuse stay blocked | Same as board prober | Same as board prober | Can run modified code on that unit | Could forge RSA, but still needs physical flash access |
@@ -88,7 +88,7 @@ They could still withhold or drop frames, including sensor readings, which the a
   eFuses, which have 9 bits in total (R4).
 - **The C5 against a lab attacker.** Espressif lists no fix for AR2023-007 on the C3 and C6; the C5 adds glitch detectors and AES dummy rounds,
   but these raise the cost rather than remove the attack. Per-device keys keep it to one unit (R5).
-- **Plaintext inside the enclosure.** I2S, the LCD bus and the watermark nets carry plaintext; the tamper-evident seal is the only protection (R38).
+- **Plaintext inside the enclosure.** I2S and the LCD bus carry plaintext; the tamper-evident seal is the only protection (R38). Replayed or substituted samples on I2S are not detected (R40).
 - **Secrecy of the application code,** unless the Code Secrecy Profile is enabled.
 
 ## Risk Assessment
@@ -126,7 +126,7 @@ FDA asks for an exploitability-based rating rather than likelihood; the table is
 | R14 | Sensor identity | Counterfeiter | Make sensors that pair as genuine | Sensors pair offline | Critical | Low | ML-DSA certificate from the sensor manufacturer's HSM, checked by the TEE; the sensor must prove it holds the certified ML-KEM key |
 | R15 | Sensor identity | Lab attacker | Extract one sensor's key and clone it | A sensor is a small microcontroller | High | Low | Each sensor has its own key; the enrollment server sees the same serial paired to several devices and adds it to the denylist delivered with updates and online |
 | R16 | Device identity | Counterfeiter or cloner | Build or clone devices that use the service | Devices may be offline for long periods | High | Low | Device root key in a read-protected eFuse; the server authenticates every device it sees and flags unknown identities; a device that was never enrolled has no distribution key, so it cannot install updates |
-| R17 | ECP5 | Board prober | Replace the ECP5, or load a different or older bitstream through JTAG or the configuration pins | The configuration pins and JTAG are on the board | High | Medium | "Encrypted bitstreams only" refuses foreign bitstreams; the link handshake proves the per-device link key and reports the bitstream version, which the TEE checks; a reconfiguration ends the link session and is logged |
+| R17 | ECP5 | Board prober | Replace the ECP5, or load a different or older bitstream through JTAG or the configuration pins | The configuration pins and JTAG are on the board | High | Medium | A foreign or plaintext bitstream holds no link key, so the link handshake fails and the TEE refuses to proceed; an older bitstream of the same device is caught by the version the handshake reports; a reconfiguration ends the link session and is logged |
 | R18 | Update packages in transit | Hobbyist | Hex dump a package | Packages travel over open channels | Low | High | AES-256-GCM under the fleet-wide distribution key (obfuscation). Code Secrecy Profile for real secrecy |
 | R19 | HSMs, enrollment database, update server | Insider or intruder | Use master keys or records to derive any device's keys, unlock any host's data secret, or issue rogue sensors | Per-device keys are derived from master keys | Critical | Low | HSMs with dual control and audit; the database holds no secret key material; signing and derivation only inside HSMs; separate masters per key type |
 | R20 | Host key | Thief of the host | Use a stolen host to open sessions | The host holds the keys | Critical | Medium | Host-side protection (user authentication, encrypted key storage) is the host's job; a compromised host means retiring the device, since its keys cannot be changed |
@@ -146,12 +146,13 @@ FDA asks for an exploitability-based rating rather than likelihood; the table is
 | R34 | FPGA application version | Board prober with a programmer | Write an older application image back into the FPGA's flash | The FPGA keeps no state | High | Medium | The TEE sends the current install salt at every boot; an older image's lines fail their tags (`doc/xip.md`) |
 | R35 | FPGA application code | Board prober with an interposer or emulator | Modify, move or mix lines in the FPGA's flash during execution | Flash is external | Critical | Medium | Per-line AES-256-GCM with the slot and line address in the nonce and a per-install key; checked on every fetch |
 | R36 | C5–FPGA link | Board prober with an interposer | Read, forge or replay link frames: keys, boot image messages, sensor readings, commands | The link is on the board | Critical | Medium | Mutual authentication under the per-device link key with nonces from both sides (the FPGA's from its own TRNG); AES-256-GCM frames with counters |
-| R37 | FPGA keys | Malicious or buggy application, including a developer build | Read the link, image, segment or watermark keys | The application runs on the same FPGA | Critical | Medium | Keys live in fabric registers and constants with no CPU read path; the CPU can only request operations; no debug port in production bitstreams |
+| R37 | FPGA keys | Malicious or buggy application, including a developer build | Read the link, image or segment keys | The application runs on the same FPGA | Critical | Medium | Keys live in fabric registers and constants with no CPU read path; the CPU can only request operations; no debug port in production bitstreams |
 | R38 | Plaintext inside the enclosure | Board prober during a recording | Read samples on the I2S buses or the LCD bus | CODECs and LCDs cannot encrypt | High | Medium | Tamper-evident seal; optional enclosure switch logged by the TEE. Accepted |
 | R39 | Live recordings | Radio attacker with a C5 firmware exploit | Exfiltrate recordings over Wi-Fi | The C5 firmware carries the stream | Critical | Medium | The FPGA encrypts to the host before the stream reaches the C5; the C5 firmware holds no segment key |
-| R40 | Recording liveness | Board prober | Replay or substitute data on an I2S bus | I2S is plaintext | Critical | Medium | Keyed frequency-hopping watermark at LSB level, below the noise per hop; the host classifies every window; live check in the FPGA. Defeated only by also tapping the injection net (`doc/acquisition.md`) |
+| R40 | Recording integrity at the source | Board prober | Replay or substitute samples on an I2S bus | I2S is plaintext | Critical | Medium | Tamper-evident seal only. Accepted |
 | R41 | Stored and uploaded recordings | Thief, network attacker, cloud intruder | Read recordings on the card, in transit or in storage | Recordings leave the device | Critical | High | AES-256-GCM per segment, segment keys encapsulated with ML-KEM-768 to the host and erased on the device; block and segment numbers; optional ML-DSA provenance signature |
 | R42 | Bitstream build service | Insider or intruder | Collect per-device link, image and ECP5 keys from the build service | The service handles them in plaintext to patch and encrypt bitstreams | Critical | Low | Keys released by the HSM per job and erased after; the service is isolated, audited and dual-controlled; outputs signed in the HSM |
+| R43 | ECP5 pins | Board prober with a JTAG pod | Use the ECP5's boundary scan to sample or drive its pins while it runs | Boundary scan stays available after the security settings | High | Medium | Gives no access to keys or to the fabric; equivalent to probing or interposing on the pins (R36, R38, R40); JTAG connector not populated, inside the seal |
 
 ## Optional: Code Secrecy Profile
 
@@ -176,7 +177,7 @@ one device. The profile changes nothing else in the design.
 | ML-KEM-768 | FIPS 203 | TEE (encapsulate) | Recording segment keys, to the host |
 | AES-256-GCM | SP 800-38D | ECP5 fabric (XIP engine; link and recording engine) | Application lines, link frames, recordings |
 | AES-256-CMAC KDF | SP 800-108, SP 800-38B | ECP5 fabric and TEE | FPGA session keys and install keys |
-| AES-128 bitstream encryption | Lattice | ECP5 configuration engine; `bitgen` | Bitstream confidentiality |
+| AES-128 bitstream encryption | Lattice | ECP5 configuration engine; Lattice Diamond's `bitgen` | Bitstream confidentiality |
 | TRNG | SP 800-90B health tests | C5 RNG; ring-oscillator TRNG in the ECP5; a TRNG on the sensor | Nonces |
 
 Implementations for ML-KEM and ML-DSA are to be chosen; portable C libraries such as the PQ Code Package's mlkem-native and mldsa-native are candidates.

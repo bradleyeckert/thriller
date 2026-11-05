@@ -26,21 +26,18 @@ Every open question in one place. Earlier architectures are kept in git history 
 | C13 | RAM budget with the TEE, Wi-Fi and BLE stacks, SD buffering and the link | [c5.md](c5.md#part) | Build and measure | 2 |
 | C14 | PARLIO receive from the FPGA at the recording rate, alongside SPI2 traffic and Wi-Fi | [fpga.md](fpga.md#the-link-to-the-c5) | Bench | 2 |
 | **FPGA** | | | | |
-| F1 | That Lattice's `bitgen` encrypts an `ecppack` bitstream, runs headless on build servers, and what licence it needs | [enrollment.md](enrollment.md#bitstream-build-service) | Try it | 1 |
-| F2 | ECP5 security settings: the "encrypted bitstreams only" fuse, readback disable and key lock, their availability on the chosen part, and what JTAG can still do afterwards | [fpga.md](fpga.md#bitstream) | Lattice documentation; bench with sacrificial parts | 1 |
+| F1 | How to write each device's keys into the block RAM initialization of a Diamond `.ncd` from a script, without placing and routing again; otherwise, per-device place-and-route time | [enrollment.md](enrollment.md#bitstream-build-service) | Try Diamond's memory-initialization update and ECO tooling headless | 1 |
+| F2 | Whether the ECP5 can be set to refuse plaintext bitstreams, and what JTAG can still do to the on-chip key (read: no; overwrite or erase?) | [fpga.md](fpga.md#bitstream) | Lattice documentation; bench. The design does not depend on refusing plaintext bitstreams (R17) | 3 |
 | F3 | ECP5 bitstream encryption mode and CRC width, to bound blind edits (R32) | [fpga.md](fpga.md#bitstream) | Lattice documentation; analysis | 2 |
-| F4 | ECP5 slave SPI configuration pins as the link after configuration, and whether user logic can read CCLK | [fpga.md](fpga.md#configuration) | ECP5 sysCONFIG documentation; bench | 1 |
-| F5 | ECP5 size: LUTs for the security blocks plus the application's logic | [fpga.md](fpga.md#resource-estimate) | Synthesis | 2 |
+| F5 | Whether the LFE5U-25F's 24K LUTs fit the security blocks (about 8.5K to 15K) plus the application's logic | [fpga.md](fpga.md#resource-estimate) | Synthesis | 2 |
 | F6 | XIP line and cache sizes, GHASH width, FPGA flash size | [xip.md](xip.md#open-questions) | Measure on real LiteForth applications | 2 |
 | F7 | Ring-oscillator TRNG design and health-test thresholds on the ECP5 | [fpga.md](fpga.md#trng) | Characterize on hardware | 2 |
 | F8 | An LCD overlay for developer mode and alarms that the application cannot draw over | [roles.md](roles.md#running-a-developer-build) | RTL design | 3 |
+| F9 | Keeping the development flow (Yosys, nextpnr) and the production flow (Diamond) equivalent: same RTL, constraints and tests, and Yosys EDIF into Diamond or Diamond's own synthesis | [enrollment.md](enrollment.md#bitstream-build-service) | Run the RTL tests on both builds | 2 |
 | **Acquisition and recordings** | | | | |
-| Q1 | Watermark parameters: number of sines, hop length, amplitude, band; detection time and false-alarm rate | [acquisition.md](acquisition.md#watermark) | Reference model, then bench with synthetic EEG | 2 |
-| Q2 | NAU88C22 injection point after the front end (auxiliary inputs, input mixer) | [acquisition.md](acquisition.md#watermark) | Datasheet; bench | 1 |
 | Q3 | Sample rate per channel and segment length | [acquisition.md](acquisition.md#hardware) | Device design | 2 |
 | Q4 | Recording recipients: the host only, or also a clinic server; how the host backs up its recording private key | [acquisition.md](acquisition.md#recording-encryption) | Decide | 2 |
 | Q5 | Provenance signatures on segments (per-device ML-DSA key) | [acquisition.md](acquisition.md#recording-encryption) | Decide | 3 |
-| Q6 | Does a safety alarm need a path independent of the FPGA application? | [acquisition.md](acquisition.md#alarms) | Clinical risk analysis | 1 |
 | Q7 | Enclosure-open switch logged by the TEE | [arch.md](arch.md#risk-assessment) | Decide | 3 |
 | **Sensor** | | | | |
 | S1 | Frame MAC: Ascon-AEAD128 or HMAC-SHA256 | [sensor.md](sensor.md#sessions) | Sensor microcontroller's performance and code size | 2 |
@@ -70,7 +67,9 @@ Every open question in one place. Earlier architectures are kept in git history 
 | I1 | Whether the ICS55 SRAM is usable as a PUF for the ASIC's keys | [ics55.md](ics55.md#where-the-keys-come-from) | Test chip | 3 |
 
 Closed: C9 (developer images in TEE slots: developer builds are now FPGA applications, outside secure boot), D1 (developer signing: a per-device developer key, no signing service),
-E1 (server path: Wi-Fi when enabled, otherwise the host).
+E1 (server path: Wi-Fi when enabled, otherwise the host), the old F1 (`bitgen` needs Diamond's `.ncd`: production bitstreams come from Diamond),
+the old F2 (ECP5 security is bitstream settings plus on-chip key storage; boundary scan stays), F4 (the slave SPI pins carry the link), the watermark (removed),
+Q6 (safety alarms need no path independent of the FPGA application).
 
 ## Decisions taken
 
@@ -78,10 +77,12 @@ E1 (server path: Wi-Fi when enabled, otherwise the host).
 
 - ESP32-C5HR8 as the root of trust, installer and gateway. No ATECC608B.
 - **The application runs on the ECP5,** in LiteForth, executing in place from a QSPI flash attached to the FPGA.
-- Per-device keys in the bitstream, encrypted under the ECP5's own key with Lattice's `bitgen`; per-device bitstream packages from the server, including for offline delivery.
+- **LFE5U-25F-6BG256C.** Per-device keys in the bitstream, encrypted under the ECP5's own key with Lattice Diamond's `bitgen` (which needs a Diamond place-and-route and a free Lattice licence); per-device bitstream packages from the server, including for offline delivery.
+- The ECP5's slave SPI configuration pins carry the link after configuration.
 - Recordings encrypted in the FPGA with segment keys from the C5, so the C5's network side never sees plaintext.
 - Four channels from two NAU88C22 CODECs, with the FPGA providing both I2S masters; LCD and speaker inside a tamper-evident enclosure.
-- A watermark of keyed, changing sine waves, checked by the host that decrypts the recording; it must detect a bad watermark, not just a good one.
+- No watermark; replay or substitution on I2S is left to the tamper-evident seal (R40).
+- Safety alarms go through the FPGA application; no independent path.
 - The temperature sensor connects to the C5, is replaceable, and must pair without a network.
 - Enrollment in the manufacturer's database is required for updates, and the ecosystem flags unknown identities.
 - Over-the-air updates over Wi-Fi, and the CLI over a BLE serial service; the application owner enables or disables each radio. The UART stays for status and fallback.
@@ -92,7 +93,6 @@ E1 (server path: Wi-Fi when enabled, otherwise the host).
 - **The TEE's record decides** which bitstream is configured and which install salt is sent, so neither flash can roll the FPGA back on its own.
 - **Link and image keys derived from the device root,** so the HSM can build bitstreams and the TEE can derive the same keys.
 - **AES-only FPGA crypto:** AES-256-GCM for lines, link and recordings, an AES-256-CMAC KDF, a ring-oscillator TRNG.
-- **Frequency-hopping watermark** with hops below the noise, coherent integration at the host, a hardware live check in the FPGA, and injection-net monitoring by the C5.
 - **Recording key pair generated by the host;** the device holds only the public key.
 - **Developer builds as FPGA applications** with a per-device symmetric developer key; offline, no signing service.
 - **Secure boot with RSA-3072,** not ECDSA, because of the C5's ECDSA erratum. LMS on every package.
