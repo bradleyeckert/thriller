@@ -28,18 +28,19 @@ Every open question in one place. Earlier architectures are kept in git history 
 | **FPGA** | | | | |
 | F1 | Burn order and verification of the ECP5's key and decrypt-only eFuses, and whether the key's eFuses can be read or reprogrammed over JTAG afterwards | [enrollment.md](enrollment.md#device-enrollment) | Lattice documentation; bench with sacrificial parts | 1 |
 | F3 | ECP5 bitstream encryption mode and CRC width, to bound blind edits (R32) | [fpga.md](fpga.md#bitstream) | Lattice documentation; analysis | 2 |
-| F5 | Whether the LFE5U-25F's 24K LUTs fit the security blocks (about 8.5K to 15K) plus the application's logic | [fpga.md](fpga.md#resource-estimate) | Synthesis | 2 |
-| F6 | XIP line and cache sizes, GHASH width, FPGA flash size | [xip.md](xip.md#open-questions) | Measure on real LiteForth applications | 2 |
+| F5 | Whether the LFE5U-25F's 24K LUTs fit the security blocks and CPU (about 7K to 12K) plus the application's logic | [fpga.md](fpga.md#resource-estimate) | Synthesis | 2 |
+| F6 | XIP line and cache sizes, Ascon rounds per cycle, FPGA flash size | [xip.md](xip.md#open-questions) | Measure on real LiteForth applications | 2 |
 | F7 | Ring-oscillator TRNG design and health-test thresholds on the ECP5 | [fpga.md](fpga.md#trng) | Characterize on hardware | 2 |
 | F8 | An LCD overlay for developer mode and alarms that the application cannot draw over | [roles.md](roles.md#running-a-developer-build) | RTL design | 3 |
 | F9 | Keeping the development flow (Yosys, nextpnr) and the production flow (Diamond) equivalent: same RTL, constraints and tests, and Yosys EDIF into Diamond or Diamond's own synthesis | [enrollment.md](enrollment.md#bitstream-build-service) | Run the RTL tests on both builds | 2 |
+| F10 | Pango PGL25G: bitstream encryption, key storage, refusal of unencrypted bitstreams, readback disable, scripted block RAM updates (the questions in `fpga/pgl25g/`) | [pgl25g](../fpga/pgl25g/README.md) | Ask Pango | 2 |
+| F11 | CrossLink-NX and Titanium as alternatives: the open items in their folders | [fpga/](../fpga/README.md) | Vendor documentation | 3 |
 | **Acquisition and recordings** | | | | |
 | Q3 | Sample rate per channel and segment length | [acquisition.md](acquisition.md#hardware) | Device design | 2 |
 | Q4 | Recording recipients: the host only, or also a clinic server; how the host backs up its recording private key | [acquisition.md](acquisition.md#recording-encryption) | Decide | 2 |
 | Q5 | Provenance signatures on segments (per-device ML-DSA key) | [acquisition.md](acquisition.md#recording-encryption) | Decide | 3 |
 | Q7 | Enclosure-open switch logged by the TEE | [arch.md](arch.md#risk-assessment) | Decide | 3 |
 | **Sensor** | | | | |
-| S1 | Frame MAC: Ascon-AEAD128 or HMAC-SHA256 | [sensor.md](sensor.md#sessions) | Sensor microcontroller's performance and code size | 2 |
 | S2 | Physical layer: the sensor's existing interface, cable, and which C5 peripheral drives it | [sensor.md](sensor.md#physical-layer) | Sensor and cable specification | 1 |
 | S3 | Sensor microcontroller: TRNG, read-out protection, ML-KEM-768 speed | [sensor.md](sensor.md#the-sensor-end) | Part selection | 1 |
 | S4 | Clinical parameters: maximum reading age, safe state, behavior while a pairing is unconfirmed | [sensor.md](sensor.md#server-confirmation) | Clinical and risk management decision | 2 |
@@ -68,7 +69,7 @@ Every open question in one place. Earlier architectures are kept in git history 
 Closed: C9 (developer images in TEE slots: developer builds are now FPGA applications, outside secure boot), D1 (developer signing: a per-device developer key, no signing service),
 E1 (server path: Wi-Fi when enabled, otherwise the host), the old F1 (`bitgen` needs Diamond's `.ncd`: production bitstreams come from Diamond),
 the old F2 (the AES key and a decrypt-only setting are eFuses; readback disable is a bitstream setting; boundary scan stays), the per-device key update (a headless Diamond Tcl script with the ECO editor writes the EBR `INIT` properties), F4 (the slave SPI pins carry the link), the watermark (removed),
-Q6 (safety alarms need no path independent of the FPGA application).
+Q6 (safety alarms need no path independent of the FPGA application), S1 (sensor frames use Ascon).
 
 ## Decisions taken
 
@@ -82,6 +83,7 @@ Q6 (safety alarms need no path independent of the FPGA application).
 - Four channels from two NAU88C22 CODECs, with the FPGA providing both I2S masters; LCD and speaker inside a tamper-evident enclosure.
 - No watermark; replay or substitution on I2S is left to the tamper-evident seal (R40).
 - Safety alarms go through the FPGA application; no independent path.
+- **Ascon (SP 800-232) for every symmetric protocol we choose:** XIP lines, the link, recordings, host and CLI sessions, user data, packages, the sensor, key derivation.
 - The temperature sensor connects to the C5, is replaceable, and must pair without a network.
 - Enrollment in the manufacturer's database is required for updates, and the ecosystem flags unknown identities.
 - Over-the-air updates over Wi-Fi, and the CLI over a BLE serial service; the application owner enables or disables each radio. The UART stays for status and fallback.
@@ -91,7 +93,7 @@ Q6 (safety alarms need no path independent of the FPGA application).
 - **The C5 installs, the FPGA executes:** the TEE verifies application packages and encrypts them per line; the FPGA has no LMS, SHA-256 or install path.
 - **The TEE's record decides** which bitstream is configured and which install salt is sent, so neither flash can roll the FPGA back on its own.
 - **Link and image keys derived from the device root,** so the HSM can build bitstreams and the TEE can derive the same keys.
-- **AES-only FPGA crypto:** AES-256-GCM for lines, link and recordings, an AES-256-CMAC KDF, a ring-oscillator TRNG.
+- **Ascon-only FPGA crypto:** Ascon-AEAD128 for lines, link and recordings, Ascon-CXOF128 for key derivation, a ring-oscillator TRNG.
 - **Recording key pair generated by the host;** the device holds only the public key.
 - **Developer builds as FPGA applications** with a per-device symmetric developer key; offline, no signing service.
 - **Secure boot with RSA-3072,** not ECDSA, because of the C5's ECDSA erratum. LMS on every package.

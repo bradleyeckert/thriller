@@ -17,7 +17,7 @@ All keys stay inside HSMs. The database holds identities and records, never secr
 | Key | Used for |
 |---|---|
 | Device master | Deriving each device's root key: KDF(device master, chip ID). Everything the device derives from its root (identity, host, data, log, developer, FPGA link and FPGA image keys) the HSM can derive too |
-| ECP5 master | Deriving each device's ECP5 configuration key: KDF(ECP5 master, chip ID), truncated to 128 bits |
+| FPGA configuration master | Deriving each device's FPGA configuration key: KDF(master, chip ID), sized for the family (128 bits on the ECP5) |
 | Host data master | Deriving each device's host data secret: KDF(host data master, chip ID). Separate from the device master because the device must never be able to compute it |
 | Distribution key | Encrypting production application packages; written into each device at enrollment |
 | Release RSA keys, main and backup | Signing C5 images (secure boot) |
@@ -38,29 +38,27 @@ At the end of the production line:
    read-protects and write-protects it, and erases its copy. The station's link must be inside the controlled area, since the root crosses it once.
 5. **Write the distribution key** into TEE secure storage the same way.
 6. **Check.** The station sends a nonce; the TEE answers with a MAC under the identity key; the HSM checks it. This proves the root key took.
-7. **Program the ECP5** over JTAG: its AES configuration key (from the HSM) into eFuse key storage, then the decrypt-only eFuse, so it accepts only bitstreams encrypted
-   under that key. Readback disable is a bitstream setting. The ECP5 key crosses the JTAG link once, inside the controlled area.
+7. **Program the FPGA** over JTAG: its configuration key (from the HSM) into the FPGA's key storage, then the setting that refuses unencrypted bitstreams
+   (on the ECP5, the decrypt-only eFuse; per family in `fpga/<family>/`). The key crosses the JTAG link once, inside the controlled area.
 8. **Build the bitstream.** The bitstream build service makes this device's bitstream (below), and the station writes its signed package into the C5's bitstream slots.
-9. **Check the pair.** The C5 configures the ECP5; the link handshake must succeed, which proves the ECP5 key, the bitstream's keys and the C5's root all agree.
+9. **Check the pair.** The C5 configures the FPGA; the link handshake must succeed, which proves the FPGA's key, the bitstream's keys and the C5's root all agree.
 10. **Install the application** through the TEE, which encrypts it per line under a fresh install salt and writes it over the link into the FPGA's flash (`doc/xip.md`).
 11. **Record** the chip ID, serial number, date, station, image and bitstream versions and an eFuse summary in the database.
 12. **Close enrollment.** The TEE records that enrollment is complete. It has no command to rewrite the root or the distribution key, KEY4
-    is write-protected, and the ECP5's key and decrypt-only setting are eFuses, so neither chip can be enrolled or paired again. Replacing either chip means returning the board to the factory.
+    is write-protected, and the FPGA's key and lock are one-time settings, so neither chip can be enrolled or paired again. Replacing either chip means returning the board to the factory.
 
 ## Bitstream build service
 
 Each device has its own bitstream, because its link and image keys are inside it (`doc/fpga.md`). For each FPGA release:
 
-Encryption needs Lattice's `bitgen`, which takes only a design placed and routed by Lattice's own tools (an `.ncd` file) and needs a free Lattice software licence.
-So production bitstreams come from **Lattice Diamond**; the open flow (Yosys, nextpnr, `ecppack`) remains for development on unlocked boards.
-
-1. Diamond builds the common design once per FPGA release, with placeholder key constants in block RAM, producing an `.ncd`. Synthesis can stay with Yosys (EDIF into Diamond) or use Diamond's own.
-2. For each device, the HSM derives its link key, image key and ECP5 key and releases them to the build service for that job only.
-3. A headless Diamond Tcl script opens a copy of the routed design in the ECO editor, writes the device's keys into the key EBRs' `INIT_00` to `INIT_3F` properties,
-   runs `bitgen` with encryption under the ECP5 key, and erases the keys.
+1. The family's tools build the common design once, with placeholder key constants in block RAM.
+2. For each device, the HSM derives its link key, image key and FPGA configuration key and releases them to the build service for that job only.
+3. A family-specific script writes the device's keys into the block RAM contents of the routed design, without placing and routing again, encrypts the bitstream under the
+   device's configuration key (and signs it, where the family authenticates bitstreams), and erases the keys.
 4. The HSM signs the package (device ID, bitstream version, link protocol version, the encrypted bitstream) with the manufacturer's LMS key.
 
-No re-place-and-route is needed, so a per-device build takes seconds. The service handles per-device keys in plaintext, so it is isolated,
+For the ECP5 this is Lattice Diamond: `bitgen` encrypts only Diamond's own routed designs (`.ncd`), and a headless Tcl script uses the ECO editor to write the key EBRs'
+`INIT_00` to `INIT_3F` properties, so a device takes seconds (`fpga/ecp5/`). The service handles per-device keys in plaintext, so it is isolated,
 audited, dual-controlled, and gets keys only per job (R42).
 
 Bitstream packages are delivered online to the one device, or prepared for one device for offline delivery on a card or through the host.

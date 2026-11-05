@@ -15,7 +15,7 @@ Security runs in two places: as software in the C5's TEE, on hardware Espressif 
 
 | Layer | What | Where |
 |---|---|---|
-| 1. Reference models | Python models of every format and protocol: package layout and signatures, key derivations, per-line GCM, link handshake and frames, recording segments, host session, sensor pairing and session, user data records, event log chain | Workstation; produce test vectors |
+| 1. Reference models | Python models of every format and protocol: package layout and signatures, key derivations, per-line Ascon, link handshake and frames, recording segments, host session, sensor pairing and session, user data records, event log chain | Workstation; produce test vectors |
 | 2. Unit tests | TEE and C5 firmware components against the vectors; RTL modules against the same vectors | ESP-IDF unit tests (Unity) on the C5 and its Linux host target; Verilator for the RTL; LiteForth's `vm.c` for application code |
 | 3. System tests | Whole device against simulated host, sensor, server and card | Hardware-in-the-loop rig |
 | 4. Fault injection and side channels | Attacks on one unit | Lab bench |
@@ -28,7 +28,7 @@ Each test names the risk it covers. The catalogue below is the traceability matr
 ## 2. Reference models
 
 - **Formats:** update packages (C5, bitstream, application), developer package, boot image message, XIP lines and tags, link frames, recording segment headers and blocks, sensor certificate, pairing transcript, session frames, user data records, log entries.
-- **Cryptography:** known-answer tests for each algorithm from the standards (LMS from RFC 8554, ML-KEM and ML-DSA from the FIPS 203 and 204 vectors, Ascon from SP 800-232, AES-GCM, HKDF).
+- **Cryptography:** known-answer tests for each algorithm from the standards (LMS from RFC 8554, ML-KEM and ML-DSA from the FIPS 203 and 204 vectors, Ascon-AEAD128 and Ascon-CXOF128 from SP 800-232; the same vectors drive the RTL and the TEE).
 - **Protocols:** both ends of the host session, the C5–FPGA link and the sensor protocol, so each end can be tested against a model of the other.
 
 The sensor's firmware is tested against the same models.
@@ -108,8 +108,8 @@ On the ECP5, a glitch could make the XIP engine accept a line whose tag failed, 
 ### Side channels
 
 - **Flash encryption:** test-vector leakage assessment (TVLA) on the XTS-AES engine with pseudo-rounds at the chosen level, to confirm it removes the leakage AR2023-007 used.
-- **AES and HMAC in the TEE:** TVLA on the operations that use the device root and the data key.
-- **ECP5:** TVLA on the fabric's AES cores (XIP, link, recording) and, as far as possible, on bitstream decryption. Per-device keys limit the impact (R33).
+- **Ascon and HMAC in the TEE:** TVLA on the HMAC peripheral's root derivation and on the TEE's software Ascon with the data and link keys.
+- **FPGA:** TVLA on the fabric's Ascon cores (XIP, link, recording) and, as far as possible, on bitstream decryption. Per-device keys limit the impact (R33).
 - **Sensor:** TVLA on the sensor's ML-KEM decapsulation and MAC. A broken sensor exposes only itself (R15), so a modest result may be acceptable.
 
 ## 6. Tools

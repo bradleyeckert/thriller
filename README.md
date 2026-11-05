@@ -19,8 +19,9 @@ then the C5 alone running the application (commit `8c54b84`). This one keeps the
 | This README | Overview: chipset, keys, boot, updates, recordings, sensor, host sessions, radios and the CLI |
 | `doc/arch.md` | Trust boundary, threat model, risk assessment, algorithm bill of materials |
 | `doc/c5.md` | ESP32-C5 configuration: eFuse key map, boot chain, TEE, flash partitions, anti-rollback, radios |
-| `doc/fpga.md` | The ECP5: per-device encrypted bitstream, key isolation, the link to the C5, TRNG, resources |
-| `doc/xip.md` | Execute in place: per-line AES-GCM, with the C5 as installer |
+| `doc/fpga.md` | The FPGA, family-neutral: per-device encrypted bitstream, key isolation, the link to the C5, TRNG, resources |
+| `fpga/` | Everything family-specific, one folder per FPGA family: ECP5 (current), CrossLink-NX, Titanium, Pango Logos |
+| `doc/xip.md` | Execute in place: per-line Ascon-AEAD128, with the C5 as installer |
 | `doc/acquisition.md` | CODECs, data path, recording encryption, LCD, speaker and alarms |
 | `doc/sensor.md` | Replaceable temperature sensor: certificates, offline pairing, authenticated sessions, fail-safe behavior |
 | `doc/enrollment.md` | Device and sensor enrollment, the bitstream build service, detecting unknown identities, updates |
@@ -34,7 +35,8 @@ then the C5 alone running the application (commit `8c54b84`). This one keeps the
 
 - **ESP32-C5HR8**: 240 MHz RISC-V, 384 KB SRAM, 8 MB PSRAM in the package, Wi-Fi 6 and Bluetooth LE (enabled by the application owner; see Radios).
 - **QSPI NOR flash for the C5**, 16 MB proposed: C5 bootloader, TEE and firmware (A/B), the FPGA's per-device bitstreams (A/B), TEE secure storage. Encrypted by the C5.
-- **Lattice ECP5, LFE5U-25F-6BG256C** (24K LUTs, 126 KB of block RAM), configured by the C5 over its slave SPI port at every power-up with its encrypted bitstream; the same pins then carry the link (`doc/fpga.md`).
+- **Lattice ECP5, LFE5U-25F-6BG256C** (24K LUTs, 126 KB of block RAM), configured by the C5 over its slave SPI port at every power-up with its encrypted bitstream; the same pins then carry the link (`doc/fpga.md`, `fpga/ecp5/`).
+  The family can change: anything family-specific lives in `fpga/<family>/`.
 - **QSPI NOR flash for the ECP5**: the application images (A/B), encrypted and authenticated per cache line (`doc/xip.md`).
 - **2 × NAU88C22** stereo CODECs: four acquisition channels, and the speaker driver (`doc/acquisition.md`).
 - **LCD panel and speaker** inside the enclosure, which carries a tamper-evident seal.

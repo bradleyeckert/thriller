@@ -31,7 +31,7 @@ How ownership is shown is a business process. A leaked developer key exposes onl
 
 A developer package carries:
 
-- the application image, encrypted with AES-256-GCM under a package key derived from the developer key;
+- the application image, encrypted with Ascon-AEAD128 under a package key derived from the developer key;
 - a header naming the target device's chip ID and the epoch, marked as a developer build, with the developer's chosen radio policy;
 - a MAC over the whole package under a MAC key derived from the developer key.
 

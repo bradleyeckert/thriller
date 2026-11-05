@@ -56,7 +56,7 @@ and the recording and link buffers are the main users; the application's code st
 
 - SRAM PUF reliability and uniqueness with the ICS55 SRAM compiler's cells.
 - Ring-oscillator TRNG entropy.
-- Side-channel leakage of the AES cores.
+- Side-channel leakage of the Ascon cores, and the cost of masking them.
 
 A small test chip on an early shuttle, carrying just these structures, would settle them before committing the full design.
 

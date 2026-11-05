@@ -75,7 +75,7 @@ flowchart LR
       APP["LiteForth application<br/>XIP, recording engine"]
     end
     CFL["C5 flash<br/>(encrypted)"]
-    FFL["FPGA flash<br/>(per-line GCM)"]
+    FFL["FPGA flash<br/>(per-line Ascon)"]
     SD["MicroSD"]
     COD["CODECs, LCD, speaker"]
   end
@@ -90,7 +90,7 @@ flowchart LR
   MFG -.->|"JTAG, factory only"| CFG
   C5 <--> CFL
   FW -->|"encrypted bitstream"| CFG --> APP
-  FW <-->|"link, AES-GCM"| APP
+  FW <-->|"link, Ascon"| APP
   APP -->|"recordings, encrypted to host"| FW
   APP <--> FFL
   APP <-->|"I2S, LCD (plaintext)"| COD
@@ -103,13 +103,13 @@ flowchart LR
 |---|---|---|---|
 | C5 QSPI | C5 ↔ its flash | C5 images, bitstreams, TEE storage | XTS-AES flash encryption with an on-chip key; RSA-signed images checked at boot; bitstreams also ECP5-encrypted (R2, R6) |
 | ECP5 configuration (SPI2) | C5 firmware → ECP5 | The device's bitstream | Encrypted under the ECP5's per-device eFuse key; decrypt-only; a bitstream without this device's link key fails the handshake (R17, R31, R32) |
-| C5–FPGA link (SPI2) | TEE ↔ FPGA fabric, through the C5 firmware | Boot image messages, install lines, segment keys, sensor readings, commands | Mutual authentication under the per-device link key with nonces from both sides; AES-256-GCM frames (R36) |
+| C5–FPGA link (SPI2) | TEE ↔ FPGA fabric, through the C5 firmware | Boot image messages, install lines, segment keys, sensor readings, commands | Mutual authentication under the per-device link key with nonces from both sides; Ascon-AEAD128 frames (R36) |
 | Recording stream (PARLIO) | FPGA → C5 firmware | Recording ciphertext | Encrypted to the host by the FPGA (R39, R41) |
-| FPGA QSPI | FPGA ↔ its flash | Application lines | Per-line AES-256-GCM, per-install key, address in the nonce (R34, R35) |
+| FPGA QSPI | FPGA ↔ its flash | Application lines | Per-line Ascon-AEAD128, per-install key, address in the nonce (R34, R35) |
 | I2S, LCD | FPGA ↔ CODECs and LCD | Samples, waveforms | Inside the sealed enclosure only (R38, R40) |
 | MicroSD (SPI2) | C5 firmware ↔ card | Recordings, user data, logs, packages | All encrypted and authenticated (R1, R26, R41) |
 | UART | Host ↔ TEE, through the C5 firmware | Status; fallback sessions, packages, CLI | Status read-only (R30); sessions as for BLE |
-| BLE serial service | Host or phone ↔ TEE, through the C5 firmware | CLI and host sessions, packages | Mutual authentication, AES-256-GCM, attempt limits; advertising only after a user action (R9, R28) |
+| BLE serial service | Host or phone ↔ TEE, through the C5 firmware | CLI and host sessions, packages | Mutual authentication, Ascon-AEAD128, attempt limits; advertising only after a user action (R9, R28) |
 | Wi-Fi | C5 firmware ↔ server | Packages, recording uploads, logs, pairing confirmations | Outbound TLS; server authenticated under the identity key; everything inside already protected (R23, R29) |
 | Sensor link | Sensor ↔ TEE, through the C5 firmware | Pairing, readings, commands | Certificates, ML-KEM pairing, per-frame MACs, maximum reading age (R11–R14) |
 | JTAG and download mode | Factory ↔ C5 and ECP5 | Initial programming, ECP5 key | C5: disabled by eFuse; ECP5: decrypt-only eFuse, key in eFuse, readback disabled, boundary scan still available, connector not populated (R7, R17, R43) |
@@ -205,10 +205,10 @@ The server marks the device retired; an authorized wipe erases TEE storage and t
 |---|---|---|
 | Authentication | Secure boot (RSA-3072); LMS on every package; per-line tags on the application; mutual C5–FPGA link authentication; mutual host authentication; sensor certificates and per-frame MACs; device identity proven to the server | ECP5 bitstreams are not authenticated by the ECP5 (R32); no device certificate for the sensor to check |
 | Authorization | TEE services only; keys with no CPU read path in the FPGA; user data only with the host's secret; developer builds bound to one device and epoch; radio policy set by the application owner | Session timeouts to be set |
-| Cryptography | NIST algorithms: AES, SHA-256, HMAC, HKDF, AES-CMAC KDF, LMS, ML-KEM, ML-DSA, Ascon; per-device keys | C5 boot root is RSA-3072 (R24); ECP5 bitstream encryption is AES-128 without a MAC |
+| Cryptography | NIST algorithms: Ascon (SP 800-232) for all symmetric protocols; SHA-256 and HMAC for the C5's root derivation; LMS, ML-KEM, ML-DSA; per-device keys | C5 boot root is RSA-3072 (R24); the FPGA vendor's bitstream encryption (AES-128 without a MAC on the ECP5); 128-bit symmetric keys (post-quantum category 1) |
 | Code, data and execution integrity | Secure boot every boot; per-line authentication of the application on every fetch; TEE isolation; anti-rollback | No integrity check of C5 flash reads after boot (R6) |
 | Confidentiality | Recordings encrypted to the host inside the FPGA; flash, PSRAM, card, link and sessions encrypted | Plaintext on I2S and the LCD inside the sealed enclosure (R38) |
-| Event detection and logging | HMAC-chained event log in the TEE, copied to the card, read by the host and uploaded to the server | Event list to be completed |
+| Event detection and logging | MAC-chained (Ascon) event log in the TEE, copied to the card, read by the host and uploaded to the server | Event list to be completed |
 | Resiliency and recovery | A/B slots for every component; recovery bootloader; safe state on sensor loss; UART fallback | Behavior under denial of service on the UART, BLE and Wi-Fi to be defined |
 | Firmware and software updates | Signed, encrypted, interruption-safe updates for the C5, the bitstream and the application, online and offline | Per-device bitstream packages must be prepared for each device; sensor firmware updates not yet designed |
 

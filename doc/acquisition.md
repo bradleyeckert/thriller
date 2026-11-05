@@ -34,9 +34,9 @@ samples on an I2S bus; nothing in the design detects that (R40).
 Recordings are encrypted so that **the device can write them but not read them back.**
 
 1. **Recipient keys.** The host (and optionally a clinic server) gives the device its ML-KEM-768 public key during an authenticated host session. The TEE stores it.
-2. **Segments.** A recording is cut into segments, for example a few minutes each. For each segment the TEE draws a fresh AES-256 segment key, encapsulates it to each recipient's
-   public key, and builds the segment header: device ID, recording ID, segment number, start sample index, build mode, and the encapsulations.
-3. **Key to the FPGA.** The TEE sends the segment key to the FPGA over the link. The recording engine encrypts the stream in AES-256-GCM blocks
+2. **Segments.** A recording is cut into segments, for example a few minutes each. For each segment the TEE draws a fresh 128-bit segment key. For each recipient it runs ML-KEM encapsulation to the
+   recipient's public key and wraps the segment key with Ascon-AEAD128 under a key derived from the shared secret. It then builds the segment header: device ID, recording ID, segment number, start sample index, build mode, and the encapsulations with their wrapped keys.
+3. **Key to the FPGA.** The TEE sends the segment key to the FPGA over the link. The recording engine encrypts the stream in Ascon-AEAD128 blocks
    (for example 4 KB) with the block number as the nonce and the segment header as associated data in the first block.
 4. **Erase.** At the end of the segment, the TEE and the FPGA erase the segment key. Nothing on the device can decrypt that segment again.
 5. **Order.** Block and segment numbers make dropped, reordered or substituted blocks and segments detectable at the host.

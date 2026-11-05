@@ -1,6 +1,10 @@
 # FPGA
 
-The ECP5 runs the application: a LiteForth CPU executing in place from its own QSPI flash, with the acquisition front end (two NAU88C22 CODECs),
+This document is family-neutral. What a family must provide, and how each candidate provides it, is in `fpga/` at the top of the repository:
+`fpga/README.md` (the requirements), and one folder per family (`fpga/ecp5/`, `fpga/lifcl/`, `fpga/ti60/`, `fpga/pgl25g/`). The current choice is the
+**ECP5, LFE5U-25F-6BG256C** (`fpga/ecp5/`).
+
+The FPGA runs the application: a LiteForth CPU executing in place from its own QSPI flash, with the acquisition front end (two NAU88C22 CODECs),
 the LCD and the speaker. It is inside the trust boundary for the application and for recordings, so it holds two per-device keys, carried in its encrypted bitstream.
 The C5 remains the root of trust: it stores and selects the bitstream, verifies and installs application images, holds the version records,
 and does all networking and storage (`doc/c5.md`).
@@ -13,14 +17,14 @@ flowchart LR
     TEE["TEE<br/>keys, versions, installs"]
     REE["C5 firmware<br/>Wi-Fi, BLE, SD, CLI"]
   end
-  subgraph ECP5["ECP5"]
-    CFG["Config engine<br/>eFuse AES key"]
+  subgraph FPGA["FPGA"]
+    CFG["Config engine<br/>per-device key"]
     KEYS["Key constants<br/>link key, image key<br/>(no CPU read path)"]
-    LINK["Link engine<br/>AES-256-GCM, handshake"]
+    LINK["Link engine<br/>Ascon, handshake"]
     TRNG["Ring-oscillator TRNG"]
-    XIP["XIP engine<br/>AES-256-GCM per line<br/>+ flash bridge"]
+    XIP["XIP engine<br/>Ascon per line<br/>+ flash bridge"]
     CPU["LiteForth CPU<br/>application"]
-    REC["Recording engine<br/>AES-256-GCM"]
+    REC["Recording engine<br/>Ascon"]
     ACQ["Acquisition<br/>2 x I2S"]
     LCD["LCD controller"]
   end
@@ -45,24 +49,23 @@ flowchart LR
 
 ## Bitstream
 
-- **Per device.** Each device's bitstream carries its own link key and image key as constants in block RAM, written into a common Diamond build per device. Both keys are derived in the HSM from the device root: HMAC(root, "fpga link") and HMAC(root, "fpga image"). The C5's TEE derives the same values.
-- **Encrypted by the ECP5's own key.** The bitstream is encrypted with Lattice Diamond's `bitgen` under the ECP5's per-device AES key, held in its eFuse key storage, so it stays encrypted
-  in the C5's flash, on the SPI configuration bus, and in transit. The C5 never holds the plaintext. The C5's flash encryption alone would not do: it decrypts as it reads,
+- **Per device.** Each device's bitstream carries its own link key and image key as constants in block RAM, written into one common routed design per device by the family's
+  build flow. Both keys are derived in the HSM from the device root: the first 128 bits of HMAC(root, "fpga link") and HMAC(root, "fpga image"). The C5's TEE derives the same values.
+- **Encrypted by the FPGA's own key.** The bitstream is encrypted under the FPGA's per-device configuration key, held in the FPGA's own key storage, so it stays encrypted
+  in the C5's flash, on the configuration bus, and in transit. The C5 never holds the plaintext. The C5's flash encryption alone would not do: it decrypts as it reads,
   and the keys would cross the configuration bus in clear.
-- **ECP5 security settings.** At enrollment the AES key is programmed into the ECP5's eFuse key storage and the decrypt-only eFuse is burned, so the ECP5 always decrypts
-  incoming bitstreams with that key and cannot fall back to an unencrypted configuration. Readback is disabled by a bitstream preference (`doc/enrollment.md`).
-  JTAG boundary scan stays available (R43). A bitstream encrypted under another key decrypts to garbage and fails; even if one loaded, it would hold no link key and fail the handshake (R17).
-- **Built by the bitstream build service** for each device and each FPGA release, from one Lattice Diamond place-and-route (`bitgen` accepts only Diamond's `.ncd`):
-  a headless Diamond Tcl script uses the ECO editor to write the device's keys into the key EBRs' `INIT_00` to `INIT_3F` properties in the routed design, `bitgen` encrypts it,
-  and the HSM signs the package with the manufacturer's LMS key. No re-place-and-route, so a device takes seconds. The open flow (Yosys, nextpnr) stays for development on unlocked boards. The service sees per-device keys in plaintext, so it is a protected system with its keys released by the HSM per job (R42).
-- **Not authenticated by the ECP5.** ECP5 bitstream encryption has no MAC. A genuine encrypted bitstream could be modified blindly; each edit scrambles
-  whole cipher blocks and must still pass the configuration CRC (R32). The link handshake then catches any bitstream whose keys or version do not check out.
+- **No fallback.** The FPGA must be set to refuse any unencrypted (or, where the family can authenticate bitstreams, unsigned) configuration. A bitstream without this device's
+  link key would fail the handshake anyway (R17).
+- **Authentication is family-dependent.** Families that sign bitstreams (CrossLink-NX, Titanium) close blind modification of an encrypted bitstream; the ECP5 does not, so it relies on
+  the configuration CRC and the link handshake (R32).
+- **Built by the bitstream build service** for each device and each FPGA release (`doc/enrollment.md`), with the family's tools (`fpga/<family>/`).
+  The service sees per-device keys in plaintext, so it is a protected system with its keys released by the HSM per job (R42).
 
 ## Configuration
 
-1. The C5's TEE chooses the bitstream slot (A or B in the C5's flash) from its version record; the C5 firmware sends that encrypted bitstream over SPI2 to the ECP5's slave SPI port.
-   After configuration the same pins carry the link.
-2. The C5 checks DONE, then opens the link (below). The handshake proves that the configured FPGA holds this device's link key, and reports the bitstream's version,
+1. The C5's TEE chooses the bitstream slot (A or B in the C5's flash) from its version record; the C5 firmware sends that encrypted bitstream over SPI2 to the FPGA's slave configuration port.
+   On the ECP5, the same pins then carry the link.
+2. The C5 checks that configuration completed, then opens the link (below). The handshake proves that the configured FPGA holds this device's link key, and reports the bitstream's version,
    which the TEE checks against its record. An old bitstream of the same device, loaded by an attacker through JTAG or the configuration pins, is refused there.
 3. If the handshake or the FPGA's self-test fails on a newly installed bitstream, the C5 configures the other slot. The C5 controls configuration, so bitstream fallback is simple.
 4. If the FPGA is reset or reconfigured while running, the link session ends; the C5 treats that as an event, logs it, and repeats steps 2 to 3.
@@ -86,10 +89,10 @@ The link runs over SPI2, with the C5 as master. The C5 firmware moves the frames
 **Handshake (at every link start):**
 
 1. The FPGA draws a nonce *Nf* from its TRNG; the TEE draws *Nc*.
-2. Both derive session keys, one per direction, from the link key and both nonces, with the SP 800-108 counter-mode KDF using AES-256-CMAC
-   (AES only, so the FPGA needs no SHA-256).
+2. Both derive session keys, one per direction, from the link key and both nonces with Ascon-CXOF128, using the direction as part of the customization string
+   (Ascon only, so the FPGA needs no SHA-256).
 3. Each side sends a confirmation tag over the whole transcript, including the FPGA's bitstream version and the C5's firmware version, with direction labels.
-4. Frames then use AES-256-GCM with a 64-bit counter per direction as the nonce; any failure ends the session and clears the FPGA's session keys.
+4. Frames then use Ascon-AEAD128 with a 128-bit nonce made of the direction and a 64-bit counter; any failure ends the session and clears the FPGA's session keys.
 
 The FPGA's own nonce is what stops a recorded session from being replayed to it: it keeps no state across boots, so without its TRNG it could not tell an old session from a new one.
 
@@ -110,7 +113,7 @@ and does not compete with the SD card for SPI2.
 
 ## TRNG
 
-A ring-oscillator TRNG with continuous health tests (repetition count and adaptive proportion, as in NIST SP 800-90B), conditioned with AES-CMAC.
+A ring-oscillator TRNG with continuous health tests (repetition count and adaptive proportion, as in NIST SP 800-90B), conditioned with Ascon-CXOF128.
 It supplies the link nonce. A health-test failure stops the link, so the CPU never starts.
 
 ## XIP engine and flash bridge
@@ -124,19 +127,19 @@ The FPGA masters both CODECs' I2S buses, generates their master clock, and drive
 
 ## Resource estimate
 
-Rough figures, to be replaced by synthesis results:
+Rough figures in 4-input LUTs, to be replaced by synthesis results:
 
 | Block | LUTs | Block RAM |
 |---|---|---|
 | LiteForth CPU | 1.5K to 3K | Stacks, data RAM |
-| XIP engine: AES-256, GHASH, fill controller, 4 KB cache, flash bridge | 3K to 5K | 4 KB cache, S-boxes |
-| Link and recording engine: one shared AES-256-GCM core, KDF, framing | 3K to 4.5K | S-boxes, buffers |
+| XIP engine: Ascon core (one round per cycle), fill controller, 4 KB cache, flash bridge | 2.5K to 4K | 4 KB cache |
+| Link and recording engine: one shared Ascon core, framing | 2K to 3K | Buffers |
 | TRNG | Under 0.2K | |
 | Two I2S masters, CODEC control | 0.5K to 1K | |
 | LCD controller, PARLIO output | 0.5K to 1K | Line buffer |
-| **Total** | **About 8.5K to 15K** | |
+| **Total** | **About 7K to 12K** | |
 
-The LFE5U-25F (24K LUTs, 126 KB of block RAM, 28 multipliers) leaves roughly 9K to 15K LUTs for the application's own logic. Synthesis will tell whether that is enough.
+On the LFE5U-25F (24K LUTs) that leaves roughly 12K to 17K LUTs for the application's own logic (`fpga/ecp5/`).
 
 ## Open questions
 
