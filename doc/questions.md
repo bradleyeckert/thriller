@@ -26,8 +26,7 @@ Every open question in one place. Earlier architectures are kept in git history 
 | C13 | RAM budget with the TEE, Wi-Fi and BLE stacks, SD buffering and the link | [c5.md](c5.md#part) | Build and measure | 2 |
 | C14 | PARLIO receive from the FPGA at the recording rate, alongside SPI2 traffic and Wi-Fi | [fpga.md](fpga.md#the-link-to-the-c5) | Bench | 2 |
 | **FPGA** | | | | |
-| F1 | How to write each device's keys into the block RAM initialization of a Diamond `.ncd` from a script, without placing and routing again; otherwise, per-device place-and-route time | [enrollment.md](enrollment.md#bitstream-build-service) | Try Diamond's memory-initialization update and ECO tooling headless | 1 |
-| F2 | Whether the ECP5 can be set to refuse plaintext bitstreams, and what JTAG can still do to the on-chip key (read: no; overwrite or erase?) | [fpga.md](fpga.md#bitstream) | Lattice documentation; bench. The design does not depend on refusing plaintext bitstreams (R17) | 3 |
+| F1 | Burn order and verification of the ECP5's key and decrypt-only eFuses, and whether the key's eFuses can be read or reprogrammed over JTAG afterwards | [enrollment.md](enrollment.md#device-enrollment) | Lattice documentation; bench with sacrificial parts | 1 |
 | F3 | ECP5 bitstream encryption mode and CRC width, to bound blind edits (R32) | [fpga.md](fpga.md#bitstream) | Lattice documentation; analysis | 2 |
 | F5 | Whether the LFE5U-25F's 24K LUTs fit the security blocks (about 8.5K to 15K) plus the application's logic | [fpga.md](fpga.md#resource-estimate) | Synthesis | 2 |
 | F6 | XIP line and cache sizes, GHASH width, FPGA flash size | [xip.md](xip.md#open-questions) | Measure on real LiteForth applications | 2 |
@@ -68,7 +67,7 @@ Every open question in one place. Earlier architectures are kept in git history 
 
 Closed: C9 (developer images in TEE slots: developer builds are now FPGA applications, outside secure boot), D1 (developer signing: a per-device developer key, no signing service),
 E1 (server path: Wi-Fi when enabled, otherwise the host), the old F1 (`bitgen` needs Diamond's `.ncd`: production bitstreams come from Diamond),
-the old F2 (ECP5 security is bitstream settings plus on-chip key storage; boundary scan stays), F4 (the slave SPI pins carry the link), the watermark (removed),
+the old F2 (the AES key and a decrypt-only setting are eFuses; readback disable is a bitstream setting; boundary scan stays), the per-device key update (a headless Diamond Tcl script with the ECO editor writes the EBR `INIT` properties), F4 (the slave SPI pins carry the link), the watermark (removed),
 Q6 (safety alarms need no path independent of the FPGA application).
 
 ## Decisions taken
@@ -77,7 +76,7 @@ Q6 (safety alarms need no path independent of the FPGA application).
 
 - ESP32-C5HR8 as the root of trust, installer and gateway. No ATECC608B.
 - **The application runs on the ECP5,** in LiteForth, executing in place from a QSPI flash attached to the FPGA.
-- **LFE5U-25F-6BG256C.** Per-device keys in the bitstream, encrypted under the ECP5's own key with Lattice Diamond's `bitgen` (which needs a Diamond place-and-route and a free Lattice licence); per-device bitstream packages from the server, including for offline delivery.
+- **LFE5U-25F-6BG256C.** Per-device keys in the bitstream, encrypted under the ECP5's own key with Lattice Diamond's `bitgen` (which needs a Diamond place-and-route and a free Lattice licence), with per-device keys written by a Diamond ECO Tcl script; decrypt-only eFuse; per-device bitstream packages from the server, including for offline delivery.
 - The ECP5's slave SPI configuration pins carry the link after configuration.
 - Recordings encrypted in the FPGA with segment keys from the C5, so the C5's network side never sees plaintext.
 - Four channels from two NAU88C22 CODECs, with the FPGA providing both I2S masters; LCD and speaker inside a tamper-evident enclosure.

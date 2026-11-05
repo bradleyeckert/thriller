@@ -46,13 +46,15 @@ flowchart LR
 ## Bitstream
 
 - **Per device.** Each device's bitstream carries its own link key and image key as constants in block RAM, written into a common Diamond build per device. Both keys are derived in the HSM from the device root: HMAC(root, "fpga link") and HMAC(root, "fpga image"). The C5's TEE derives the same values.
-- **Encrypted by the ECP5's own key.** The bitstream is encrypted with Lattice Diamond's `bitgen` under the ECP5's per-device AES key, held in its on-chip key storage, so it stays encrypted
+- **Encrypted by the ECP5's own key.** The bitstream is encrypted with Lattice Diamond's `bitgen` under the ECP5's per-device AES key, held in its eFuse key storage, so it stays encrypted
   in the C5's flash, on the SPI configuration bus, and in transit. The C5 never holds the plaintext. The C5's flash encryption alone would not do: it decrypts as it reads,
   and the keys would cross the configuration bus in clear.
-- **ECP5 security settings.** The AES key is programmed into on-chip key storage at enrollment; readback disable and encryption are bitstream preference settings, not fuses (`doc/enrollment.md`).
-  JTAG boundary scan stays available (R43). A plaintext or foreign bitstream may still be loadable, but it holds no link key, so the handshake fails and the TEE refuses it (R17).
+- **ECP5 security settings.** At enrollment the AES key is programmed into the ECP5's eFuse key storage and the decrypt-only eFuse is burned, so the ECP5 always decrypts
+  incoming bitstreams with that key and cannot fall back to an unencrypted configuration. Readback is disabled by a bitstream preference (`doc/enrollment.md`).
+  JTAG boundary scan stays available (R43). A bitstream encrypted under another key decrypts to garbage and fails; even if one loaded, it would hold no link key and fail the handshake (R17).
 - **Built by the bitstream build service** for each device and each FPGA release, from one Lattice Diamond place-and-route (`bitgen` accepts only Diamond's `.ncd`):
-  write the keys, encrypt with `bitgen`, sign the package with the manufacturer's LMS key. The open flow (Yosys, nextpnr) stays for development on unlocked boards. The service sees per-device keys in plaintext, so it is a protected system with its keys released by the HSM per job (R42).
+  a headless Diamond Tcl script uses the ECO editor to write the device's keys into the key EBRs' `INIT_00` to `INIT_3F` properties in the routed design, `bitgen` encrypts it,
+  and the HSM signs the package with the manufacturer's LMS key. No re-place-and-route, so a device takes seconds. The open flow (Yosys, nextpnr) stays for development on unlocked boards. The service sees per-device keys in plaintext, so it is a protected system with its keys released by the HSM per job (R42).
 - **Not authenticated by the ECP5.** ECP5 bitstream encryption has no MAC. A genuine encrypted bitstream could be modified blindly; each edit scrambles
   whole cipher blocks and must still pass the configuration CRC (R32). The link handshake then catches any bitstream whose keys or version do not check out.
 

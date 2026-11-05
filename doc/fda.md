@@ -35,7 +35,7 @@ Roles (manufacturer, application owner, developer, user) are defined in `doc/rol
 | C5 bootloader | Verifies the TEE and C5 firmware, enforces anti-rollback, falls back between slots; recovery bootloader as fallback | Trusted; signed |
 | C5 TEE | ESP-TEE in machine mode. Holds the C5's keys; checks and installs every package; keeps version records; runs host, CLI, sensor and FPGA link sessions; issues recording segment keys | Trusted; signed |
 | C5 firmware | User mode. Wi-Fi, BLE, UART, MicroSD, FPGA configuration and transport, sensor I/O. Handles only ciphertext and authenticated frames | Untrusted by the TEE; signed |
-| ECP5 configuration engine | Lattice silicon. Decrypts the bitstream with its per-device on-chip key | Trusted, fixed; no bitstream authentication (R32) |
+| ECP5 configuration engine | Lattice silicon. Decrypts the bitstream with its per-device eFuse key; decrypt-only, so no unencrypted configuration | Trusted, fixed; no bitstream authentication (R32) |
 | ECP5 fabric (LFE5U-25F) | LiteForth CPU running the application; XIP engine; link and recording engines; I2S, LCD | Trusted for the application and recordings; keys with no CPU read path |
 | LiteForth application | Device function, signal processing, display; runs from the FPGA's flash | Signed by the application owner, or a device-bound developer build |
 | C5 QSPI flash, PSRAM | C5 images, bitstreams, TEE storage | Untrusted storage, encrypted by the C5 |
@@ -102,7 +102,7 @@ flowchart LR
 | Interface | Between | What crosses it | Protection |
 |---|---|---|---|
 | C5 QSPI | C5 ↔ its flash | C5 images, bitstreams, TEE storage | XTS-AES flash encryption with an on-chip key; RSA-signed images checked at boot; bitstreams also ECP5-encrypted (R2, R6) |
-| ECP5 configuration (SPI2) | C5 firmware → ECP5 | The device's bitstream | Encrypted under the ECP5's per-device key; a foreign bitstream fails the link handshake (R17, R31, R32) |
+| ECP5 configuration (SPI2) | C5 firmware → ECP5 | The device's bitstream | Encrypted under the ECP5's per-device eFuse key; decrypt-only; a bitstream without this device's link key fails the handshake (R17, R31, R32) |
 | C5–FPGA link (SPI2) | TEE ↔ FPGA fabric, through the C5 firmware | Boot image messages, install lines, segment keys, sensor readings, commands | Mutual authentication under the per-device link key with nonces from both sides; AES-256-GCM frames (R36) |
 | Recording stream (PARLIO) | FPGA → C5 firmware | Recording ciphertext | Encrypted to the host by the FPGA (R39, R41) |
 | FPGA QSPI | FPGA ↔ its flash | Application lines | Per-line AES-256-GCM, per-install key, address in the nonce (R34, R35) |
@@ -112,7 +112,7 @@ flowchart LR
 | BLE serial service | Host or phone ↔ TEE, through the C5 firmware | CLI and host sessions, packages | Mutual authentication, AES-256-GCM, attempt limits; advertising only after a user action (R9, R28) |
 | Wi-Fi | C5 firmware ↔ server | Packages, recording uploads, logs, pairing confirmations | Outbound TLS; server authenticated under the identity key; everything inside already protected (R23, R29) |
 | Sensor link | Sensor ↔ TEE, through the C5 firmware | Pairing, readings, commands | Certificates, ML-KEM pairing, per-frame MACs, maximum reading age (R11–R14) |
-| JTAG and download mode | Factory ↔ C5 and ECP5 | Initial programming, ECP5 key | C5: disabled by eFuse; ECP5: readback disabled, key in on-chip storage, boundary scan still available, connector not populated (R7, R17, R43) |
+| JTAG and download mode | Factory ↔ C5 and ECP5 | Initial programming, ECP5 key | C5: disabled by eFuse; ECP5: decrypt-only eFuse, key in eFuse, readback disabled, boundary scan still available, connector not populated (R7, R17, R43) |
 
 **Integrator adds:** the host software and its environment, recording storage and review systems, the clinical interfaces and safe states, and any additional data flows.
 

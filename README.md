@@ -52,7 +52,7 @@ then the C5 alone running the application (commit `8c54b84`). This one keeps the
 | C5 flash encryption key (XTS-AES) | C5 eFuse, generated on chip | Yes | The C5's external flash and PSRAM |
 | TEE storage key | C5 eFuse, generated on chip | Yes | TEE secure storage |
 | Device root key | C5 eFuse, from the HSM at enrollment, used only inside the TEE | Yes | Root of the identity, host, data, developer, FPGA link and FPGA image keys |
-| ECP5 configuration key (AES-128) | ECP5 on-chip key storage; HSM | Yes | The bitstream, at rest and on the configuration bus |
+| ECP5 configuration key (AES-128) | ECP5 eFuse key storage (decrypt-only); HSM | Yes | The bitstream, at rest and on the configuration bus |
 | FPGA link key | In the encrypted bitstream, and derived by the TEE | Yes | The C5–FPGA link |
 | FPGA image key | In the encrypted bitstream, and derived by the TEE | Yes | Application images in the FPGA's flash |
 | Distribution key | TEE secure storage, written at enrollment | No | Production application packages; a device never enrolled cannot install them |
