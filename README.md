@@ -20,7 +20,7 @@ then the C5 alone running the application (commit `8c54b84`). This one keeps the
 | `doc/arch.md` | Trust boundary, threat model, risk assessment, algorithm bill of materials |
 | `doc/c5.md` | ESP32-C5 configuration: eFuse key map, boot chain, TEE, flash partitions, anti-rollback, radios |
 | `doc/fpga.md` | The FPGA, family-neutral: per-device encrypted bitstream, key isolation, the link to the C5, TRNG, resources |
-| `fpga/` | Everything family-specific, one folder per FPGA family: ECP5 (current), CrossLink-NX, Titanium, Pango Logos |
+| `fpga/` | Everything family-specific, one folder per FPGA family: ECP5 (current), Pango Logos2, CrossLink-NX, Titanium, Pango Logos |
 | `doc/xip.md` | Execute in place: per-line Ascon-AEAD128, with the C5 as installer |
 | `doc/acquisition.md` | CODECs, data path, recording encryption, LCD, speaker and alarms |
 | `doc/sensor.md` | Replaceable temperature sensor: certificates, offline pairing, authenticated sessions, fail-safe behavior |

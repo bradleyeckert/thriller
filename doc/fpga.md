@@ -1,7 +1,7 @@
 # FPGA
 
 This document is family-neutral. What a family must provide, and how each candidate provides it, is in `fpga/` at the top of the repository:
-`fpga/README.md` (the requirements), and one folder per family (`fpga/ecp5/`, `fpga/lifcl/`, `fpga/ti60/`, `fpga/pgl25g/`). The current choice is the
+`fpga/README.md` (the requirements), and one folder per family (`fpga/ecp5/`, `fpga/lifcl/`, `fpga/ti60/`, `fpga/logos/`, `fpga/logos2/`). The current choice is the
 **ECP5, LFE5U-25F-6BG256C** (`fpga/ecp5/`).
 
 The FPGA runs the application: a LiteForth CPU executing in place from its own QSPI flash, with the acquisition front end (two NAU88C22 CODECs),

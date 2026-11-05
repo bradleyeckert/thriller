@@ -9,7 +9,8 @@ the C5 side) is family-neutral. Each family folder will hold its notes, its buil
 | Lattice ECP5 (LFE5U-25F-6BG256C) | [`ecp5/`](ecp5/README.md) | **Current choice** |
 | Lattice CrossLink-NX (LIFCL) | [`lifcl/`](lifcl/README.md) | Candidate |
 | Efinix Titanium (Ti60) | [`ti60/`](ti60/README.md) | Candidate |
-| Pango Logos (PGL25G) | [`pgl25g/`](pgl25g/README.md) | Under evaluation |
+| Pango Logos2 (PG2L50H-6IFBG484) | [`logos2/`](logos2/README.md) | Strong candidate |
+| Pango Logos (PGL25G) | [`logos/`](logos/README.md) | Not usable: no bitstream encryption |
 
 ## What a family must provide
 

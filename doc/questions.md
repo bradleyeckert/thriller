@@ -33,7 +33,7 @@ Every open question in one place. Earlier architectures are kept in git history 
 | F7 | Ring-oscillator TRNG design and health-test thresholds on the ECP5 | [fpga.md](fpga.md#trng) | Characterize on hardware | 2 |
 | F8 | An LCD overlay for developer mode and alarms that the application cannot draw over | [roles.md](roles.md#running-a-developer-build) | RTL design | 3 |
 | F9 | Keeping the development flow (Yosys, nextpnr) and the production flow (Diamond) equivalent: same RTL, constraints and tests, and Yosys EDIF into Diamond or Diamond's own synthesis | [enrollment.md](enrollment.md#bitstream-build-service) | Run the RTL tests on both builds | 2 |
-| F10 | Pango PGL25G: bitstream encryption, key storage, refusal of unencrypted bitstreams, readback disable, scripted block RAM updates (the questions in `fpga/pgl25g/`) | [pgl25g](../fpga/pgl25g/README.md) | Ask Pango | 2 |
+| F10 | Pango Logos2 PG2L50H: the open items in `fpga/logos2/` (scripted block RAM updates, refusing unencrypted bitstreams, slave configuration from the C5, tools and licence) | [logos2](../fpga/logos2/README.md) | Pango documentation and support; bench | 2 |
 | F11 | CrossLink-NX and Titanium as alternatives: the open items in their folders | [fpga/](../fpga/README.md) | Vendor documentation | 3 |
 | **Acquisition and recordings** | | | | |
 | Q3 | Sample rate per channel and segment length | [acquisition.md](acquisition.md#hardware) | Device design | 2 |
@@ -69,7 +69,7 @@ Every open question in one place. Earlier architectures are kept in git history 
 Closed: C9 (developer images in TEE slots: developer builds are now FPGA applications, outside secure boot), D1 (developer signing: a per-device developer key, no signing service),
 E1 (server path: Wi-Fi when enabled, otherwise the host), the old F1 (`bitgen` needs Diamond's `.ncd`: production bitstreams come from Diamond),
 the old F2 (the AES key and a decrypt-only setting are eFuses; readback disable is a bitstream setting; boundary scan stays), the per-device key update (a headless Diamond Tcl script with the ECO editor writes the EBR `INIT` properties), F4 (the slave SPI pins carry the link), the watermark (removed),
-Q6 (safety alarms need no path independent of the FPGA application), S1 (sensor frames use Ascon).
+Q6 (safety alarms need no path independent of the FPGA application), S1 (sensor frames use Ascon), the Pango Logos PGL25G (no bitstream encryption; not usable).
 
 ## Decisions taken
 

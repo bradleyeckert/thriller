@@ -1,7 +1,7 @@
-# Pango Logos PGL25G
+# Pango Logos (PGL25G)
 
-**Status:** under evaluation. The deciding question is whether the PGL25G has bitstream encryption under a key the manufacturer can program per device,
-with a setting that refuses unencrypted bitstreams. Its datasheet, as quoted so far, offers something else.
+**Status:** not usable. The Logos family is very low cost and **has no bitstream encryption**, so it cannot keep per-device keys in its bitstream (requirement 1 in `fpga/README.md`).
+The Logos2 family does have it; see `fpga/logos2/`. This page is kept for the analysis of the Logos UID-locking scheme.
 
 ## What the datasheet offers
 
@@ -26,30 +26,8 @@ and have the design read the UID at run time through the UID interface, recomput
 
 UID locking is a reasonable answer to IP cloning by a production subcontractor. It is not an answer to a board-level attacker reading keys, which is our threat.
 
-## What would make the PGL25G usable
-
-| # | Requirement (`fpga/README.md`) | PGL25G |
-|---|---|---|
-| 1 | Bitstream encryption, per-device key | Unknown; the deciding question |
-| 2 | No fallback to unencrypted | Unknown |
-| 3 | Readback disabled | Unknown |
-| 4 | Key not readable | Unknown |
-| 5 | Configured by the C5 | To confirm (slave serial or SPI configuration) |
-| 6 | Per-device constants from a script | Unknown: whether Pango Design Suite can update block RAM contents in a routed design from a script |
-| 7 | Ring-oscillator TRNG | To confirm |
-| 8 | Enough logic | A 25K-class part, similar to the LFE5U-25F; to confirm |
-| 9 | QSPI flash interface | General I/O |
-
 ## Without bitstream encryption
 
 The design would degrade, not collapse. A board prober who captures the plaintext bitstream learns that device's link and image keys. They could then read and forge link traffic
 (live data and future segment keys) and write their own application code into the FPGA's flash. Past recordings stay safe, because their segment keys were erased and only the host
 can decrypt them, and the C5's keys and version records are untouched. That is a weaker tier than the ECP5 gives, and it would have to be stated as such in the risk assessment.
-
-## Questions for Pango
-
-1. Does the PGL25G support bitstream encryption? Algorithm and key size?
-2. Where is the key stored (eFuse, OTP, battery-backed), and can it be read back or overwritten over JTAG?
-3. Can the device be locked to refuse unencrypted bitstreams?
-4. Can readback be disabled permanently?
-5. Can Pango Design Suite change block RAM initialization in a routed design from a script, and encrypt the result?
