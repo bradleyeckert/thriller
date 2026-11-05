@@ -71,7 +71,7 @@ serial, certificate hash and pairing time. The server checks that:
 - the same serial is not paired to other devices in a pattern that suggests a clone.
 
 The server answers *confirmed* or *rejected*, authenticated under the device's identity key, together with the current denylist.
-On *rejected*, the TEE removes the pairing, logs it, and the application raises an alert. Denylists also travel inside every update package,
+On *rejected*, the TEE removes the pairing, logs it, and the FPGA application raises an alert. Denylists also travel inside every update package,
 so offline devices receive them too.
 
 How long a pairing may stay unconfirmed, and what the device does meanwhile, is a clinical decision (open question).
@@ -91,8 +91,8 @@ A CRC may protect the physical layer against noise, but it is not a security con
 A MAC proves who sent a reading, not when. So:
 
 - **The device asks.** Each reading request carries the request counter, and the sensor's answer is bound to it, along with the sample's age as the sensor reports it.
-- **The TEE times the exchange** with a timer the application cannot change: from issuing the request to receiving the answer. Age of the reading = that round-trip time + the sample age the sensor reports.
-  The application moves the frames (`doc/c5.md`, TEE), so it can only make a reading look older, never newer.
+- **The TEE times the exchange** with a timer the C5 firmware cannot change: from issuing the request to receiving the answer. Age of the reading = that round-trip time + the sample age the sensor reports.
+  The C5 firmware moves the frames (`doc/c5.md`, TEE), so it can only make a reading look older, never newer.
 - **The TEE rejects a reading older than the maximum reading age,** a clinical parameter.
 
 Anyone on the link can delay frames but not forge them, so the worst they can do is make readings late, and late readings are rejected.
@@ -107,7 +107,8 @@ Anyone on the link can delay frames but not forge them, so the worst they can do
 | Certificate invalid or denylisted | Refuse to pair; alarm; log |
 | Pairing rejected by the server | Remove the pairing; alarm; log |
 
-The application defines what the safe state is. The TEE reports each reading with its age and status, and the application must not act on a reading the TEE has not passed.
+The TEE passes each reading, with its age and status, to the FPGA application over the authenticated link (`doc/fpga.md`). The application defines the safe state,
+and must not act on a reading the TEE has not passed. The time a reading spends crossing the link is added to its age.
 
 ## Physical layer
 

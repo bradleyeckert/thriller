@@ -12,47 +12,59 @@ These would fit chips with pin counts of 44-64, 80-100, and 144-208 pins.
 
 ## Commentary: `thriller` on ICS55
 
-With the root of trust in the ESP32-C5, the ASIC's job is the ECP5's job: a peripheral of the C5. That changes the migration completely.
-The earlier design (on the `archive/fpga-rot-v0` branch) put the root of trust in the ASIC itself, which needed a mask ROM boot chain,
-a PUF for per-device keys and decrypting caches, because the ICsprout 55nm open PDK lists no OTP, eFuse or embedded flash cells. None of that is needed now.
+The ECP5 now runs the application and holds two per-device keys (the link key and the image key), carried in its encrypted bitstream (`doc/fpga.md`).
+An ASIC replacing it would do the same job, but it has no bitstream to carry keys in, and the ICsprout 55nm open PDK lists no OTP, eFuse or embedded flash cells.
+So the ASIC's one hard problem is the same one the earliest design faced: **where its per-device keys come from.** Everything else gets simpler.
 
-### What the ASIC needs
+### What stays the same
 
-- **No secrets and no non-volatile memory.** Keys, versions, pairings and records all stay in the C5.
-- **No security logic.** It holds no keys, so it needs no crypto cores, no side-channel or glitch hardening, no lifecycle states and no debug lockdown for security's sake.
-- **A build ID register** in fixed logic, read by the C5 after reset, as the FPGA does now (`doc/fpga.md`). On an ASIC it identifies the silicon revision.
-- **A self-test** the C5 can trigger.
-- **The same SPI data link** as the FPGA, so the application talks to either without change.
+- The C5 remains the root of trust, installer and gateway. Version records, package checks, networking and storage do not move.
+- The XIP engine, link engine, recording engine, watermark generator and key isolation are the same RTL.
+- The link protocol and the boot image message are the same, so the C5's software does not change.
 
-### What changes from the FPGA
+### What gets simpler
 
-| | ECP5 | ASIC |
+- No bitstream: no configuration bus to protect (R31), no blind bitstream edits (R32), no per-device bitstream builds (R42), no `bitgen`.
+- Logic cannot be replaced or reconfigured on the board (R17).
+
+### Where the keys come from
+
+| Option | How | Cost |
 |---|---|---|
-| Configuration | The C5 sends the bitstream at every power-up | None; the logic is fixed |
-| Logic updates | Through application updates | Not possible; only the C5's software can change |
-| Programmable parts | The whole design | Any programmable part (for example a small soft CPU) gets its code from the C5 over SPI at reset, into SRAM |
-| Mask ROM | n/a | Only if a soft CPU needs boot code; no keys |
+| **SRAM PUF** (preferred) | At enrollment the ASIC derives a key from its SRAM's power-up pattern; the C5 stores the helper data (not secret) and the HSM records the derived link and image keys, or the ASIC and C5 agree them once and the C5 stores them in its TEE | Needs the SRAM to behave as a PUF on this process, and a fuzzy extractor in the ASIC; settled only on silicon |
+| Mask ROM key | One key for every ASIC, in ROM | Fleet-wide: breaking one ASIC breaks all. Not acceptable for recordings |
+| Keys from the C5 over the link at every boot | The C5 sends them in plaintext before any key exists | Visible on the board. Not acceptable |
 
-Because logic cannot be updated on the ASIC, anything that might need fixing in the field should stay in the C5's software or in loadable code.
+With a PUF, the C5 pairs once with the ASIC at enrollment, matching how the C5 pairs with the ECP5 today.
 
 ### Memory budget
 
-At 2 to 3 mm2 per Mb, SRAM is expensive: 64 KB (0.5 Mb) takes about 1 to 1.5 mm2. With no decrypting caches and no loader,
-the ASIC needs SRAM only for its own function, and any loadable code it receives from the C5.
+At 2 to 3 mm2 per Mb, SRAM is expensive: 64 KB (0.5 Mb) takes about 1 to 1.5 mm2. The XIP cache (about 4 KB), the CPU's stacks and data RAM,
+and the recording and link buffers are the main users; the application's code stays in flash.
 
 ### Migration hooks in the FPGA design
 
 | Hook | On the FPGA | On the ASIC |
 |---|---|---|
-| **Memory and clock wrappers.** Every block RAM and clock primitive sits in a thin module | Instantiates the FPGA primitive | Instantiates an ASIC macro or synthesized logic |
-| **One register map** for the SPI link, including the build ID and self-test | Same | Same |
-| **No reliance on initialized RAM** | No effect | SRAM powers up random |
-| **Reset and configuration status** visible to the C5 | DONE and INITN | A ready flag after reset |
+| **Key source module.** The link and image keys reach the engines through one module with a fixed interface | Constants patched into block RAM | PUF key derivation |
+| **Memory and clock wrappers.** Every block RAM and clock primitive sits in a thin module | FPGA primitives | ASIC macros or synthesized logic |
+| **Secret-clear input.** All key registers and the cache share one clear input | Reset, reconfiguration, failures | Also scan entry and glitch detectors |
+| **No reliance on initialized RAM** outside the key constants | No effect | SRAM powers up random, which the PUF needs |
+| **Version report in the handshake** | Bitstream version | Silicon revision |
+
+### Things only silicon can answer
+
+- SRAM PUF reliability and uniqueness with the ICS55 SRAM compiler's cells.
+- Ring-oscillator TRNG entropy.
+- Side-channel leakage of the AES cores.
+
+A small test chip on an early shuttle, carrying just these structures, would settle them before committing the full design.
 
 ### Open questions
 
-1. Whether the ASIC needs a programmable part at all, which depends on the FPGA's eventual function.
-2. Pin count and package, once the SPI link and the device's I/O are known.
+1. Whether the ICS55 SRAM is usable as a PUF.
+2. Whether OTP or eFlash IP will become available to open designs on this process.
+3. Pin count and package, once the CODEC, LCD and C5 interfaces are fixed.
 
 ### Sources
 

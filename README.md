@@ -1,124 +1,128 @@
 # It's all about the ROT
-Root of trust for an FPGA-based medical device, built on an Espressif ESP32-C5.
+Root of trust for an FPGA-based medical recording device, built on an Espressif ESP32-C5 and a Lattice ECP5.
 
-The ESP32-C5 is the root of trust and runs the application. It holds every key, verifies every update,
-keeps the secure file system on the MicroSD card, authenticates the replaceable temperature sensor, and
-configures the FPGA at power-up. The FPGA (a Lattice ECP5) is a peripheral: it holds no secrets, its bitstream
-is built with the open Yosys flow, and nothing in the security design depends on it.
+The device records like a high-speed EEG: four 24-bit channels from two CODECs, streamed to a MicroSD card or over Wi-Fi.
+Recordings are health data that can identify a person, so they are the primary asset.
 
-An earlier design put the root of trust in FPGA fabric with an ATECC608B secure element. Three review rounds showed
-that much of its complexity came from building a root of trust out of parts that were not made for it. That design is kept on the
-`archive/fpga-rot-v0` branch.
+- **The ESP32-C5 is the root of trust and the gateway.** It holds the device's root keys, verifies every update, keeps the version records,
+  configures the FPGA, authenticates the replaceable temperature sensor, and does all storage and networking. Its own firmware never sees a recording in plaintext.
+- **The ECP5 runs the application:** a LiteForth CPU executing in place from the FPGA's own QSPI flash, the acquisition front end, the LCD and the speaker.
+  Its per-device keys travel in a bitstream encrypted by the ECP5's own eFuse key, and it encrypts recordings to the host before they leave it.
+
+The design has been through two earlier architectures: a root of trust in FPGA fabric with an ATECC608B secure element (commit `cecf901`),
+then the C5 alone running the application (commit `8c54b84`). This one keeps the C5 as root of trust and puts the application back in the FPGA.
 
 ## Documents
 
 | Document | Contents |
 |---|---|
-| This README | Overview: chipset, keys, boot, updates, sensor, host sessions, radios and the CLI |
+| This README | Overview: chipset, keys, boot, updates, recordings, sensor, host sessions, radios and the CLI |
 | `doc/arch.md` | Trust boundary, threat model, risk assessment, algorithm bill of materials |
-| `doc/c5.md` | ESP32-C5 configuration: eFuse key map, boot chain, TEE, flash partitions, anti-rollback, debug lockdown |
+| `doc/c5.md` | ESP32-C5 configuration: eFuse key map, boot chain, TEE, flash partitions, anti-rollback, radios |
+| `doc/fpga.md` | The ECP5: per-device encrypted bitstream, key isolation, the link to the C5, TRNG, resources |
+| `doc/xip.md` | Execute in place: per-line AES-GCM, with the C5 as installer |
+| `doc/acquisition.md` | CODECs, data path, recording encryption, watermark, LCD, speaker and alarms |
 | `doc/sensor.md` | Replaceable temperature sensor: certificates, offline pairing, authenticated sessions, fail-safe behavior |
-| `doc/enrollment.md` | Device and sensor enrollment, the enrollment database, detecting unknown devices and sensors, updates |
-| `doc/fpga.md` | The ECP5 as a peripheral: configuration over SPI, identity check, data link |
+| `doc/enrollment.md` | Device and sensor enrollment, the bitstream build service, detecting unknown identities, updates |
 | `doc/roles.md` | Manufacturer, application owner, developer and user; device-bound developer builds |
 | `doc/test.md` | Test plan and fault-injection campaigns |
 | `doc/fda.md` | FDA security architecture views |
 | `doc/ics55.md` | ASIC migration to the ICS55 55 nm process |
-| `doc/questions.md` | Every open question in one matrix, and the decisions taken by default |
+| `doc/questions.md` | Every open question in one matrix, and the decisions taken |
 
 ## Chipset
 
-- **ESP32-C5HR8**: single-core 240 MHz RISC-V, 384 KB SRAM, 8 MB PSRAM in the package, Wi-Fi 6, Bluetooth LE and 802.15.4 radios.
-  Wi-Fi and BLE are enabled or disabled by the application owner (see Radios); 802.15.4 is not used.
-  The HR8 has no flash in the package, so it needs an external part. Its PSRAM leaves room for the Wi-Fi and BLE stacks alongside the TEE.
-- **QSPI NOR flash**, external, 16 MB proposed: bootloader, TEE and application images (each in A/B slots), TEE secure storage. Encrypted by the C5 (`doc/c5.md`).
-- **Lattice ECP5**, configured by the C5 over SPI at power-up, then used as an SPI peripheral (`doc/fpga.md`). Its configuration flash is no longer needed.
-- **MicroSD card socket**: encrypted user data, the security event log, and offline update packages. It shares the C5's general-purpose SPI bus with the ECP5.
-- **Sensor connector**: a two-way link to a replaceable temperature sensor outside the box, driven by the C5's UART, RMT or MCPWM capture/compare peripherals (`doc/sensor.md`).
-- **UART** (through a USB-UART bridge, or the C5's built-in USB serial port): status reports, and a wired fallback for host sessions, updates and the CLI.
-- Voltage regulators, oscillators, and a test connector that is not populated in production (JTAG is disabled by eFuse).
-
-No secure element: the C5's eFuses, HMAC peripheral and TEE take its place (`doc/c5.md`).
+- **ESP32-C5HR8**: 240 MHz RISC-V, 384 KB SRAM, 8 MB PSRAM in the package, Wi-Fi 6 and Bluetooth LE (enabled by the application owner; see Radios).
+- **QSPI NOR flash for the C5**, 16 MB proposed: C5 bootloader, TEE and firmware (A/B), the FPGA's per-device bitstreams (A/B), TEE secure storage. Encrypted by the C5.
+- **Lattice ECP5** (LFE5U-25 or larger), configured by the C5 over SPI at every power-up with its encrypted bitstream (`doc/fpga.md`).
+- **QSPI NOR flash for the ECP5**: the application images (A/B), encrypted and authenticated per cache line (`doc/xip.md`).
+- **2 × NAU88C22** stereo CODECs: four acquisition channels, and the speaker driver (`doc/acquisition.md`).
+- **LCD panel and speaker** inside the enclosure, which carries a tamper-evident seal.
+- **MicroSD card socket**: encrypted recordings and user data, the event log, offline update packages. On the C5's SPI2 bus, shared with FPGA configuration and the link.
+- **Sensor connector**: a wired, two-way link to a replaceable temperature sensor, driven by the C5 (`doc/sensor.md`).
+- **UART** (USB-UART bridge or the C5's built-in USB serial port): status reports, and a wired fallback for host sessions, updates and the CLI.
+- One oscillator for the C5, the ECP5 and the CODECs' master clock; voltage regulators; test connectors not populated in production.
 
 ## Keys and what unlocks them
 
 | Key | Held in | Per device | Protects |
 |---|---|:-:|---|
-| Release signing keys (RSA-3072, main and backup) | Manufacturer HSM; SHA-256 of each public key in C5 eFuse | No | Secure boot: every bootloader, TEE and application image |
-| Package signing keys (LMS), main and backup | Manufacturer's HSM (platform packages) and the application owner's HSM (application packages); public keys in the TEE image | No | Update packages, verified before anything is decrypted or installed |
-| Flash encryption key (XTS-AES) | C5 eFuse, generated on chip, never readable | Yes | Everything in external flash and PSRAM |
-| TEE storage key | C5 eFuse, generated on chip, used only by the HMAC peripheral | Yes | TEE secure storage (keys and records listed below) |
-| Device root key | C5 eFuse, from the HSM at enrollment, used only by the HMAC peripheral inside the TEE | Yes | Root of the device identity, host, data and developer keys, each derived with its own label |
-| Distribution key | TEE secure storage, written at enrollment | No | Decrypting production update packages; a device that was never enrolled cannot install updates |
-| Host key | Host, and derived on the device from the device root | Yes | Host sessions |
-| Host data secret | Host only, never stored on the device; derived in the HSM from a separate master the device does not hold | Yes | Combined with the device's data key to unlock user data |
-| Sensor pairing key | TEE secure storage and the sensor | Per pairing | Sessions with one paired sensor (`doc/sensor.md`) |
+| Release signing keys (RSA-3072, main and backup) | Manufacturer HSM; digests in C5 eFuse | No | Secure boot of the C5's bootloader, TEE and firmware |
+| Package signing keys (LMS), main and backup | Manufacturer HSM (C5 and bitstream packages); application owner's HSM (application packages); public keys in the TEE image | No | Every update package, checked before anything is decrypted or installed |
+| C5 flash encryption key (XTS-AES) | C5 eFuse, generated on chip | Yes | The C5's external flash and PSRAM |
+| TEE storage key | C5 eFuse, generated on chip | Yes | TEE secure storage |
+| Device root key | C5 eFuse, from the HSM at enrollment, used only inside the TEE | Yes | Root of the identity, host, data, developer, FPGA link and FPGA image keys |
+| ECP5 configuration key (AES-128) | ECP5 eFuse; HSM | Yes | The bitstream, at rest and on the configuration bus |
+| FPGA link key | In the encrypted bitstream, and derived by the TEE | Yes | The C5–FPGA link |
+| FPGA image key | In the encrypted bitstream, and derived by the TEE | Yes | Application images in the FPGA's flash |
+| Distribution key | TEE secure storage, written at enrollment | No | Production application packages; a device never enrolled cannot install them |
+| Host key | Host, and derived by the TEE | Yes | Host and CLI sessions |
+| Host data secret | Host only; from a separate HSM master | Yes | Unlocks user data together with the device's data key |
+| Host recording key pair (ML-KEM-768) | Private key on the host; public key in TEE storage | Per host | Recordings: the device can encrypt them but not decrypt them |
+| Segment key | TEE and the FPGA's recording engine, for one segment, then erased | Per segment | One segment of a recording |
+| Sensor pairing key | TEE storage and the sensor | Per pairing | Sessions with one paired sensor |
 
-The HSM derives every per-device key from a master key and the C5's chip ID, so a replacement host can be issued without contacting the device,
-and the enrollment server can authenticate any device it has enrolled (`doc/enrollment.md`).
+The HSM derives every per-device key from a master key and the C5's chip ID (`doc/enrollment.md`). The FPGA's keys are never readable by its CPU (`doc/fpga.md`).
 
 ## Boot
 
-1. The C5's ROM checks the second-stage bootloader's RSA-3072 signature against the key digests in eFuse.
-2. The bootloader checks the TEE and application images the same way, and checks their versions against the anti-rollback eFuses.
-3. The TEE starts in machine mode, sets up memory and peripheral isolation, checks the application's build mode
-   (production, or a developer build bound to this device), and starts the application in user mode.
-4. The application configures the ECP5 from the bitstream embedded in its own signed image, then reads the FPGA's identity register and runs a self-test (`doc/fpga.md`).
-5. The application opens a session with the paired sensor and waits for the host.
+1. The C5's ROM checks its bootloader; the bootloader checks the TEE and the C5 firmware (RSA-3072, anti-rollback eFuses).
+2. The TEE starts, isolates its memory and peripherals, and starts the C5 firmware in user mode.
+3. The C5 firmware configures the ECP5 with the bitstream slot the TEE chooses. The bitstream is decrypted inside the ECP5 only.
+4. The FPGA and the TEE run the link handshake: each proves it holds the link key, over nonces from both sides, and the TEE checks the bitstream's version.
+5. The TEE sends the boot image message (slot, version, install salt). The FPGA derives that install's key and releases the LiteForth CPU, which runs the application from flash,
+   checking every cache line.
+6. The C5 opens the sensor session and passes readings to the application over the link.
 
-The application never sees a key. It asks the TEE for services: user data, sensor sessions, update installation, the event log.
+Any failure falls back: to the other C5 image, the other bitstream, or the other application slot, each chosen by the C5.
 
 ## Updates
 
-One chain covers everything on the device, because the bitstream is part of the application image:
+Three kinds of package, all checked by the TEE before anything is decrypted or installed:
 
-- Each release image carries an RSA-3072 signature (for secure boot) and its package carries an LMS signature (for the update path, `doc/arch.md`).
-- Packages arrive offline on the MicroSD card or through the host, or over the air from the update server when Wi-Fi is enabled.
-  An over-the-air package streams straight into the inactive slot; that is safe because the slot is never selected until every check passes,
-  and the bootloader runs only RSA-signed images anyway.
-- The TEE checks the LMS signature, decrypts the package with the distribution key, writes the inactive slot, and lets the bootloader try the new image.
-  The new image is confirmed only after it passes its self-test, including the FPGA check; otherwise the bootloader falls back to the old one.
-- The TEE refuses any package older than the newest version it has installed. Security fixes also advance the anti-rollback eFuses,
-  so a vulnerable version stays blocked even if someone writes an old flash image back with a programmer.
+| Package | Contents | Scope | Signed by |
+|---|---|---|---|
+| C5 platform | Bootloader, TEE, C5 firmware | Fleet | RSA-3072 images (secure boot) inside an LMS-signed package (manufacturer) |
+| FPGA bitstream | One device's encrypted bitstream | Per device, built by the bitstream build service | LMS (manufacturer) |
+| Application | The LiteForth application, and its radio policy | Fleet; encrypted under the distribution key | LMS (application owner); developer builds: a MAC under the device's developer key |
+
+Packages arrive over Wi-Fi, through the host, or on the MicroSD card; per-device bitstream packages for offline delivery are prepared for the one device.
+The TEE refuses anything older than its version record; security releases also advance the anti-rollback eFuses. Applications are re-encrypted per line by the TEE
+into the FPGA's flash (`doc/xip.md`).
+
+## Recordings
+
+The TEE gives each recording segment a fresh key, encapsulates it with ML-KEM to the host's public key, and hands it to the FPGA, which encrypts the stream.
+The segment key is then erased, so the device cannot read its own past recordings, and neither can a thief. The C5 firmware, with its network stacks, only moves ciphertext.
+A keyed, frequency-hopping watermark injected at LSB level into the CODEC inputs lets the host detect replayed or substituted data (`doc/acquisition.md`).
 
 ## Sensor
 
-The temperature sensor is replaceable and pairs offline. Each sensor carries a certificate from its manufacturer and an ML-KEM key pair.
-The C5 checks the certificate, agrees a pairing key with the sensor, and later reports the pairing to the enrollment server, which detects
-unknown or cloned sensors. Every frame in both directions carries a MAC under a fresh session key, and a missing, late or rejected reading
-puts the device in its safe state (`doc/sensor.md`).
+The temperature sensor is replaceable and pairs offline with an ML-DSA certificate and ML-KEM. Every frame carries a MAC, readings older than the maximum age are rejected,
+and the server later confirms each pairing and catches clones (`doc/sensor.md`).
 
 ## Host sessions and user data
 
-The host and the device authenticate each other with the host key and fresh nonces from both sides, and every frame is encrypted and authenticated
-under a session key. User data on the MicroSD card is encrypted under a key derived from both the device's data key and a secret the host
-sends in each session. The device never stores that secret, so a stolen device cannot decrypt its card, even if its chip is broken open.
-
-A lost host is replaced by re-deriving its keys in the HSM. A compromised host means retiring the device (`doc/arch.md`, R20).
+The host and the TEE authenticate each other with the host key and fresh nonces, and every frame is encrypted and authenticated. User data other than recordings
+is encrypted under a key derived from both the device's data key and a secret the host sends in each session, which the device never stores.
+A lost host is re-issued from the HSM. A compromised host means retiring the device (`doc/arch.md`, R20).
 
 ## Radios and the CLI
 
-**The application owner decides** whether Wi-Fi and BLE are enabled. The setting is part of the signed build descriptor of each production release,
-so a user cannot change it, and a release can turn a radio off in the field. The radio stacks run in the application, never in the TEE.
+**The application owner decides** whether Wi-Fi and BLE are enabled, through a radio policy in the signed application package. The radio stacks run in the C5 firmware,
+never in the TEE, and never see plaintext recordings.
 
-- **Wi-Fi** carries over-the-air updates and contact with the enrollment server. The device only makes outbound connections; it never listens.
-  TLS to the server keeps traffic private, but the security comes from the package signatures and the device's identity MAC (`doc/enrollment.md`).
-- **BLE** carries the CLI through a serial service over GATT (the C5 has Bluetooth LE only, so true SPP, a Bluetooth Classic profile, is not available).
-  BLE is treated as an untrusted transport: every CLI session runs our own authenticated, encrypted session over it, under the host key or a developer key,
-  so nothing depends on BLE pairing. The device advertises only after a user action, for a limited time, with rotating private addresses, one connection at a time.
-- **The UART** gives anyone with a cable read-only status reports (no user data, no keys) and the same authenticated sessions as BLE, as a wired fallback.
-
-**What the CLI allows** depends on who authenticated:
+- **Wi-Fi** carries over-the-air updates, recording uploads (already encrypted to the host) and server contact. Outbound connections only.
+- **BLE** carries the CLI through a serial service over GATT (the C5 has no Bluetooth Classic, so no true SPP). Every CLI session runs our own authenticated, encrypted session;
+  advertising only after a user action, for a limited time, one connection, rotating private addresses.
+- **The UART** gives read-only status to anyone with a cable, and the same authenticated sessions as a wired fallback.
 
 | Session | Commands |
 |---|---|
-| None (UART status only) | Read-only status: versions, build mode, faults, pairing state |
-| Host (host key) | User data, sensor pairing, updates, log export, Wi-Fi credentials if Wi-Fi is enabled |
+| None (UART status only) | Versions, build mode, faults, pairing state |
+| Host (host key) | User data, recordings, sensor pairing, updates, log export, Wi-Fi credentials |
 | Developer (developer key, developer builds only) | The above, plus the application's debug commands |
-
-No CLI command reaches past the TEE's normal services. The sensor link is wired, and nothing about it depends on a radio being up.
 
 ## ASIC conversion
 
-The ECP5 is a peripheral, so an ASIC on the ICS55 process can take its place without changing the root of trust.
-The ASIC needs no keys and no non-volatile memory (`doc/ics55.md`).
+An ASIC on the ICS55 process could replace the ECP5, but it now needs per-device keys and has no non-volatile memory to keep them in (`doc/ics55.md`).
