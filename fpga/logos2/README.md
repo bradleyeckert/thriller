@@ -1,7 +1,8 @@
 # Pango Logos2 (PG2L50H)
 
 **Part under consideration:** PG2L50H-6IFBG484 (50K-class logic, speed grade 6, industrial temperature, 484-ball BGA).
-**Status:** strong candidate. On paper its bitstream security is better than the ECP5's on every count; the deciding unknown is the build flow (requirement 6).
+**Status:** current choice, with the ECP5 as fallback. Its bitstream security is better than the ECP5's on every count, and its DPA-protected hard AES block now carries all of the FPGA's cryptography.
+The deciding unknown is the build flow (requirement 6, open question F1).
 
 ## What the datasheet claims
 
@@ -18,11 +19,11 @@ From the *Logos2 Family FPGAs Device Datasheet*:
 | # | Requirement (`fpga/README.md`) | Logos2 |
 |---|---|---|
 | 1 | Bitstream encryption, per-device key | AES-256-GCM with the key in eFuse, programmed per device at enrollment |
-| 2 | No fallback to unencrypted | To confirm: a setting that forces encrypted (or signed) configuration. Likely tied to enabling authentication, as on the Ti60 |
+| 2 | No fallback to unencrypted | **Assumed:** both encryption and signing are supported in hardware, so both are enforced (to confirm, F2) |
 | 3 | Readback disabled | Yes (claimed) |
-| 4 | Key not readable | eFuse; to confirm what JTAG can do to it before JTAG is disabled |
-| 5 | Configured by the C5 | To confirm: slave serial or SPI configuration, and reusing those pins for the link |
-| 6 | Per-device constants from a script | **Unknown, and the deciding question:** whether Pango Design Suite can change block RAM initialization in a routed design from a script, then encrypt |
+| 4 | Key not readable | eFuse; JTAG is permanently disabled when the device is locked, so what JTAG could do before that matters only inside the factory |
+| 5 | Configured by the C5 | **Slave serial**, like most FPGAs. Reusing those pins for the link is probably possible; otherwise the board gives the link its own pins (F3) |
+| 6 | Per-device constants from a script | PDS runs from the command line. **Still the deciding question:** whether it can change block RAM initialization in a routed design from a script, then encrypt and sign (F1) |
 | 7 | Ring-oscillator TRNG | To confirm |
 | 8 | Enough logic | A 50K-class part: ample room for the security blocks, the CPU and the application. LUT size and block RAM to confirm |
 | 9 | QSPI flash interface | General I/O |
@@ -33,13 +34,20 @@ From the *Logos2 Family FPGAs Device Datasheet*:
 | Risk | ECP5 | Logos2 |
 |---|---|---|
 | R32: blind edits to an encrypted bitstream | Open: no MAC, only the CRC | **Closed:** AES-GCM authenticates every bitstream under the device's own key; RSA-2048 adds an origin signature |
-| R33: power analysis on bitstream decryption | Not hardened | **Claimed DPA protection** for the configuration key. Our own Ascon cores in the fabric are still unprotected |
+| R33: power analysis | Neither configuration nor soft AES hardened | **DPA protection** for configuration and for the hard AES block in the fabric, which runs all the FPGA's key-dependent work |
 | R43: boundary scan after locking | Remains available | **Can be removed** by permanently disabling JTAG, after the board's boundary-scan test at the factory |
 | Bitstream key size | AES-128 | AES-256 |
 | Fit | 24K LUTs, tight for a large application | 50K class, roomy |
 
 The GCM tag alone is enough for our purposes, because it is under a key unique to each device. RSA-2048 (about 112-bit classical strength, not quantum-safe) adds little
 on top, but costs nothing to use: the fleet signing key would live in the manufacturer's HSM.
+
+## The hard AES block
+
+Pango's DPA protection covers configuration and the **hard AES block in the fabric**. That is why the design uses AES-256 rather than Ascon: the XIP, link and recording engines
+all run their cryptography in that block, and the key registers feed it directly. Open (F4): AES-256 support, whether the block computes GHASH (if not, the FPGA uses AES-CCM so
+that no key-dependent step runs in unprotected fabric), throughput, number of instances, and the key-loading interface. Also open (F5): whether the block can use the eFuse key, or a key
+derived from it, which would let the link and image keys stay out of the bitstream.
 
 ## Key storage: eFuse or BB-RAM
 
@@ -59,8 +67,8 @@ Would replace step 7 of `doc/enrollment.md`:
 
 ## Toolchain
 
-Pango Design Suite (PDS), proprietary. There is no open-source place-and-route for Logos2, so the development flow would be PDS too. Licence terms, headless operation, and scripting
-of block RAM updates and encryption are open.
+Pango Design Suite (PDS), proprietary, runs from the command line. There is no open-source place-and-route for Logos2, so the development flow is PDS too.
+Licence terms and scripted block RAM updates with encryption and signing (F1) are open.
 
 ## Other considerations
 
@@ -68,11 +76,15 @@ of block RAM updates and encryption are open.
 - Supply chain and availability for the target markets should be checked alongside the technical evaluation.
 - It fits the ICS55 direction (`doc/ics55.md`): a domestic Chinese FPGA now, a domestic 55 nm ASIC later.
 
-## Questions for Pango
+## Answers so far, and what remains
 
-1. Which setting forces the device to accept only encrypted, or only signed, bitstreams? Is it an eFuse?
-2. Can Pango Design Suite change block RAM initialization in a routed design from a script, and then encrypt and sign the bitstream, without placing and routing again?
-3. Slave configuration from a microcontroller: which modes, and can the configuration pins become user I/O afterwards?
-4. Before JTAG is disabled, can the eFuse key be read, verified or overwritten over JTAG?
-5. What does the DPA protection cover, and is there evaluation data?
-6. PDS licence for production use, and headless (command-line) operation.
+| Question | Answer |
+|---|---|
+| Encrypted-only and signed-only configuration | Unknown; both are supported in hardware, so the design assumes both are enforced (F2) |
+| Configuration from a microcontroller | Slave serial. Pin reuse for the link probably possible; a PCB decision (F3) |
+| JTAG access to the eFuse key before JTAG is disabled | Unknown; a locked device has JTAG permanently disabled |
+| DPA protection | Covers configuration and the hard AES block in the fabric |
+| PDS from the command line | Yes |
+| Block RAM contents in a routed design, from a script, then encrypt and sign | **Open (F1)** |
+| Hard AES block: AES-256, GHASH, throughput, instances, key loading | **Open (F4)** |
+| Hard AES block using the eFuse key | Open (F5) |

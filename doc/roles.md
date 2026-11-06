@@ -7,7 +7,7 @@ a developer can run their own application on their own device, and nowhere else.
 
 | Role | Holds | Can |
 |---|---|---|
-| **Manufacturer** | The HSMs: device, ECP5 and host data masters, release RSA keys, platform LMS keys, distribution key, sensor CA keys (unless the sensor maker holds them); the bitstream build service | Build and sign the C5 platform and each device's bitstream; enroll devices; issue host and developer keys |
+| **Manufacturer** | The HSMs: device, FPGA configuration and host data masters, the bitstream signing key, release RSA keys, platform LMS keys, distribution key, sensor CA keys (unless the sensor maker holds them); the bitstream build service | Build and sign the C5 platform and each device's bitstream; enroll devices; issue host and developer keys |
 | **Application owner** | The application LMS keys (in an HSM) | Sign production LiteForth application releases, including their radio policy (Wi-Fi and BLE on or off). May be the manufacturer or a customer (open question) |
 | **Developer** | A developer key for each device they own, for the current epoch | Build, sign and install applications for those devices only |
 | **User** | A host, with its host key, host data secret and recording key pair | Open host sessions, read recordings and user data, pair sensors, install signed updates |
@@ -31,7 +31,7 @@ How ownership is shown is a business process. A leaked developer key exposes onl
 
 A developer package carries:
 
-- the application image, encrypted with Ascon-AEAD128 under a package key derived from the developer key;
+- the application image, encrypted with AES-256-GCM under a package key derived from the developer key;
 - a header naming the target device's chip ID and the epoch, marked as a developer build, with the developer's chosen radio policy;
 - a MAC over the whole package under a MAC key derived from the developer key.
 

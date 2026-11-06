@@ -1,13 +1,13 @@
 # It's all about the ROT
-Root of trust for an FPGA-based medical recording device, built on an Espressif ESP32-C5 and a Lattice ECP5.
+Root of trust for an FPGA-based medical recording device, built on an Espressif ESP32-C5 and an FPGA (currently a Pango Logos2 PG2L50H, with the Lattice ECP5 as fallback).
 
 The device records like a high-speed EEG: four 24-bit channels from two CODECs, streamed to a MicroSD card or over Wi-Fi.
 Recordings are health data that can identify a person, so they are the primary asset.
 
 - **The ESP32-C5 is the root of trust and the gateway.** It holds the device's root keys, verifies every update, keeps the version records,
   configures the FPGA, authenticates the replaceable temperature sensor, and does all storage and networking. Its own firmware never sees a recording in plaintext.
-- **The ECP5 runs the application:** a LiteForth CPU executing in place from the FPGA's own QSPI flash, the acquisition front end, the LCD and the speaker.
-  Its per-device keys travel in a bitstream encrypted under the ECP5's own on-chip key, and it encrypts recordings to the host before they leave it.
+- **The FPGA runs the application:** a LiteForth CPU executing in place from the FPGA's own QSPI flash, the acquisition front end, the LCD and the speaker.
+  Its per-device keys travel in a bitstream encrypted and authenticated under the FPGA's own per-device eFuse key, and it encrypts recordings to the host before they leave it.
 
 The design has been through two earlier architectures: a root of trust in FPGA fabric with an ATECC608B secure element (commit `cecf901`),
 then the C5 alone running the application (commit `8c54b84`). This one keeps the C5 as root of trust and puts the application back in the FPGA.
@@ -20,8 +20,8 @@ then the C5 alone running the application (commit `8c54b84`). This one keeps the
 | `doc/arch.md` | Trust boundary, threat model, risk assessment, algorithm bill of materials |
 | `doc/c5.md` | ESP32-C5 configuration: eFuse key map, boot chain, TEE, flash partitions, anti-rollback, radios |
 | `doc/fpga.md` | The FPGA, family-neutral: per-device encrypted bitstream, key isolation, the link to the C5, TRNG, resources |
-| `fpga/` | Everything family-specific, one folder per FPGA family: ECP5 (current), Pango Logos2, CrossLink-NX, Titanium, Pango Logos |
-| `doc/xip.md` | Execute in place: per-line Ascon-AEAD128, with the C5 as installer |
+| `fpga/` | Everything family-specific, one folder per FPGA family: Pango Logos2 (current), ECP5 (fallback), CrossLink-NX, Titanium, Pango Logos |
+| `doc/xip.md` | Execute in place: per-line AES-256-GCM, with the C5 as installer |
 | `doc/acquisition.md` | CODECs, data path, recording encryption, LCD, speaker and alarms |
 | `doc/sensor.md` | Replaceable temperature sensor: certificates, offline pairing, authenticated sessions, fail-safe behavior |
 | `doc/enrollment.md` | Device and sensor enrollment, the bitstream build service, detecting unknown identities, updates |
@@ -35,15 +35,15 @@ then the C5 alone running the application (commit `8c54b84`). This one keeps the
 
 - **ESP32-C5HR8**: 240 MHz RISC-V, 384 KB SRAM, 8 MB PSRAM in the package, Wi-Fi 6 and Bluetooth LE (enabled by the application owner; see Radios).
 - **QSPI NOR flash for the C5**, 16 MB proposed: C5 bootloader, TEE and firmware (A/B), the FPGA's per-device bitstreams (A/B), TEE secure storage. Encrypted by the C5.
-- **Lattice ECP5, LFE5U-25F-6BG256C** (24K LUTs, 126 KB of block RAM), configured by the C5 over its slave SPI port at every power-up with its encrypted bitstream; the same pins then carry the link (`doc/fpga.md`, `fpga/ecp5/`).
-  The family can change: anything family-specific lives in `fpga/<family>/`.
-- **QSPI NOR flash for the ECP5**: the application images (A/B), encrypted and authenticated per cache line (`doc/xip.md`).
+- **FPGA: Pango Logos2 PG2L50H-6IFBG484** (50K-class), configured by the C5 in slave serial mode at every power-up with its encrypted, signed bitstream (`doc/fpga.md`, `fpga/logos2/`).
+  Its hard AES block, protected against power analysis, does the FPGA's cryptography. Fallback: Lattice ECP5 LFE5U-25F (`fpga/ecp5/`). Anything family-specific lives in `fpga/<family>/`.
+- **QSPI NOR flash for the FPGA**: the application images (A/B), encrypted and authenticated per cache line (`doc/xip.md`).
 - **2 × NAU88C22** stereo CODECs: four acquisition channels, and the speaker driver (`doc/acquisition.md`).
 - **LCD panel and speaker** inside the enclosure, which carries a tamper-evident seal.
 - **MicroSD card socket**: encrypted recordings and user data, the event log, offline update packages. On the C5's SPI2 bus, shared with FPGA configuration and the link.
 - **Sensor connector**: a wired, two-way link to a replaceable temperature sensor, driven by the C5 (`doc/sensor.md`).
 - **UART** (USB-UART bridge or the C5's built-in USB serial port): status reports, and a wired fallback for host sessions, updates and the CLI.
-- Oscillators, voltage regulators, and test connectors (including the ECP5's JTAG) not populated in production.
+- Oscillators, voltage regulators, and test connectors not populated in production. The FPGA's JTAG is permanently disabled at enrollment.
 
 ## Keys and what unlocks them
 
@@ -54,7 +54,8 @@ then the C5 alone running the application (commit `8c54b84`). This one keeps the
 | C5 flash encryption key (XTS-AES) | C5 eFuse, generated on chip | Yes | The C5's external flash and PSRAM |
 | TEE storage key | C5 eFuse, generated on chip | Yes | TEE secure storage |
 | Device root key | C5 eFuse, from the HSM at enrollment, used only inside the TEE | Yes | Root of the identity, host, data, developer, FPGA link and FPGA image keys |
-| ECP5 configuration key (AES-128) | ECP5 eFuse key storage (decrypt-only); HSM | Yes | The bitstream, at rest and on the configuration bus |
+| FPGA configuration key (AES-256-GCM on the Logos2) | FPGA eFuse; HSM | Yes | The bitstream, at rest and on the configuration bus |
+| Bitstream signing key (RSA-2048 on the Logos2) | Manufacturer HSM; public key data in FPGA eFuse | No | Only manufacturer bitstreams configure the FPGA |
 | FPGA link key | In the encrypted bitstream, and derived by the TEE | Yes | The C5–FPGA link |
 | FPGA image key | In the encrypted bitstream, and derived by the TEE | Yes | Application images in the FPGA's flash |
 | Distribution key | TEE secure storage, written at enrollment | No | Production application packages; a device never enrolled cannot install them |
@@ -70,7 +71,7 @@ The HSM derives every per-device key from a master key and the C5's chip ID (`do
 
 1. The C5's ROM checks its bootloader; the bootloader checks the TEE and the C5 firmware (RSA-3072, anti-rollback eFuses).
 2. The TEE starts, isolates its memory and peripherals, and starts the C5 firmware in user mode.
-3. The C5 firmware configures the ECP5 with the bitstream slot the TEE chooses. The bitstream is decrypted inside the ECP5 only.
+3. The C5 firmware configures the FPGA with the bitstream slot the TEE chooses. The bitstream is checked and decrypted inside the FPGA only.
 4. The FPGA and the TEE run the link handshake: each proves it holds the link key, over nonces from both sides, and the TEE checks the bitstream's version.
 5. The TEE sends the boot image message (slot, version, install salt). The FPGA derives that install's key and releases the LiteForth CPU, which runs the application from flash,
    checking every cache line.
@@ -126,4 +127,4 @@ never in the TEE, and never see plaintext recordings.
 
 ## ASIC conversion
 
-An ASIC on the ICS55 process could replace the ECP5, but it now needs per-device keys and has no non-volatile memory to keep them in (`doc/ics55.md`).
+An ASIC on the ICS55 process could replace the FPGA, but it now needs per-device keys and has no non-volatile memory to keep them in (`doc/ics55.md`).

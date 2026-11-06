@@ -12,8 +12,8 @@ Chip configuration is in `doc/c5.md` and `doc/fpga.md`, recordings in `doc/acqui
 | **TEE** (ESP-TEE, machine mode) | The C5's keys, every package check, version records, installs (including into the FPGA's flash), the FPGA link, segment keys, secure storage, the event log | The only C5 code that uses the device root key and the TEE storage key |
 | C5 firmware (user mode) | Moving frames, records and ciphertext: Wi-Fi, BLE, UART, MicroSD, FPGA configuration and link transport, sensor link I/O | Never sees a key or a plaintext recording; a bug in it must not expose one (R8, R39) |
 | C5 external flash, PSRAM | Nothing | Encrypted by the C5; integrity comes from secure boot and the TEE's own checks |
-| ECP5 configuration engine | Decrypting the bitstream with its eFuse key; with the decrypt-only eFuse, refusing any unencrypted configuration | Vendor silicon. No bitstream authentication (R32) |
-| **ECP5 fabric** | The application, acquisition, recording encryption; holding the link and image keys | Keys in fabric with no CPU read path (`doc/fpga.md`) |
+| FPGA configuration engine | Checking and decrypting the bitstream with its eFuse keys; refusing unencrypted or unsigned configurations | Vendor silicon. On the Logos2, AES-256-GCM and RSA-2048 with power-analysis protection; on the ECP5 fallback, no bitstream authentication (R32) |
+| **FPGA fabric** | The application, acquisition, recording encryption; holding the link and image keys | Keys in fabric with no CPU read path; cryptography in the hard AES block (`doc/fpga.md`) |
 | LiteForth application | Device function, recordings in plaintext | Can be a developer build. Never sees a key (R37) |
 | FPGA QSPI flash | Nothing | Every cache line authenticated under a per-install key the C5 chooses (`doc/xip.md`) |
 | MicroSD card | Nothing | Everything on it is encrypted and authenticated by the TEE |
@@ -58,12 +58,12 @@ The sensor certificates use ML-DSA (FIPS 204) and the pairing uses ML-KEM (FIPS 
 | Remote | Talks to the device over the UART, BLE or Wi-Fi, or sends it a file on the MicroSD card |
 | Link attacker | Can watch, inject, delay or cut traffic on the sensor cable or the UART |
 | Radio attacker | Within BLE range, or on the same network as the device's Wi-Fi: can scan, connect, send malformed packets, and run a fake access point or server |
-| Board prober | Breaks the seal: probes or interposes on the flashes, SPI, I2S and sensor lines, reflashes either flash, reconfigures the ECP5 through JTAG, replaces parts |
+| Board prober | Breaks the seal: probes or interposes on the flashes, SPI, I2S and sensor lines, reflashes either flash, tries to reconfigure the FPGA, replaces parts |
 | Thief | Has the device and unlimited time, but the legitimate host never connects to it again |
 | Evil maid | Has the device for a while, then returns it to the legitimate user, who connects their host |
-| Lab attacker | Power analysis and fault injection on one C5 (as in Espressif advisory AR2023-007) or one ECP5 |
+| Lab attacker | Power analysis and fault injection on one C5 (as in Espressif advisory AR2023-007) or one FPGA |
 | Insider | Has access to the factory, the HSMs or the enrollment database |
-| Quantum-capable | Can break RSA and ECDSA, but not Ascon, AES, SHA-256, HMAC, LMS, ML-KEM or ML-DSA |
+| Quantum-capable | Can break RSA and ECDSA, but not AES-256, SHA-256, HMAC, LMS, ML-KEM or ML-DSA |
 
 ### Outcomes
 
@@ -110,7 +110,7 @@ FDA asks for an exploitability-based rating rather than likelihood; the table is
 
 | # | Asset / Component | Threat Actor | Attack Vector / Threat Description | Vulnerability Exploited | Impact | Likelihood | Mitigation / Countermeasure |
 |---|---|---|---|---|---|---|---|
-| R1 | MicroSD card: user data | Thief with a card reader | Remove the card and read or alter user data | The card is removable | Critical | High | Ascon-AEAD128 under a key derived from both the device's data key and the host's data secret; the device never stores the secret |
+| R1 | MicroSD card: user data | Thief with a card reader | Remove the card and read or alter user data | The card is removable | Critical | High | AES-256-GCM under a key derived from both the device's data key and the host's data secret; the device never stores the secret |
 | R2 | External flash: images and TEE storage | Hobbyist with a flash programmer | Dump the flash and read code or keys | The HR8 has no flash in the package | Medium | High | XTS-AES flash encryption with a per-device key generated on chip; keys in TEE storage are also encrypted under the TEE storage key |
 | R3 | Update path | Remote attacker | Send a forged or modified package | Packages arrive from anyone, on the card, the UART, BLE or Wi-Fi | Critical | Medium | LMS signature checked by the TEE before decryption; the RSA image signature checked again by the bootloader at every boot |
 | R4 | Version state | Board prober | Write an older, vulnerable image back into flash with a programmer | Flash has no freshness | High | Medium | The TEE refuses older packages on the update path. Security releases advance the anti-rollback eFuses (6 steps for the application, 3 for the TEE, 4 for the bootloader), which the bootloader enforces even after a flash restore. Restoring a non-security release is accepted |
@@ -126,8 +126,8 @@ FDA asks for an exploitability-based rating rather than likelihood; the table is
 | R14 | Sensor identity | Counterfeiter | Make sensors that pair as genuine | Sensors pair offline | Critical | Low | ML-DSA certificate from the sensor manufacturer's HSM, checked by the TEE; the sensor must prove it holds the certified ML-KEM key |
 | R15 | Sensor identity | Lab attacker | Extract one sensor's key and clone it | A sensor is a small microcontroller | High | Low | Each sensor has its own key; the enrollment server sees the same serial paired to several devices and adds it to the denylist delivered with updates and online |
 | R16 | Device identity | Counterfeiter or cloner | Build or clone devices that use the service | Devices may be offline for long periods | High | Low | Device root key in a read-protected eFuse; the server authenticates every device it sees and flags unknown identities; a device that was never enrolled has no distribution key, so it cannot install updates |
-| R17 | ECP5 | Board prober | Replace the ECP5, or load a different or older bitstream through JTAG or the configuration pins | The configuration pins and JTAG are on the board | High | Medium | The decrypt-only eFuse refuses unencrypted bitstreams, and one encrypted under another key decrypts to garbage; any bitstream without this device's link key fails the link handshake; an older bitstream of the same device is caught by the version the handshake reports; a reconfiguration ends the link session and is logged |
-| R18 | Update packages in transit | Hobbyist | Hex dump a package | Packages travel over open channels | Low | High | Ascon-AEAD128 under the fleet-wide distribution key (obfuscation). Code Secrecy Profile for real secrecy |
+| R17 | FPGA | Board prober | Replace the FPGA, or load a different or older bitstream through JTAG or the configuration pins | The configuration pins and JTAG are on the board | High | Medium | The FPGA accepts only bitstreams encrypted under its own key and signed by the manufacturer (on the Logos2, both enforced; on the ECP5 fallback, the decrypt-only eFuse); JTAG is permanently disabled on the Logos2; any bitstream without this device's link key fails the link handshake; an older bitstream of the same device is caught by the version the handshake reports; a reconfiguration ends the link session and is logged |
+| R18 | Update packages in transit | Hobbyist | Hex dump a package | Packages travel over open channels | Low | High | AES-256-GCM under the fleet-wide distribution key (obfuscation). Code Secrecy Profile for real secrecy |
 | R19 | HSMs, enrollment database, update server | Insider or intruder | Use master keys or records to derive any device's keys, unlock any host's data secret, or issue rogue sensors | Per-device keys are derived from master keys | Critical | Low | HSMs with dual control and audit; the database holds no secret key material; signing and derivation only inside HSMs; separate masters per key type |
 | R20 | Host key | Thief of the host | Use a stolen host to open sessions | The host holds the keys | Critical | Medium | Host-side protection (user authentication, encrypted key storage) is the host's job; a compromised host means retiring the device, since its keys cannot be changed |
 | R21 | Developer builds | Developer | Run a developer application on someone else's device, or read production data | Developers install their own builds | High | Medium | Developer packages carry a MAC under one device's developer key for the current epoch; the TEE refuses them anywhere else; developer builds get separate data keys and recordings marked as developer recordings (`doc/roles.md`) |
@@ -135,24 +135,24 @@ FDA asks for an exploitability-based rating rather than likelihood; the table is
 | R23 | Wi-Fi stack | Radio attacker on the network | Exploit a bug in the Wi-Fi, TCP/IP or TLS stack to run code in the C5 firmware | Large network stacks | High | Medium | Enabled only if the application owner enables it; outbound connections only, no listening ports; stacks in user mode, so keys stay in the TEE; recordings already encrypted to the host; the application runs on the FPGA; stacks kept current by OTA |
 | R24 | Boot root | Quantum-capable attacker with flash access | Forge an RSA-3072 image signature | The ROM supports only RSA and ECDSA | High | Low | The update path needs LMS; a forged image still needs physical flash access. Accepted |
 | R25 | C5 boot ROM | Researcher | A ROM bug (as in AR2023-007's buffer overflow) | ROM cannot be patched | High | Low | Follow Espressif advisories; per-device keys; eFuse settings chosen against published attacks |
-| R26 | Event log | Evil maid or thief | Erase or alter the security event log | The log lives in flash or on the card | Medium | Medium | MAC-chained entries (Ascon) under a TEE key; the host and the server read it and notice gaps |
+| R26 | Event log | Evil maid or thief | Erase or alter the security event log | The log lives in flash or on the card | Medium | Medium | HMAC-SHA256-chained entries under a TEE key; the host and the server read it and notice gaps |
 | R27 | Signing keys | Insider, or loss | A signing key is lost or leaks | Keys are long-lived | Critical | Low | Main and backup RSA keys in eFuse, each revocable; main and backup LMS keys in the TEE image, replaceable by a TEE update signed with the other key; keys held in separate HSMs |
 | R28 | BLE stack and CLI | Radio attacker within range | Exploit a BLE stack bug, or brute-force or abuse the CLI | BLE answers anyone in range; ESP-IDF has had BLE stack CVEs | High | Medium | Enabled only by the application owner; advertising only after a user action and for a limited time; one connection; every CLI session authenticated by the TEE under the host or developer key, with attempt limits and logging; stacks in user mode; kept current by OTA |
 | R29 | OTA updates and server contact | Radio attacker running a fake access point or server | Offer old or forged packages, or block updates | The network is not trusted | High | Medium | Packages verified by LMS signature and version in the TEE whatever the source; the server proves itself under the device's identity key; TLS for privacy. Blocking updates cannot be prevented; the server reports units that fall behind |
 | R30 | UART status | Anyone with a cable | Learn something from the unauthenticated status reports | Status needs no session | Low | High | Status limited to versions, build mode, faults and pairing state; no user data and no keys; everything else needs a session |
 | R31 | Bitstream and its keys | Board prober with a logic analyzer | Capture the bitstream on the SPI configuration bus | The bus is on the board | Critical | High | The bitstream is encrypted under the ECP5's own per-device eFuse key and decrypted only inside the ECP5; the C5 never holds it in plaintext |
-| R32 | Bitstream integrity | Board prober | Flip bits in the encrypted bitstream to alter the logic blindly | ECP5 encryption has no MAC (families with bitstream authentication close this; `fpga/`) | High | Low | Each edit scrambles whole cipher blocks and must pass the configuration CRC; a damaged key or version fails the link handshake; a targeted useful edit without the key is impractical (to be assessed against the ECP5's CRC) |
-| R33 | ECP5 keys | Lab attacker | Power analysis on the ECP5's bitstream decryption or the fabric's Ascon cores | Neither is hardened | High | Low | Per-device keys: one break exposes one unit's link and image keys, and recordings only while segment keys pass through it. Ascon's degree-2 S-box makes a masked core affordable if needed |
+| R32 | Bitstream integrity | Board prober | Flip bits in the encrypted bitstream to alter the logic blindly | Possible only where bitstream encryption has no MAC | High | Low | **Closed on the Logos2:** AES-256-GCM authenticates every bitstream under the device's own key, and RSA-2048 signs it. On the ECP5 fallback: each edit scrambles whole cipher blocks and must pass the configuration CRC; a damaged key or version fails the link handshake; a targeted useful edit without the key is impractical (to be assessed against the ECP5's CRC) |
+| R33 | FPGA keys | Lab attacker | Power analysis on bitstream decryption or on the FPGA's AES | Hardening varies by family | High | Low | On the Logos2, configuration decryption and the hard AES block are protected against DPA, and all the FPGA's key-dependent operations run in that block; key loading into it is the remaining exposure. On the ECP5 fallback, neither is hardened. Per-device keys: one break exposes one unit |
 | R34 | FPGA application version | Board prober with a programmer | Write an older application image back into the FPGA's flash | The FPGA keeps no state | High | Medium | The TEE sends the current install salt at every boot; an older image's lines fail their tags (`doc/xip.md`) |
-| R35 | FPGA application code | Board prober with an interposer or emulator | Modify, move or mix lines in the FPGA's flash during execution | Flash is external | Critical | Medium | Per-line Ascon-AEAD128 with the slot and line address in the nonce and a per-install key; checked on every fetch |
-| R36 | C5–FPGA link | Board prober with an interposer | Read, forge or replay link frames: keys, boot image messages, sensor readings, commands | The link is on the board | Critical | Medium | Mutual authentication under the per-device link key with nonces from both sides (the FPGA's from its own TRNG); Ascon-AEAD128 frames with counters |
+| R35 | FPGA application code | Board prober with an interposer or emulator | Modify, move or mix lines in the FPGA's flash during execution | Flash is external | Critical | Medium | Per-line AES-256-GCM with the slot and line address in the nonce and a per-install key; checked on every fetch |
+| R36 | C5–FPGA link | Board prober with an interposer | Read, forge or replay link frames: keys, boot image messages, sensor readings, commands | The link is on the board | Critical | Medium | Mutual authentication under the per-device link key with nonces from both sides (the FPGA's from its own TRNG); AES-256-GCM frames with counters |
 | R37 | FPGA keys | Malicious or buggy application, including a developer build | Read the link, image or segment keys | The application runs on the same FPGA | Critical | Medium | Keys live in fabric registers and constants with no CPU read path; the CPU can only request operations; no debug port in production bitstreams |
 | R38 | Plaintext inside the enclosure | Board prober during a recording | Read samples on the I2S buses or the LCD bus | CODECs and LCDs cannot encrypt | High | Medium | Tamper-evident seal; optional enclosure switch logged by the TEE. Accepted |
 | R39 | Live recordings | Radio attacker with a C5 firmware exploit | Exfiltrate recordings over Wi-Fi | The C5 firmware carries the stream | Critical | Medium | The FPGA encrypts to the host before the stream reaches the C5; the C5 firmware holds no segment key |
 | R40 | Recording integrity at the source | Board prober | Replay or substitute samples on an I2S bus | I2S is plaintext | Critical | Medium | Tamper-evident seal only. Accepted |
-| R41 | Stored and uploaded recordings | Thief, network attacker, cloud intruder | Read recordings on the card, in transit or in storage | Recordings leave the device | Critical | High | Ascon-AEAD128 per segment, segment keys encapsulated with ML-KEM-768 to the host and erased on the device; block and segment numbers; optional ML-DSA provenance signature |
-| R42 | Bitstream build service | Insider or intruder | Collect per-device link, image and ECP5 keys from the build service | The service handles them in plaintext to patch and encrypt bitstreams | Critical | Low | Keys released by the HSM per job and erased after; the service is isolated, audited and dual-controlled; outputs signed in the HSM |
-| R43 | ECP5 pins | Board prober with a JTAG pod | Use the ECP5's boundary scan to sample or drive its pins while it runs | Boundary scan stays available after the security settings | High | Medium | Gives no access to keys or to the fabric; equivalent to probing or interposing on the pins (R36, R38, R40); JTAG connector not populated, inside the seal |
+| R41 | Stored and uploaded recordings | Thief, network attacker, cloud intruder | Read recordings on the card, in transit or in storage | Recordings leave the device | Critical | High | AES-256-GCM per segment, segment keys encapsulated with ML-KEM-768 to the host and erased on the device; block and segment numbers; optional ML-DSA provenance signature |
+| R42 | Bitstream build service | Insider or intruder | Collect per-device link, image and FPGA configuration keys from the build service | The service handles them in plaintext to patch and encrypt bitstreams | Critical | Low | Keys released by the HSM per job and erased after; the service is isolated, audited and dual-controlled; outputs signed in the HSM |
+| R43 | FPGA pins | Board prober with a JTAG pod | Use boundary scan to sample or drive the FPGA's pins while it runs | Boundary scan may stay available after the security settings | High | Medium | **Closed on the Logos2:** JTAG is permanently disabled at enrollment, after the factory boundary-scan test. On the ECP5 fallback it remains, giving no access to keys or to the fabric; equivalent to probing or interposing on the pins (R36, R38, R40); JTAG connector not populated, inside the seal |
 
 ## Optional: Code Secrecy Profile
 
@@ -167,27 +167,24 @@ one device. The profile changes nothing else in the design.
 |---|---|---|---|
 | RSA-3072 PSS | Secure boot v2 | C5 ROM and bootloader (hardware RSA accelerator) | C5 image signatures |
 | XTS-AES-128 | IEEE 1619 | C5 flash and PSRAM encryption hardware | Everything in the C5's external flash and PSRAM |
-| HMAC-SHA256 | FIPS 198-1 | C5 HMAC peripheral | Only the first derivation from the eFuse keys (the hardware offers nothing else); everything after uses Ascon |
-| SHA-256 | FIPS 180-4 | TEE | LMS verification, certificate and transcript hashes |
-| **Ascon-AEAD128** | SP 800-232 | ECP5 fabric (XIP engine; link and recording engine), TEE, sensor, host | XIP lines, the C5–FPGA link, recordings, host and CLI sessions, user data, update packages, developer packages, sensor frames |
-| **Ascon-CXOF128** | SP 800-232 | ECP5 fabric, TEE, sensor, host | Every key derivation after the root (session keys, install keys, data keys, pairing keys), MAC chains for the log, TRNG conditioning |
+| SHA-256, HMAC-SHA256 | FIPS 180-4, FIPS 198-1 | C5 SHA and HMAC peripherals | Derivation from the eFuse keys, LMS verification, certificate and transcript hashes, the event log's MAC chain |
+| **AES-256-GCM** | SP 800-38D | FPGA hard AES block (XIP, link, recordings); C5 AES accelerator with pseudo-rounds (TEE); sensor; host | XIP lines, the C5–FPGA link, recordings, host and CLI sessions, user data, update and developer packages, sensor frames |
+| **AES-256-CMAC KDF** | SP 800-108, SP 800-38B | FPGA hard AES block; TEE; sensor; host | Every key derivation after the root: session keys, install keys, data keys, pairing keys, recording key wraps; TRNG conditioning |
 | LMS (HSS) | RFC 8554, SP 800-208 | TEE (Mbed TLS includes an LMS verifier) | Update package signatures |
 | ML-DSA-44 | FIPS 204 | TEE (verify only); optionally sign, for recording provenance | Sensor certificates |
 | ML-KEM-768 | FIPS 203 | TEE (encapsulate), sensor (decapsulate), host (decapsulate) | Sensor pairing; recording segment keys |
-| AES-128 bitstream encryption | Lattice | ECP5 configuration engine; Lattice Diamond's `bitgen` | Bitstream confidentiality (family-specific, `fpga/ecp5/`) |
+| Bitstream encryption and signature | Vendor | FPGA configuration engine | Logos2: AES-256-GCM and RSA-2048 over SHA-3. ECP5 fallback: AES-128, no MAC |
 | TRNG | SP 800-90B health tests | C5 RNG; ring-oscillator TRNG in the FPGA; a TRNG on the sensor | Nonces |
 
-**Ascon everywhere we choose the symmetric algorithm.** One primitive covers the FPGA, the TEE, the sensor and the host, and gives the FPGA its smallest security logic.
-The exceptions are fixed by hardware: the C5's flash encryption (XTS-AES), its eFuse key peripheral (HMAC-SHA256), secure boot (RSA), and the FPGA vendor's bitstream encryption.
+**AES-256 everywhere we choose the symmetric algorithm.** The Logos2's hard AES block is protected against power analysis, and so is the C5's AES accelerator, so both ends of
+every FPGA protocol run AES in hardened hardware. All key-dependent work in the FPGA stays inside the hard block: if it cannot compute GHASH itself, the FPGA uses AES-CCM instead
+of GCM, so that no key-dependent step (such as GHASH's hash key) runs in unprotected fabric (open question F4). Ascon was considered for its small logic, but a DPA-resistant Ascon
+core would be a large engineering job, while the hard AES block is already hardened.
 
-**Key sizes.** Ascon-AEAD128 has 128-bit keys, so the symmetric keys it uses are 128-bit: NIST's post-quantum category 1, like AES-128 (Grover's algorithm does not parallelize well).
-The C5's root keys stay 256-bit; every Ascon key is derived from them.
-
-**Side channels.** The TEE runs Ascon in software, without the pseudo-round countermeasures of the C5's AES accelerator. Ascon's bitsliced software is constant-time,
-and every key is per device, so a break stays on one unit (R5).
+**Key sizes.** 256-bit symmetric keys throughout: NIST's post-quantum category 5.
 
 Implementations for ML-KEM and ML-DSA are to be chosen; portable C libraries such as the PQ Code Package's mlkem-native and mldsa-native are candidates.
-The FPGA needs only Ascon and its TRNG: no SHA-256, no LMS, no post-quantum code.
+The FPGA needs only its hard AES block (plus GHASH if the block lacks it) and its TRNG: no SHA-256, no LMS, no post-quantum code.
 
 ## Open questions
 

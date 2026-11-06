@@ -12,7 +12,7 @@ These would fit chips with pin counts of 44-64, 80-100, and 144-208 pins.
 
 ## Commentary: `thriller` on ICS55
 
-The ECP5 now runs the application and holds two per-device keys (the link key and the image key), carried in its encrypted bitstream (`doc/fpga.md`).
+The FPGA now runs the application and holds two per-device keys (the link key and the image key), carried in its encrypted bitstream (`doc/fpga.md`).
 An ASIC replacing it would do the same job, but it has no bitstream to carry keys in, and the ICsprout 55nm open PDK lists no OTP, eFuse or embedded flash cells.
 So the ASIC's one hard problem is the same one the earliest design faced: **where its per-device keys come from.** Everything else gets simpler.
 
@@ -35,7 +35,7 @@ So the ASIC's one hard problem is the same one the earliest design faced: **wher
 | Mask ROM key | One key for every ASIC, in ROM | Fleet-wide: breaking one ASIC breaks all. Not acceptable for recordings |
 | Keys from the C5 over the link at every boot | The C5 sends them in plaintext before any key exists | Visible on the board. Not acceptable |
 
-With a PUF, the C5 pairs once with the ASIC at enrollment, matching how the C5 pairs with the ECP5 today.
+With a PUF, the C5 pairs once with the ASIC at enrollment, matching how the C5 pairs with the FPGA today.
 
 ### Memory budget
 
@@ -56,7 +56,7 @@ and the recording and link buffers are the main users; the application's code st
 
 - SRAM PUF reliability and uniqueness with the ICS55 SRAM compiler's cells.
 - Ring-oscillator TRNG entropy.
-- Side-channel leakage of the Ascon cores, and the cost of masking them.
+- Side-channel leakage of the AES cores. The FPGA's AES is a vendor hard block with DPA protection; the ASIC would need its own masked AES, a substantial design task.
 
 A small test chip on an early shuttle, carrying just these structures, would settle them before committing the full design.
 

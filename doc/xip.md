@@ -5,7 +5,7 @@ Each cache line is decrypted and authenticated as it is fetched, and only checke
 
 The work is split: **the C5 installs, the FPGA executes.** The C5's TEE verifies every package, encrypts the image per line, and keeps the authoritative
 record of which image is installed. The FPGA only decrypts and checks lines, with keys it cannot export. This is a trimmed version of the XIP design in the
-earlier FPGA-only architecture (commit `cecf901`, `doc/xip.md`), without the boot ROM, the second core, the install port and the secure element, and with Ascon in place of AES-GCM.
+earlier FPGA-only architecture (commit `cecf901`, `doc/xip.md`), without the boot ROM, the second core, the install port and the secure element.
 
 ## Requirements
 
@@ -18,24 +18,24 @@ earlier FPGA-only architecture (commit `cecf901`, `doc/xip.md`), without the boo
 | Reject a whole older image | The FPGA keeps no state, so the C5 must say which image is current |
 | Add little latency to a miss | The flash read is already the dominant cost |
 
-## Per-line Ascon
+## Per-line GCM
 
 For each install, the TEE draws a fresh 128-bit **install salt** *R* and derives the install key:
 
-> install key = Ascon-CXOF128(image key ‖ *R*, customization "install"), 128 bits
+> install key = KDF(image key, "install" ‖ *R*), with the SP 800-108 counter-mode KDF using AES-256-CMAC
 
 For line *i* of the image in slot *s*:
 
-- **Nonce (128 bits)** = *s* (8 bits) ‖ *i* (24 bits) ‖ 0 (96 bits).
-- **Ciphertext and tag** = Ascon-AEAD128 under the install key, with no associated data; the tag is truncated to 64 bits (SP 800-232 allows 32 to 128 bits,
-  and asks for a risk analysis below 64) and stored right after the line.
+- **Nonce (96 bits)** = *s* (8 bits) ‖ *i* (24 bits) ‖ 0 (64 bits).
+- **Ciphertext** = plaintext XOR AES-256-CTR keystream from that nonce.
+- **Tag** = GCM tag over the ciphertext, truncated to 64 bits, stored right after the line.
 
-Lines are 64 bytes; each line and its tag (72 bytes) are fetched in one burst, so the flash overhead is 12.5%.
+Lines are 64 bytes; each line and its tag (72 bytes) are fetched in one burst, so the flash overhead is 12.5%. All the AES work for a line depends only on its address,
+so the FPGA's hard AES block runs it during the flash read, and GHASH processes the data as it arrives: GCM adds only a few cycles to a miss.
 
-- **Initialization** (12 rounds) depends only on the key and the nonce, so it runs during the flash command and address phase.
-- **Each 16-byte block** is decrypted as it arrives: 8 rounds take about 0.16 µs at 50 MHz with one round per cycle, while the flash delivers a block every 0.4 µs.
-- **Finalization** (12 rounds) runs after the last block: about 0.24 µs at one round per cycle, or 0.12 µs at two. That is what Ascon adds to a miss, against a few cycles for AES-GCM,
-  in exchange for much less logic and no S-box tables.
+**If the hard AES block cannot compute GHASH,** GHASH's hash key would have to sit in unprotected fabric, where power analysis could recover it and forge tags. The line format then
+switches to AES-CCM (CTR encryption plus a CBC-MAC tag), which uses nothing but the hard block: per line, four keystream blocks, one tag-mask block and five CBC-MAC blocks.
+The CBC-MAC follows the data as it arrives, adding about one AES block's time to a miss. Which mode applies is open question F4.
 
 ## Binding to the C5's record
 
@@ -87,11 +87,11 @@ rather than reading a busy flash, which would fail a tag and look like tampering
 
 ## Timing
 
-With a QSPI flash at 80 MHz, a 64-byte line and its tag take about 2 µs to read. Ascon's initialization overlaps the command phase and its block rounds keep pace with the data,
-so a miss costs about 2.1 to 2.3 µs including finalization; hits cost nothing extra.
+With a QSPI flash at 80 MHz, a 64-byte line and its tag take about 2 µs to read; the hard AES block produces the keystream and the tag mask during that time. A miss costs about 2 µs
+with GCM, a little more with CCM; hits cost nothing extra.
 
 ## Open questions
 
 1. Line and cache sizes, from hit rates of real LiteForth applications.
-2. Rounds per cycle for the XIP Ascon core: one or two, trading LUTs against miss latency.
+2. GCM or CCM, from what the hard AES block offers (F4), and its throughput when the XIP, link and recording engines share it.
 3. FPGA flash size, from the application size (two slots).

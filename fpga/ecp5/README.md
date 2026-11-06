@@ -1,7 +1,7 @@
 # Lattice ECP5
 
 **Part:** LFE5U-25F-6BG256C: 24K LUTs, 1,008 Kbit (126 KB) of block RAM in 56 EBRs, 28 multipliers, speed grade 6, 256-ball BGA.
-This is the current choice.
+This is the **fallback**; the current choice is the Pango Logos2 PG2L50H (`fpga/logos2/`). The ECP5 has no hard AES block, so its AES-256 cores and GHASH are soft logic, unprotected against power analysis.
 
 ## Requirements
 
@@ -10,11 +10,11 @@ This is the current choice.
 | 1 | Bitstream encryption, per-device key | AES-128 with the key in eFuse key storage, programmed at enrollment |
 | 2 | No fallback to unencrypted | The decrypt-only eFuse forces every incoming bitstream to be decrypted with the stored key |
 | 3 | Readback disabled | Bitstream preference setting |
-| 4 | Key not readable | eFuse key storage (what JTAG can do to it afterwards is open question F1) |
+| 4 | Key not readable | eFuse key storage (what JTAG can do to it afterwards is open question F10) |
 | 5 | Configured by the C5 | Slave SPI port; the same pins carry the link after configuration |
 | 6 | Per-device constants from a script | Lattice Diamond's ECO editor, from a headless Tcl script, writes the key EBRs' `INIT_00` to `INIT_3F` properties in the routed design |
 | 7 | Ring-oscillator TRNG | To confirm with Diamond's timing and DRC settings |
-| 8 | Enough logic | 7K to 12K LUTs for the security blocks and CPU leaves 12K to 17K for the application |
+| 8 | Enough logic | About 11K to 16K LUTs for the security blocks (with soft AES) and CPU leaves roughly 6K to 13K for the application |
 | 9 | QSPI flash interface | General I/O |
 | — | Bitstream authentication | **None.** Encryption has no MAC, so an encrypted bitstream could be edited blindly (R32) |
 
@@ -25,7 +25,7 @@ JTAG boundary scan stays available after the security settings (R43).
 - **Production:** Lattice Diamond, with a free Lattice software licence. `bitgen` encrypts only designs placed and routed by Diamond (`.ncd`), so production bitstreams
   come from Diamond. Synthesis can be Yosys (EDIF into Diamond) or Diamond's own.
 - **Development:** Yosys, nextpnr and `ecppack`, unencrypted, on unlocked boards.
-- The same RTL, constraints and tests must run on both builds (open question F9).
+- The same RTL, constraints and tests must run on both builds (open question F10).
 
 ## Enrollment
 
@@ -48,14 +48,14 @@ The key EBRs should be placed with constraints so the script can find them by na
 
 ## Bitstream size
 
-About 0.6 to 0.7 MB, so the C5's bitstream slots are 1 MB each.
+About 0.6 to 0.7 MB, well within the C5's bitstream slots.
 
 ## Risks specific to the ECP5
 
-- **R32:** no bitstream authentication; blind edits limited by the configuration CRC (width and mode: open question F3).
-- **R33:** the configuration decryptor is not hardened against power analysis; a break exposes one device.
+- **R32:** no bitstream authentication; blind edits limited by the configuration CRC (width and mode: open question F10).
+- **R33:** neither the configuration decryptor nor the soft AES cores are hardened against power analysis; a break exposes one device.
 - **R43:** boundary scan after locking.
 
 ## Open questions
 
-F1 (eFuse burn order and JTAG access afterwards), F3 (encryption mode and CRC width), F9 (development and production flows equivalent) in `doc/questions.md`.
+F10 in `doc/questions.md`: eFuse burn order and JTAG access afterwards, encryption mode and CRC width, and keeping the development and production flows equivalent.

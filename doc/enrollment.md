@@ -17,7 +17,7 @@ All keys stay inside HSMs. The database holds identities and records, never secr
 | Key | Used for |
 |---|---|
 | Device master | Deriving each device's root key: KDF(device master, chip ID). Everything the device derives from its root (identity, host, data, log, developer, FPGA link and FPGA image keys) the HSM can derive too |
-| FPGA configuration master | Deriving each device's FPGA configuration key: KDF(master, chip ID), sized for the family (128 bits on the ECP5) |
+| FPGA configuration master | Deriving each device's FPGA configuration key: KDF(master, chip ID), sized for the family (256 bits on the Logos2, 128 on the ECP5) |
 | Host data master | Deriving each device's host data secret: KDF(host data master, chip ID). Separate from the device master because the device must never be able to compute it |
 | Distribution key | Encrypting production application packages; written into each device at enrollment |
 | Release RSA keys, main and backup | Signing C5 images (secure boot) |
@@ -39,7 +39,7 @@ At the end of the production line:
 5. **Write the distribution key** into TEE secure storage the same way.
 6. **Check.** The station sends a nonce; the TEE answers with a MAC under the identity key; the HSM checks it. This proves the root key took.
 7. **Program the FPGA** over JTAG: its configuration key (from the HSM) into the FPGA's key storage, then the setting that refuses unencrypted bitstreams
-   (on the ECP5, the decrypt-only eFuse; per family in `fpga/<family>/`). The key crosses the JTAG link once, inside the controlled area.
+   (per family in `fpga/<family>/`; on the Logos2, also the RSA-2048 public key data, then JTAG is disabled permanently). The key crosses the JTAG link once, inside the controlled area.
 8. **Build the bitstream.** The bitstream build service makes this device's bitstream (below), and the station writes its signed package into the C5's bitstream slots.
 9. **Check the pair.** The C5 configures the FPGA; the link handshake must succeed, which proves the FPGA's key, the bitstream's keys and the C5's root all agree.
 10. **Install the application** through the TEE, which encrypts it per line under a fresh install salt and writes it over the link into the FPGA's flash (`doc/xip.md`).
@@ -57,7 +57,8 @@ Each device has its own bitstream, because its link and image keys are inside it
    device's configuration key (and signs it, where the family authenticates bitstreams), and erases the keys.
 4. The HSM signs the package (device ID, bitstream version, link protocol version, the encrypted bitstream) with the manufacturer's LMS key.
 
-For the ECP5 this is Lattice Diamond: `bitgen` encrypts only Diamond's own routed designs (`.ncd`), and a headless Tcl script uses the ECO editor to write the key EBRs'
+For the Logos2 this is Pango Design Suite, run from the command line; how it writes per-device block RAM contents into a routed design is open question F1 (`fpga/logos2/`).
+For the ECP5 fallback it is Lattice Diamond: `bitgen` encrypts only Diamond's own routed designs (`.ncd`), and a headless Tcl script uses the ECO editor to write the key EBRs'
 `INIT_00` to `INIT_3F` properties, so a device takes seconds (`fpga/ecp5/`). The service handles per-device keys in plaintext, so it is isolated,
 audited, dual-controlled, and gets keys only per job (R42).
 

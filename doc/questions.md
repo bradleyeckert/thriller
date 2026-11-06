@@ -3,7 +3,7 @@
 Every open question in one place. Earlier architectures are kept in git history (commits `cecf901` and `8c54b84`); questions from them that still apply are carried over here.
 
 **Priority:**
-- **1:** blocks something irreversible (eFuse burning, ECP5 key programming, enrollment) or the board design.
+- **1:** blocks something irreversible (eFuse burning, FPGA key programming, enrollment) or the board design.
 - **2:** needed before implementation of that part.
 - **3:** needed before a submission.
 
@@ -19,21 +19,23 @@ Every open question in one place. Earlier architectures are kept in git history 
 | C5 | C5HR8 (external flash, probe point) or C5HF4 (flash in the package, no PSRAM) | [c5.md](c5.md#part) | Leaning HR8: PSRAM for the radio stacks and SD write buffering (C13) | 1 |
 | C6 | C5 flash size and partition sizes | [c5.md](c5.md#flash-partitions) | Real image and bitstream sizes | 2 |
 | C7 | ESP-TEE maturity on the C5: release status, and that APM covers the HMAC peripheral, eFuse controller and TEE flash regions as needed | [c5.md](c5.md#tee) | ESP-IDF release notes; isolation tests (`doc/test.md`) | 1 |
-| C8 | LMS verification in ESP-IDF's Mbed TLS build; library choices for ML-KEM, ML-DSA and Ascon in the TEE | [arch.md](arch.md#algorithm-bill-of-materials) | Build and size them in the TEE | 2 |
+| C8 | LMS verification in ESP-IDF's Mbed TLS build; library choices for ML-KEM and ML-DSA in the TEE | [arch.md](arch.md#algorithm-bill-of-materials) | Build and size them in the TEE | 2 |
 | C10 | Glitch detector settings on the C5 and how their resets are reported | [c5.md](c5.md#part) | Technical reference manual; campaign E (`doc/test.md`) | 2 |
 | C11 | Whether the TEE's hardware timer and the anti-rollback eFuse update behave as assumed | [c5.md](c5.md#anti-rollback) | Bench | 2 |
 | C12 | Can the TEE deny the C5 firmware access to the radio hardware through the APM, so a compromised firmware cannot enable a radio the policy disables? | [c5.md](c5.md#radios) | Technical reference manual; test | 2 |
 | C13 | RAM budget with the TEE, Wi-Fi and BLE stacks, SD buffering and the link | [c5.md](c5.md#part) | Build and measure | 2 |
 | C14 | PARLIO receive from the FPGA at the recording rate, alongside SPI2 traffic and Wi-Fi | [fpga.md](fpga.md#the-link-to-the-c5) | Bench | 2 |
 | **FPGA** | | | | |
-| F1 | Burn order and verification of the ECP5's key and decrypt-only eFuses, and whether the key's eFuses can be read or reprogrammed over JTAG afterwards | [enrollment.md](enrollment.md#device-enrollment) | Lattice documentation; bench with sacrificial parts | 1 |
-| F3 | ECP5 bitstream encryption mode and CRC width, to bound blind edits (R32) | [fpga.md](fpga.md#bitstream) | Lattice documentation; analysis | 2 |
-| F5 | Whether the LFE5U-25F's 24K LUTs fit the security blocks and CPU (about 7K to 12K) plus the application's logic | [fpga.md](fpga.md#resource-estimate) | Synthesis | 2 |
-| F6 | XIP line and cache sizes, Ascon rounds per cycle, FPGA flash size | [xip.md](xip.md#open-questions) | Measure on real LiteForth applications | 2 |
-| F7 | Ring-oscillator TRNG design and health-test thresholds on the ECP5 | [fpga.md](fpga.md#trng) | Characterize on hardware | 2 |
+| F1 | Pango Design Suite: write each device's keys into block RAM contents of a routed design from a script, then encrypt and sign, without placing and routing again; otherwise per-device place-and-route time | [logos2](../fpga/logos2/README.md) | Pango documentation and support; try it | 1 |
+| F2 | Confirm that the PG2L50H can be set to accept only encrypted and only signed bitstreams (assumed in the design) | [logos2](../fpga/logos2/README.md) | Pango documentation; bench with sacrificial parts | 1 |
+| F3 | Slave serial pins as the link after configuration, or separate link pins on the board | [fpga.md](fpga.md#configuration) | Pango documentation; PCB decision | 1 |
+| F4 | The hard AES block: AES-256 support, whether it computes GHASH (GCM) or only the block cipher (then CCM), throughput, number of instances, and how keys are loaded into it | [arch.md](arch.md#algorithm-bill-of-materials) | Pango documentation | 1 |
+| F5 | Can the hard AES block use the eFuse key, or a key derived from it, without exposing it? (Then the link and image keys need not be in the bitstream) | [logos2](../fpga/logos2/README.md) | Pango documentation | 3 |
+| F6 | XIP line and cache sizes, FPGA flash size | [xip.md](xip.md#open-questions) | Measure on real LiteForth applications | 2 |
+| F7 | Ring-oscillator TRNG design and health-test thresholds on the FPGA | [fpga.md](fpga.md#trng) | Characterize on hardware | 2 |
 | F8 | An LCD overlay for developer mode and alarms that the application cannot draw over | [roles.md](roles.md#running-a-developer-build) | RTL design | 3 |
-| F9 | Keeping the development flow (Yosys, nextpnr) and the production flow (Diamond) equivalent: same RTL, constraints and tests, and Yosys EDIF into Diamond or Diamond's own synthesis | [enrollment.md](enrollment.md#bitstream-build-service) | Run the RTL tests on both builds | 2 |
-| F10 | Pango Logos2 PG2L50H: the open items in `fpga/logos2/` (scripted block RAM updates, refusing unencrypted bitstreams, slave configuration from the C5, tools and licence) | [logos2](../fpga/logos2/README.md) | Pango documentation and support; bench | 2 |
+| F9 | PG2L50H bitstream size, for the C5's bitstream slots | [c5.md](c5.md#flash-partitions) | Build | 2 |
+| F10 | ECP5 fallback: eFuse burn order, CRC width against blind edits (R32), and keeping its Yosys/nextpnr and Diamond flows equivalent | [ecp5](../fpga/ecp5/README.md) | Only if the fallback is used | 3 |
 | F11 | CrossLink-NX and Titanium as alternatives: the open items in their folders | [fpga/](../fpga/README.md) | Vendor documentation | 3 |
 | **Acquisition and recordings** | | | | |
 | Q3 | Sample rate per channel and segment length | [acquisition.md](acquisition.md#hardware) | Device design | 2 |
@@ -66,24 +68,26 @@ Every open question in one place. Earlier architectures are kept in git history 
 | **ICS55** | | | | |
 | I1 | Whether the ICS55 SRAM is usable as a PUF for the ASIC's keys | [ics55.md](ics55.md#where-the-keys-come-from) | Test chip | 3 |
 
-Closed: C9 (developer images in TEE slots: developer builds are now FPGA applications, outside secure boot), D1 (developer signing: a per-device developer key, no signing service),
-E1 (server path: Wi-Fi when enabled, otherwise the host), the old F1 (`bitgen` needs Diamond's `.ncd`: production bitstreams come from Diamond),
-the old F2 (the AES key and a decrypt-only setting are eFuses; readback disable is a bitstream setting; boundary scan stays), the per-device key update (a headless Diamond Tcl script with the ECO editor writes the EBR `INIT` properties), F4 (the slave SPI pins carry the link), the watermark (removed),
-Q6 (safety alarms need no path independent of the FPGA application), S1 (sensor frames use Ascon), the Pango Logos PGL25G (no bitstream encryption; not usable).
+Closed:
+- **FPGA:** the PUF as the FPGA's key source (considered and set aside); Pango's answers on DPA coverage (configuration and the hard AES block), configuration mode (slave serial),
+  JTAG (permanently disabled when locked) and command-line PDS; for the ECP5 fallback, `bitgen` needing Diamond's `.ncd`, the decrypt-only eFuse, per-device keys through Diamond's ECO editor,
+  and the slave SPI pins carrying the link; the Pango Logos PGL25G (no bitstream encryption; not usable).
+- **Other:** C9 (developer images in TEE slots: developer builds are now FPGA applications, outside secure boot), D1 (developer signing: a per-device developer key, no signing service),
+  E1 (server path: Wi-Fi when enabled, otherwise the host), the watermark (removed), Q6 (safety alarms need no path independent of the FPGA application), S1 (sensor frames use AES-256-GCM).
 
 ## Decisions taken
 
 ### By you
 
 - ESP32-C5HR8 as the root of trust, installer and gateway. No ATECC608B.
-- **The application runs on the ECP5,** in LiteForth, executing in place from a QSPI flash attached to the FPGA.
-- **LFE5U-25F-6BG256C.** Per-device keys in the bitstream, encrypted under the ECP5's own key with Lattice Diamond's `bitgen` (which needs a Diamond place-and-route and a free Lattice licence), with per-device keys written by a Diamond ECO Tcl script; decrypt-only eFuse; per-device bitstream packages from the server, including for offline delivery.
-- The ECP5's slave SPI configuration pins carry the link after configuration.
+- **The application runs on the FPGA,** in LiteForth, executing in place from a QSPI flash attached to the FPGA.
+- **FPGA family:** the Pango Logos2 PG2L50H-6IFBG484 is the target (encrypted-only and signed-only configuration assumed, JTAG disabled permanently when locked, PDS from the command line);
+  the ECP5 LFE5U-25F, with the decrypt-only eFuse and Diamond's ECO editor for per-device keys, is the fallback.
 - Recordings encrypted in the FPGA with segment keys from the C5, so the C5's network side never sees plaintext.
 - Four channels from two NAU88C22 CODECs, with the FPGA providing both I2S masters; LCD and speaker inside a tamper-evident enclosure.
 - No watermark; replay or substitution on I2S is left to the tamper-evident seal (R40).
 - Safety alarms go through the FPGA application; no independent path.
-- **Ascon (SP 800-232) for every symmetric protocol we choose:** XIP lines, the link, recordings, host and CLI sessions, user data, packages, the sensor, key derivation.
+- **AES-256 rather than Ascon,** because the Logos2's hard AES block (like the C5's AES accelerator) is protected against power analysis, and a DPA-resistant Ascon core would be a large job.
 - The temperature sensor connects to the C5, is replaceable, and must pair without a network.
 - Enrollment in the manufacturer's database is required for updates, and the ecosystem flags unknown identities.
 - Over-the-air updates over Wi-Fi, and the CLI over a BLE serial service; the application owner enables or disables each radio. The UART stays for status and fallback.
@@ -93,7 +97,7 @@ Q6 (safety alarms need no path independent of the FPGA application), S1 (sensor 
 - **The C5 installs, the FPGA executes:** the TEE verifies application packages and encrypts them per line; the FPGA has no LMS, SHA-256 or install path.
 - **The TEE's record decides** which bitstream is configured and which install salt is sent, so neither flash can roll the FPGA back on its own.
 - **Link and image keys derived from the device root,** so the HSM can build bitstreams and the TEE can derive the same keys.
-- **Ascon-only FPGA crypto:** Ascon-AEAD128 for lines, link and recordings, Ascon-CXOF128 for key derivation, a ring-oscillator TRNG.
+- **AES-256-GCM in the FPGA's hard AES block** for lines, link and recordings, an AES-256-CMAC KDF, and AES-CCM instead if the block cannot compute GHASH (F4); a ring-oscillator TRNG.
 - **Recording key pair generated by the host;** the device holds only the public key.
 - **Developer builds as FPGA applications** with a per-device symmetric developer key; offline, no signing service.
 - **Secure boot with RSA-3072,** not ECDSA, because of the C5's ECDSA erratum. LMS on every package.

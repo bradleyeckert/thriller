@@ -6,10 +6,10 @@ the C5 side) is family-neutral. Each family folder will hold its notes, its buil
 
 | Family | Folder | Status |
 |---|---|---|
-| Lattice ECP5 (LFE5U-25F-6BG256C) | [`ecp5/`](ecp5/README.md) | **Current choice** |
+| Lattice ECP5 (LFE5U-25F-6BG256C) | [`ecp5/`](ecp5/README.md) | Fallback |
 | Lattice CrossLink-NX (LIFCL) | [`lifcl/`](lifcl/README.md) | Candidate |
 | Efinix Titanium (Ti60) | [`ti60/`](ti60/README.md) | Candidate |
-| Pango Logos2 (PG2L50H-6IFBG484) | [`logos2/`](logos2/README.md) | Strong candidate |
+| Pango Logos2 (PG2L50H-6IFBG484) | [`logos2/`](logos2/README.md) | **Current choice** |
 | Pango Logos (PGL25G) | [`logos/`](logos/README.md) | Not usable: no bitstream encryption |
 
 ## What a family must provide
@@ -23,10 +23,11 @@ the C5 side) is family-neutral. Each family folder will hold its notes, its buil
 | 5 | **Configuration by an external microcontroller** (slave SPI or similar), with pins for the link afterwards | The C5 stores and chooses the bitstream |
 | 6 | **Per-device constants in a routed design, from a script**, then encryption, without placing and routing again | The bitstream build service makes one bitstream per device (R42) |
 | 7 | **Combinational loops allowed** for a ring-oscillator TRNG | The FPGA needs its own nonces (R36) |
-| 8 | **Enough logic:** about 7K to 12K 4-input LUTs for the security blocks and CPU, plus the application; block RAM for a 4 KB cache, CPU memory and buffers | `doc/fpga.md`, Resource estimate |
+| 8 | **Enough logic:** about 5K to 10K 4-input-LUT equivalents for the security blocks and CPU with a hard AES block (about 6K more with soft AES cores), plus the application; block RAM for a 4 KB cache, CPU memory and buffers | `doc/fpga.md`, Resource estimate |
 | 9 | **A QSPI flash interface** for XIP | `doc/xip.md` |
 
-**Desirable:** bitstream authentication (closes R32); hardening of the configuration decryptor against power analysis (R33); a free or low-cost licence that runs headless.
+**Desirable:** bitstream authentication (closes R32); a **hard AES block protected against power analysis**, which carries all the FPGA's key-dependent work (R33);
+hardening of the configuration decryptor against power analysis; permanent JTAG disable (R43); a licence that runs headless.
 
 ## What each family folder records
 

@@ -4,18 +4,18 @@ How `thriller` is tested, from reference models to fault injection. Risk IDs (R1
 
 ## 1. Approach
 
-Security runs in two places: as software in the C5's TEE, on hardware Espressif has characterized, and as RTL in the ECP5. Testing therefore concentrates on:
+Security runs in two places: as software in the C5's TEE, on hardware Espressif has characterized, and as RTL in the FPGA, around its hard AES block. Testing therefore concentrates on:
 
 - **our protocols and their implementation:** packages, host sessions, the C5–FPGA link, recordings, sensor pairing and sessions, user data, the event log;
 - **our RTL:** the XIP engine, the link and recording engines, key isolation and the TRNG;
-- **the C5 and ECP5 configuration:** eFuses, boot chain, TEE isolation, the ECP5's security settings;
+- **the C5 and FPGA configuration:** eFuses, boot chain, TEE isolation, the FPGA's security settings;
 - **fault injection and side channels** on the checks we write, and confirming that Espressif's countermeasures are enabled and effective.
 
 ### Layers
 
 | Layer | What | Where |
 |---|---|---|
-| 1. Reference models | Python models of every format and protocol: package layout and signatures, key derivations, per-line Ascon, link handshake and frames, recording segments, host session, sensor pairing and session, user data records, event log chain | Workstation; produce test vectors |
+| 1. Reference models | Python models of every format and protocol: package layout and signatures, key derivations, per-line GCM (and CCM), link handshake and frames, recording segments, host session, sensor pairing and session, user data records, event log chain | Workstation; produce test vectors |
 | 2. Unit tests | TEE and C5 firmware components against the vectors; RTL modules against the same vectors | ESP-IDF unit tests (Unity) on the C5 and its Linux host target; Verilator for the RTL; LiteForth's `vm.c` for application code |
 | 3. System tests | Whole device against simulated host, sensor, server and card | Hardware-in-the-loop rig |
 | 4. Fault injection and side channels | Attacks on one unit | Lab bench |
@@ -28,14 +28,14 @@ Each test names the risk it covers. The catalogue below is the traceability matr
 ## 2. Reference models
 
 - **Formats:** update packages (C5, bitstream, application), developer package, boot image message, XIP lines and tags, link frames, recording segment headers and blocks, sensor certificate, pairing transcript, session frames, user data records, log entries.
-- **Cryptography:** known-answer tests for each algorithm from the standards (LMS from RFC 8554, ML-KEM and ML-DSA from the FIPS 203 and 204 vectors, Ascon-AEAD128 and Ascon-CXOF128 from SP 800-232; the same vectors drive the RTL and the TEE).
+- **Cryptography:** known-answer tests for each algorithm from the standards (LMS from RFC 8554, ML-KEM and ML-DSA from the FIPS 203 and 204 vectors, AES-GCM and AES-CMAC from the NIST vectors; the same vectors drive the RTL and the TEE).
 - **Protocols:** both ends of the host session, the C5–FPGA link and the sensor protocol, so each end can be tested against a model of the other.
 
 The sensor's firmware is tested against the same models.
 
 ## 3. Hardware-in-the-loop rig
 
-- A production-configured board (C5, locked ECP5, both flashes, CODECs, LCD, MicroSD card), plus boards with the eFuses left open and an unlocked ECP5 for debugging.
+- A production-configured board (C5, locked FPGA, both flashes, CODECs, LCD, MicroSD card), plus boards with the eFuses left open and an unlocked FPGA for debugging.
 - **Interposers** on SPI2 (configuration and link), on the FPGA's QSPI flash (or a flash emulator), and on one I2S bus, able to record, replay and alter traffic.
 - **Signal source** on the CODEC inputs: synthetic EEG at known levels.
 - **Host simulator** on the UART and over BLE, driven by test scripts.
@@ -44,7 +44,7 @@ The sensor's firmware is tested against the same models.
 - **Link interposer** between the device and the sensor simulator, able to delay, drop, replay and alter frames with controlled timing.
 - **Server simulator** reached through the host simulator.
 - **Power control** for power cuts at chosen points during updates and pairing.
-- Flash programmers on both external flashes, for restore attacks, and a JTAG pod on the ECP5.
+- Flash programmers on both external flashes, for restore attacks, and a JTAG pod on unlocked FPGAs.
 
 ## 4. Test catalogue
 
@@ -59,10 +59,10 @@ The sensor's firmware is tested against the same models.
 | User data | Card read offline shows no plaintext; altered records rejected; an old copy of the card detected through the host's digest; developer and production data mutually unreadable | R1, R10, R21 |
 | Sensor pairing | Certificate signed by an unknown CA, altered certificate, denylisted serial, wrong private key (implicit rejection) all refused; power cut during pairing leaves the old pairing or none, never a half pairing; server rejection removes the pairing | R14, R15 |
 | Sensor session | Forged, replayed, reordered and delayed frames rejected; readings older than the maximum age rejected; link cut puts the device in its safe state within the maximum age | R11, R12, R13 |
-| Bitstream | Production bitstreams built through Diamond behave like the development builds (same RTL tests run on both); configuration bus capture shows only ciphertext; an unencrypted bitstream is refused by the decrypt-only ECP5; one encrypted under another key fails to configure; an older bitstream of the same device, loaded through JTAG, fails the TEE's version check; a reconfiguration while running ends the link and is logged; blind bit flips in the encrypted bitstream do not yield a working link | R17, R31, R32 |
+| Bitstream | configuration bus capture shows only ciphertext; an unencrypted, unsigned, or altered bitstream is refused; one encrypted for another device fails to configure; an older bitstream of the same device, loaded through JTAG, fails the TEE's version check; a reconfiguration while running ends the link and is logged; blind bit flips in the encrypted bitstream do not yield a working link | R17, R31, R32 |
 | XIP | Each attack in `doc/xip.md`: modified, moved, other-slot and earlier-install lines; a whole older image written back; flash copied from another board; an emulator swapping lines after boot; all fail their tags and the CPU stays in reset; the C5 then boots the other slot | R34, R35 |
 | C5–FPGA link | Wrong link key, replayed handshake, replayed, reordered and altered frames rejected; the FPGA's TRNG health tests stop the link on a stuck or biased source | R36 |
-| ECP5 boundary scan | Boundary scan reaches no key and no fabric state; documented as equivalent to pin probing | R43 |
+| FPGA JTAG | JTAG unusable after enrollment (on the ECP5 fallback: boundary scan reaches no key or fabric state) | R43 |
 | FPGA key isolation | No CPU instruction sequence or bus access reads a key (simulation over every register address, and on hardware); debug port absent in production bitstreams; keys cleared on reset, reconfiguration and failures | R37 |
 | Recordings | Card and Wi-Fi capture show no plaintext; the C5 firmware's memory never holds plaintext samples or a segment key; the host detects dropped, reordered and substituted blocks and segments; segment keys erased at segment end | R39, R41 |
 | Enrollment | Unenrolled device cannot install updates or authenticate; enrollment cannot be repeated; server flags unknown and duplicate identities | R16 |
@@ -80,7 +80,7 @@ The sensor's firmware is tested against the same models.
 
 A lab attacker glitches the C5 to skip a check: a signature comparison, a version check, the build mode check, a MAC comparison in the sensor, host or link protocol.
 Espressif advisory AR2023-007 shows this works on the C3 and C6 with voltage glitches. The C5 adds glitch detectors, which these tests must also exercise.
-On the ECP5, a glitch could make the XIP engine accept a line whose tag failed, or the link engine accept a bad frame.
+On the FPGA, a glitch could make the XIP engine accept a line whose tag failed, or the link engine accept a bad frame.
 
 ### Countermeasures to build into our code
 
@@ -102,14 +102,14 @@ On the ECP5, a glitch could make the XIP engine accept a line whose tag failed, 
 | C. Sensor MAC | Same, during frame verification | Accept a forged reading | Never accepted |
 | D. Secure boot | Same, during the bootloader's check (ROM checks are Espressif's) | Boot an unsigned application | Never boots |
 | E. Glitch detectors | Sweep glitch parameters | Find the detection boundary | Detectors fire before any of A to D succeed |
-| F. XIP tag check | Voltage and clock glitches on the ECP5 during line fills; first in Verilator with injected faults, then on hardware | Execute a line whose tag failed | Never executed |
+| F. XIP tag check | Voltage and clock glitches on the FPGA during line fills; first in Verilator with injected faults, then on hardware | Execute a line whose tag failed | Never executed |
 | G. Link frames | Same, during frame verification in the FPGA | Accept a forged boot image message or key frame | Never accepted |
 
 ### Side channels
 
 - **Flash encryption:** test-vector leakage assessment (TVLA) on the XTS-AES engine with pseudo-rounds at the chosen level, to confirm it removes the leakage AR2023-007 used.
-- **Ascon and HMAC in the TEE:** TVLA on the HMAC peripheral's root derivation and on the TEE's software Ascon with the data and link keys.
-- **FPGA:** TVLA on the fabric's Ascon cores (XIP, link, recording) and, as far as possible, on bitstream decryption. Per-device keys limit the impact (R33).
+- **AES and HMAC in the TEE:** TVLA on the HMAC peripheral's root derivation and on the AES accelerator with the data and link keys.
+- **FPGA:** TVLA on the hard AES block as used by the XIP, link and recording engines, including key loading into it, to check the vendor's DPA claim; and, as far as possible, on bitstream decryption. Per-device keys limit the impact (R33).
 - **Sensor:** TVLA on the sensor's ML-KEM decapsulation and MAC. A broken sensor exposes only itself (R15), so a modest result may be acceptable.
 
 ## 6. Tools
@@ -117,7 +117,7 @@ On the ECP5, a glitch could make the XIP engine accept a line whose tag failed, 
 | Tool | Use |
 |---|---|
 | ESP-IDF with its Unity test framework and Linux host target | Unit tests |
-| Python (`cryptography`, reference implementations of LMS, ML-KEM, ML-DSA, Ascon) | Reference models and vectors |
+| Python (`cryptography`, reference implementations of LMS, ML-KEM, ML-DSA) | Reference models and vectors |
 | pytest-embedded | Driving the rig |
 | A BLE fuzzer and a controllable Wi-Fi access point | Radio tests |
 | ChipWhisperer-Husky, a voltage glitch stage, an EMFI probe | Fault injection |
