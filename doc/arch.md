@@ -15,8 +15,8 @@ the sensor in `doc/sensor.md`, and enrollment and updates in `doc/enrollment.md`
 | Secure element | Holding keys, counters and identity; releasing keys only to the holder of the pairing key; CheckMac for the host; signing attestations | Certified tamper-resistant part. Its counters are unauthenticated (R36) |
 | QSPI flash | Nothing | Bitstream encrypted and (where the family can) signed; every loader and application line authenticated on fetch; boot record authenticated under the application key |
 | MicroSD card | Nothing | Everything on it is encrypted and authenticated by the loader |
-| Sensor link, UART, Ethernet | Nothing | Every session authenticated end to end by the loader; the Ethernet transport is hardware that delivers UDP payloads and nothing else |
-| Site network, edge proxy, Internet | Nothing | Carry only ciphertext; can drop, delay or replay, which the session protocol handles |
+| Sensor link, UART | Nothing | Every session authenticated end to end by the loader |
+| **Everything from the RMII pins outward:** PHY, magnetics, cable, site network, edge proxy, Internet | Nothing | The trust boundary is the FPGA's pins. The Ethernet transport inside them is hardware that delivers UDP payloads and nothing else; everything beyond carries only ciphertext and can at most drop, delay or replay, which the session protocol handles |
 | Sensor | Its own readings, once its certificate and pairing check out | Replaceable; one broken sensor exposes only itself |
 | Host | Its user's data | Holds the host authorization key and the host data secret |
 | HSMs, enrollment database, update server, bitstream build service | Keys and records for the whole fleet | The crown jewels (R19, R42) |

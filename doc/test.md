@@ -41,6 +41,8 @@ The sensor's firmware is tested against the same models.
 - **Signal source** on the CODEC inputs: synthetic EEG at known levels.
 - **Host simulator** on the UART and on the LAN, driven by test scripts.
 - **Network test harness:** a switch, a packet generator and a server simulator able to act as the edge proxy, the DHCP server or a fake server, and to drop, delay, replay and flood.
+  Everything from the RMII pins outward is attacker territory, so the harness is driven as an attacker: boofuzz (the successor to Sulley) generates the malformed ARP, IP, ICMP, UDP and DHCP
+  traffic and the malformed session frames, with the device's response and its UART status as the monitor.
 - **Sensor simulator** on the sensor link, able to misbehave on command (bad certificates, wrong MACs, replays, delays, silence), and a **link interposer** between it and the device.
 - **Power control** for power cuts at chosen points during installs, the ratchet write and pairing.
 - A flash programmer, and a JTAG pod on unlocked FPGAs.
@@ -117,7 +119,7 @@ On the configuration engine, a glitch could make it accept a bad bitstream; that
 | LiteForth `vm.c` and `stage1sim` | The loader and application Forth with modeled peripherals; two cores and the mailbox |
 | cryptoauthlib and a Microchip development kit | Exercising the slot configuration on real secure elements before locking |
 | Python (`cryptography`, reference implementations of LMS, ML-KEM, ML-DSA) | Reference models and vectors |
-| A packet generator (Scapy or similar) and a managed switch | Network transport fuzzing and the edge proxy, DHCP and fake-server cases |
+| boofuzz, Scapy and a managed switch | Protocol fuzzing of the Ethernet transport and the session protocol from the network; the edge proxy, DHCP and fake-server cases. boofuzz's block-based grammars suit the fixed header and frame formats, and the same grammars drive the RTL fuzzing in Verilator through a Python harness |
 | ChipWhisperer-Husky, a voltage glitch stage, an EMFI probe | Fault injection |
 | A scope or ChipWhisperer for power traces | TVLA |
 | The family's programmer and tools | eFuse state, encrypted bitstream generation |
