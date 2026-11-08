@@ -185,7 +185,12 @@ Provision the secure element, program the FPGA key and locks, build and program 
 
 A verifier sends a nonce; the loader builds a report of what it measured; the secure element signs it (ECDSA for hosts, MAC for the server). Only a bitstream holding the current pairing key can obtain a signature (`doc/se.md`).
 
-### 4.8 Decommissioning
+### 4.8 Network exposure
+
+The device presents no software to the network: a hardware UDP transport, one authenticated session protocol, outbound flows only, and an air-gap option.
+A network attacker can deny service and see ciphertext, nothing else. The statement written for IT departments and this submission is `doc/network.md`.
+
+### 4.9 Decommissioning
 
 The server marks the device retired and the loader writes the retired state into slot 13; an authorized wipe erases the records region and the card. Recordings stay readable only by their host.
 

@@ -31,6 +31,7 @@ To support DSP applications, audio CODECs are planned for.
 | `doc/roles.md` | Manufacturer, application owner, developer and user; device-bound developer builds |
 | `doc/test.md` | Test plan and fault-injection campaigns |
 | `doc/fda.md` | FDA security architecture views |
+| `doc/network.md` | Network security posture: why the device cannot be a network attack vector, for IT departments and the FDA |
 | `doc/ics55.md` | ASIC migration to the ICS55 55 nm process: the PUF behind the key-source interface |
 | `doc/questions.md` | Every open question in one matrix, and the decisions taken |
 
