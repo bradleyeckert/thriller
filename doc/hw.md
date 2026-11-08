@@ -14,7 +14,7 @@ the secure element protocol in `doc/se.md`, the flash map in `doc/flash.md`. Eve
    The ASIC's boot chain is tested from the first FPGA build.
 5. **One key-source interface.** The pairing keys reach the SHA-256 core through a module with a fixed interface: patched block RAM constants on the FPGA, a PUF with its characterization logic on the ASIC (`doc/ics55.md`).
 6. **Secrets never cross a bus.** Keys, comparator results and the XIP fill pipeline use private, point-to-point connections, and all AES work runs in the hard AES block.
-7. **Two buses per core, chosen by speed.** AXI4-Lite for memory; APB4 for peripherals. Each core is the only master on its own buses. No DMA except the recording engine's private FIFO.
+7. **Two buses per core, chosen by speed.** AXI4-Lite for memory; APB4 for peripherals. Each core is the only master on its own buses. No DMA except the recording path: the recording engine's private sample FIFO in, and the stream buffer's private drain to the card and network controllers out. Both carry ciphertext or samples, never keys, and neither can address memory on either core's bus.
 8. **Same Forth code everywhere.** Peripherals are reached through LiteForth's I/O ports (`>sys` and `sys>`), which `vm.c` and MCU builds implement in C.
 
 ## Block diagram
@@ -43,9 +43,12 @@ flowchart TB
     AES["Hard AES block<br/>(DPA-protected)"]
     INST["Install port"]
     REC["Recording engine"]
+    PSR["Stream buffer<br/>QSPI PSRAM controller"]
     LCPU -->|AXI4-Lite| LROM & LRAM & LXC
     LCPU --> LPB
-    LPB --> SHA & SEC & I2C & QD & SD & UART & SUART & ETH & TRNG & WDT & ACC & INST & REC
+    LPB --> SHA & SEC & I2C & QD & SD & UART & SUART & ETH & TRNG & WDT & ACC & INST & REC & PSR
+    REC -.->|ciphertext| PSR
+    PSR -.->|ciphertext| SD & ETH
   end
   subgraph MB["Mailbox"]
     MRAM["Shared message RAM"]
@@ -187,7 +190,8 @@ The mailbox is the only path from the application to the loader, so it is the fi
 | TRNG + health tests | APB | Ring oscillators | Ring oscillators | Conditioned with AES-256-CMAC; mixed with the secure element's Random; also feeds the application's random numbers |
 | Timers + watchdogs | APB | RTL | RTL | One watchdog per core; the sensor age timer; the loader resets the application core on its timeout |
 | Application core control | APB | RTL | RTL | Holds the application core in reset until boot checks pass; lockdown holds it in reset |
-| Recording engine | APB (control), private FIFO (data) | RTL | RTL | AES-256-GCM blocks over the sample stream in the hard AES block; segment key register cleared at segment end |
+| Recording engine | APB (control), private FIFO (data) | RTL | RTL | AES-256-GCM blocks over the sample stream in the hard AES block; segment key register cleared at segment end; output goes to the stream buffer |
+| Stream buffer | APB (control, levels), private paths (data) | RTL + external PSRAM | RTL + external PSRAM | A ring buffer of encrypted recording blocks in an 8 MB QSPI PSRAM (ESP-PSRAM64H), written by the recording engine and drained to the SD controller or the Ethernet transport under the loader's direction. Ciphertext only; its own QSPI pins, separate from the flash's. See `doc/acquisition.md`, Stream buffer |
 
 ### Application core domain
 
@@ -371,6 +375,7 @@ Rough figures in 4-input-LUT equivalents, to be replaced by synthesis results:
 | Recording engine, sample FIFO | 0.5K to 1K | Block buffer |
 | I2C master, SD, two UARTs, timers | 0.5K to 1K | — |
 | Ethernet transport: RMII MAC, ARP, IPv4, ICMP echo, UDP demux, FIFOs | 0.5K to 1K | Frame buffers |
+| Stream buffer: QSPI PSRAM controller, ring pointers, drain paths | 0.3K to 0.6K | Small staging FIFOs |
 | TRNG | Under 0.2K | — |
 | Two I2S masters, CODEC I2C, LCD controller with overlay | 1K to 2K | Line buffer |
 | **Total** | **About 9K to 17K, plus the hard AES block** | |

@@ -22,7 +22,7 @@ Assuming the data is biometric, recordings are the primary asset (`doc/arch.md`)
 | Application core domain | Samples, for display and processing | Inside the FPGA |
 | Application → recording engine (sample FIFO) | Samples the application wants recorded | A one-way FIFO into the loader domain; the engine accepts samples only while a segment key is loaded |
 | FPGA → LCD | Displayed waveforms | Tamper-evident seal |
-| Recording engine → card or network | Recording ciphertext | Encrypted to the host |
+| Recording engine → stream buffer (PSRAM) → card or network | Recording ciphertext | Encrypted to the host; the PSRAM holds nothing else |
 
 Plaintext exists only in the sealed enclosure: on the I2S buses, the LCD bus, and inside the FPGA (R38). Someone who breaks the seal could also replay or substitute samples on an I2S bus;
 nothing in the design detects that (R40). An enclosure-crossing data link, when present, carries only ciphertext (R39).
@@ -43,6 +43,25 @@ Recordings are encrypted so that **the device can write them but not read them b
 6. **Provenance (optional).** The loader signs each segment's header and final block tag with a per-device ML-DSA key kept in the records region, registered at enrollment (open question Q5).
 
 A thief who breaks the device gets the segment in progress at most, never earlier recordings. The host, holding the private key, decrypts and checks everything.
+
+## Stream buffer
+
+The card and the network both stall: an SD card can pause for hundreds of milliseconds on a wear-leveling or garbage-collection cycle, and a network path can lose connectivity for longer.
+The recording engine cannot stall, because samples arrive at a fixed rate. Between them sits a **stream buffer**: an 8 MB QSPI PSRAM (ESP-PSRAM64H) used as a ring of encrypted blocks.
+
+- **Ciphertext only.** The recording engine writes finished, authenticated AES-256-GCM blocks into the ring; the loader's stream-buffer controller drains them to the SD controller, the Ethernet
+  transport, or both, with the loader choosing destinations and watching the fill level. No plaintext and no key ever reaches the PSRAM, so it is outside the trust boundary like the card:
+  a board prober who reads it sees ciphertext, and one who corrupts it corrupts a block the host will reject (R41).
+- **Capacity.** 8 MB is about ten seconds of stream at the highest foreseen rate and twenty at the lowest, far beyond card latency, and enough to cover a network hiccup. A longer outage simply
+  falls back to the card, which is always a destination unless the application owner has turned it off.
+- **Loss on power cut.** PSRAM is volatile; whatever is in the ring when power fails is lost, at most the last ten seconds of the segment in progress. The host sees the missing blocks (block numbers
+  are consecutive) and the segment's final tag is absent, so the loss is visible, never silent.
+- **Overflow.** If both destinations stall for longer than the ring holds, the controller stops accepting blocks and the loader raises an alarm and logs the event; the recording engine's FIFO
+  then backs up to the application, which decides whether to drop samples or stop. Nothing is overwritten silently.
+- **Its own bus.** The PSRAM has its own QSPI pins and controller, separate from the flash's QSPI, so buffering never contends with instruction fetch. The controller respects the device's
+  maximum chip-select time and page boundaries, which is what makes a PSRAM need a controller rather than a plain SPI master.
+
+The same ring can hold a staged update package on its way from the network to the card, so a download does not stall on card writes either.
 
 ## When a recording was made
 

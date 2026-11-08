@@ -34,6 +34,7 @@ Terms are defined in the README and `doc/arch.md`. Risk IDs (R1–R46) refer to 
 | QSPI flash | Bitstreams, loader and application images, boot record, records | Untrusted storage; everything authenticated |
 | CODECs, LCD, speaker | Acquisition, display, alarms; plaintext inside the sealed enclosure | Physically protected only (R38) |
 | MicroSD card | Recordings (encrypted to the host), user data, logs, offline packages | Untrusted storage |
+| PSRAM stream buffer | Ring buffer of encrypted recording blocks between the recording engine and the card or network | Untrusted; ciphertext only (R48) |
 | Ethernet PHY | 10/100 RMII PHY (LAN8742A class) and magnetics; held in reset unless the network policy enables it | Untrusted transport; the FPGA's hardware UDP transport sits behind it (R23) |
 | Edge proxy (where needed) | Software or a small appliance on the site LAN that relays the device's UDP datagrams to the server over TLS 443 | Untrusted; carries only ciphertext (R29, R39) |
 | Temperature sensor | Replaceable, outside the box; certificate from its manufacturer, paired to the device | Trusted for its readings once authenticated |
@@ -99,6 +100,7 @@ flowchart LR
 | Mailbox and sample FIFO | Application domain → loader domain | Service requests, terminal bytes, samples | Fixed message set, fuzzed parser, one-way sample path (R45) |
 | I2S, LCD | Application domain ↔ CODECs and LCD | Samples, waveforms | Inside the sealed enclosure only (R38, R40) |
 | MicroSD | Loader domain ↔ card | Recordings, user data, logs, packages | All encrypted and authenticated (R1, R10, R26, R41) |
+| QSPI (PSRAM) | Recording engine → PSRAM → card and network | Authenticated recording ciphertext in transit | Holds nothing else; damage is detected at the host (R48) |
 | UART | Host ↔ loader domain | Status; sessions, packages, CLI | Status read-only (R30); sessions authenticated through the secure element, AES-256-GCM frames (R9) |
 | Ethernet (RMII) | Loader domain ↔ PHY ↔ site network | UDP datagrams carrying session frames: packages, recording ciphertext, server exchanges, DHCP | Hardware transport that drops everything but ARP, ICMP echo and UDP to one port; every payload is an authenticated, encrypted session frame; PHY reset driven by the network policy (R23, R28, R29, R39) |
 | Sensor link | Sensor ↔ loader domain | Pairing, readings, commands | Certificates, ML-KEM pairing, per-frame MACs, maximum reading age (R11–R14) |

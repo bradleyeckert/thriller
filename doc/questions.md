@@ -67,7 +67,7 @@ Every open question in one place. Earlier architectures are kept in git history 
 | **ICS55** | | | | |
 | I1 | Whether the ICS55 SRAM is usable as a PUF for the ASIC's pairing key | [ics55.md](ics55.md#where-the-key-comes-from) | Test chip | 3 |
 | I2 | Whether OTP or eFlash IP becomes available to open designs on this process | [ics55.md](ics55.md#open-questions) | Watch the PDK | 3 |
-| I3 | Pin count and package, once the CODEC, LCD, card, sensor and RMII interfaces are fixed | [ics55.md](ics55.md) | Board design | 3 |
+| I3 | Pin count and package, once the CODEC, LCD, card, PSRAM, sensor and RMII interfaces are fixed | [ics55.md](ics55.md) | Board design | 3 |
 
 Closed:
 - **From the C5 architecture:** every C5 question (C1 to C14): there is no microcontroller. The link protocol and its message set (A8 in that architecture) are replaced by the mailbox (H2).

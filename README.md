@@ -47,6 +47,8 @@ To support DSP applications, audio CODECs are planned for.
 - **2 × NAU88C22** stereo CODECs: four acquisition channels, and the speaker driver (`doc/acquisition.md`).
 - **LCD panel and speaker** inside the enclosure, which carries a tamper-evident seal.
 - **MicroSD card socket**, driven by the FPGA: encrypted recordings and user data, the event log, offline update packages.
+- **ESP-PSRAM64H** (8 MB QSPI PSRAM): a ring buffer for the encrypted recording stream between the recording engine and the card or the network, riding out card write latency and network stalls.
+  It holds ciphertext only, about ten seconds of it at the full rate, and is outside the trust boundary like the card (`doc/acquisition.md`, Stream buffer).
 - **Sensor connector**: a wired, two-way link to a replaceable temperature sensor, driven by the loader core (`doc/sensor.md`).
 - **UART** (USB-UART bridge): status reports, and the wired path for host sessions, updates and the CLI.
 - **Ethernet**, 10/100 over RMII to a PHY such as the LAN8742A: the path to the server for attestation, updates, uploads and sensor-pairing confirmation. The FPGA speaks only UDP on one port,
