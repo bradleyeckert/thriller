@@ -81,6 +81,7 @@ After authentication, the exchange runs under a session key derived from both no
 - uploads its event log since the last contact;
 - reports unconfirmed sensor pairings, and receives *confirmed* or *rejected* for each;
 - receives the current sensor denylist;
+- receives time beacons throughout the contact, and keeps the latest for recording headers and the event log (`doc/acquisition.md`, When a recording was made);
 - can receive an update package built for its reported state.
 
 ## Detecting unknown identities

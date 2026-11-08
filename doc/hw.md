@@ -150,7 +150,7 @@ The mailbox is the only path from the application to the loader, so it is the fi
 
 - Read and write user data on the MicroSD card (encrypted under the data key, inside the loader; only while a host session is open)
 - Host session status, and a request to prompt the host for one; the application learns only success or failure
-- Start and end a recording segment; the loader draws the key, writes the segment header and the ciphertext to the card
+- Start and end a recording segment; the loader draws the key, writes the segment header (including the latest time beacon) and the ciphertext to the card
 - The latest sensor reading with its age and status (`doc/sensor.md`); the application acts only on readings the loader has passed
 - Append to the security event log
 - Install an application update from the staging area

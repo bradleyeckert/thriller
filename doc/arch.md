@@ -38,7 +38,7 @@ the sensor in `doc/sensor.md`, and enrollment and updates in `doc/enrollment.md`
 
 | Asset | Goal |
 |---|---|
-| Recordings | Confidentiality (health data that can identify a person) and integrity. **The primary asset.** |
+| Recordings | Confidentiality (health data that can identify a person), integrity, and the time they were made. **The primary asset.** |
 | Other user data on the MicroSD card | Confidentiality and integrity |
 | Temperature readings | Integrity and freshness: a reading the device acts on is genuine, from the paired sensor, and recent |
 | Bitstreams, loader and application images | Only genuine signed versions run, and no older vulnerable version. Packages are encrypted so they show no plaintext, but code secrecy is not a goal of the base model (see Code Secrecy Profile) |
@@ -151,6 +151,7 @@ FDA asks for an exploitability-based rating rather than likelihood; the table is
 | R44 | Bitstream fallback | Board prober | Corrupt the active bitstream slot to force the multi-boot fallback to an older bitstream | Multi-boot picks the other slot on failure | High | Medium | The fallback bitstream holds a retired pairing key once an update has completed, so it boots into recovery, not into service; the loader then reinstalls the current platform package from the card or the host |
 | R45 | Mailbox | Malicious application | Exploit the loader's message parser | The mailbox is the one interface between the cores | Critical | Medium | Fixed message set, lengths and offsets checked against fixed limits, every request copied out of shared RAM before use, parser fuzzed on the software platform (`doc/hw.md`, Mailbox) |
 | R46 | Secure element | Lab attacker | Decapsulate one secure element and read its keys | Any chip can be attacked in a lab | High | Low | A certified tamper-resistant part (JIL high), the 608C chosen for its updated countermeasures; keys per device, so one break exposes one unit and one host's data key, never the host data secret, never past recordings |
+| R47 | Recording time | Board prober, or a user with the device | Backdate or postdate a recording, or pass off an old one as new, by setting a clock | The device has no trusted clock | High | Medium | Recording headers carry the latest server-issued time beacon (MAC'd under the identity key, verified by the secure element) and the sample count since it, and the first segment after a reconnection carries the next beacon, so every recording is bracketed by server-attested instants; no device clock is trusted (`doc/acquisition.md`, When a recording was made). Residual: a recording made before the device ever contacted the server is undated |
 
 ## Optional: Code Secrecy Profile
 

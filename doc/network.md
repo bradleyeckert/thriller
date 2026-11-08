@@ -28,6 +28,9 @@ and no foothold from which to move to anything else on the network. The worst a 
   perform its function; it records and alarms locally and reports when connectivity returns.
 - **Watch ciphertext.** Every byte leaving the port is encrypted to the intended recipient and authenticated. Recordings are encrypted to the receiving host's key inside the FPGA before they leave it.
 
+Connectivity also adds something: while connected, the server stamps the device's recordings with authenticated time beacons, so a streamed recording is provably made when the server says,
+and an offline one is bracketed between the last contact and the next (`doc/acquisition.md`, When a recording was made).
+
 ## The edge proxy
 
 Sites that only permit outbound TCP on port 443 run a small relay on their network that wraps the device's datagrams in TLS to the server. The relay is deliberately untrusted:
