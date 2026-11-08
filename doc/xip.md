@@ -1,28 +1,37 @@
 # Execute in Place
 
-The FPGA's LiteForth application runs directly from the FPGA's QSPI flash, through a small cache, instead of being copied into block RAM.
-Each cache line is decrypted and authenticated as it is fetched, and only checked plaintext enters the cache.
-
-The work is split: **the C5 installs, the FPGA executes.** The C5's TEE verifies every package, encrypts the image per line, and keeps the authoritative
-record of which image is installed. The FPGA only decrypts and checks lines, with keys it cannot export. This is a trimmed version of the XIP design in the
-earlier FPGA-only architecture (commit `cecf901`, `doc/xip.md`), without the boot ROM, the second core, the install port and the secure element.
+Both cores run directly from the QSPI flash, through small caches, instead of from block RAM. Each cache line is decrypted and authenticated as it is fetched, and only checked plaintext
+enters a cache. The loader installs images; the hardware checks them.
 
 ## Requirements
 
 | Requirement | Why |
 |---|---|
 | Decrypt any line independently | The CPU jumps around; a miss can be anywhere |
-| Authenticate every line when it is fetched, not only at boot | A check at boot leaves a gap: the flash can be swapped or emulated afterward |
-| Reject a line moved from another address | Otherwise valid code could be rearranged |
+| Authenticate every line when it is fetched, not only at boot | A check at boot leaves a gap: the flash can be swapped or emulated afterward (R6) |
+| Reject a line moved from another address or slot | Otherwise valid code could be rearranged |
 | Reject a line from another install, including an older version | Otherwise old, vulnerable code could be mixed in line by line |
-| Reject a whole older image | The FPGA keeps no state, so the C5 must say which image is current |
+| Reject a whole older image | The counters in the secure element decide (R34, R35) |
 | Add little latency to a miss | The flash read is already the dominant cost |
+
+## Image header
+
+Each slot starts with a header: image kind (loader or application), version, mode (production, or developer with the device's serial number and epoch), length, the 128-bit **install salt** *R*,
+the radio policy (applications), and an HMAC-SHA256 under the application key over all of it. The header is the only thing the boot chain reads before deciding to trust a slot:
+
+| Check | Loader image (boot ROM) | Application image (loader) |
+|---|---|---|
+| HMAC | Under the application key, unwrapped from the secure element | Same |
+| Version | Not older than counter 0 | Not older than counter 1 (production); developer builds: serial matches, epoch = counter 1 ÷ 1024 |
+| Result | Pass token: derive the image key into XIP port 0 | Pass token: derive the image key into XIP port 1 |
+
+An attacker who writes back a whole older image fails the version check; one who writes a header with a forged version fails the HMAC.
 
 ## Per-line GCM
 
-For each install, the TEE draws a fresh 128-bit **install salt** *R* and derives the install key:
+For each install, the loader draws a fresh install salt *R* and derives the install key:
 
-> install key = KDF(image key, "install" ‖ *R*), with the SP 800-108 counter-mode KDF using AES-256-CMAC
+> install key = KDF(application key, label ‖ *R*), label "loader" or "application", with the SP 800-108 counter-mode KDF using AES-256-CMAC
 
 For line *i* of the image in slot *s*:
 
@@ -30,68 +39,55 @@ For line *i* of the image in slot *s*:
 - **Ciphertext** = plaintext XOR AES-256-CTR keystream from that nonce.
 - **Tag** = GCM tag over the ciphertext, truncated to 64 bits, stored right after the line.
 
-Lines are 64 bytes; each line and its tag (72 bytes) are fetched in one burst, so the flash overhead is 12.5%. All the AES work for a line depends only on its address,
-so the FPGA's hard AES block runs it during the flash read, and GHASH processes the data as it arrives: GCM adds only a few cycles to a miss.
+Lines are 64 bytes; each line and its tag (72 bytes) are fetched in one burst, so the flash overhead is 12.5%. All the AES work for a line depends only on its address, so the hard AES block
+runs it during the flash read, and GHASH processes the data as it arrives: GCM adds only a few cycles to a miss.
 
-**If the hard AES block cannot compute GHASH,** GHASH's hash key would have to sit in unprotected fabric, where power analysis could recover it and forge tags. The line format then
-switches to AES-CCM (CTR encryption plus a CBC-MAC tag), which uses nothing but the hard block: per line, four keystream blocks, one tag-mask block and five CBC-MAC blocks.
-The CBC-MAC follows the data as it arrives, adding about one AES block's time to a miss. Which mode applies is open question F4.
+**If the hard AES block cannot compute GHASH,** the line format switches to AES-CCM (CTR encryption plus a CBC-MAC tag), which uses nothing but the block (open question F4).
 
-## Binding to the C5's record
-
-The FPGA does not trust anything in its own flash to tell it which image is current. At every boot, after the link handshake, the TEE sends the **boot image** message:
-slot, version, install salt, length and mode. The XIP engine derives the install key from that salt, and the CPU is released from reset only then.
-
-| Attack on the FPGA's flash | Result |
+| Attack on the flash | Result |
 |---|---|
 | Modify a line | Tag fails |
 | Move a line to another address or slot | Nonce differs; tag fails |
 | Mix in a line from an earlier install | Different salt, different install key; tag fails |
-| Write back a complete older image | Its lines carry an old salt; the TEE sends the current salt, so every tag fails |
-| Copy the flash to another board | Different image key; every tag fails |
+| Write back a complete older image | Header version behind the counter; refused |
+| Copy the flash to another board | Different application key; header HMAC fails |
 | Replace the flash with an emulator after boot | Every line is still checked when fetched |
-
-A header at the start of each slot repeats the version, salt, length and mode for diagnostics, but nothing depends on it.
 
 ## Install
 
-1. The C5 receives a package: production (LMS-signed by the application owner, encrypted under the distribution key) or developer (MAC under the device's developer key).
-2. The TEE checks the signature or MAC and, for production, that the version is not older than its record (`doc/c5.md`, Anti-rollback).
-3. The TEE draws a new install salt, decrypts the package, and re-encrypts it per line under the new install key, streaming.
-4. The C5 sends the lines to the FPGA's flash bridge over the link, into the inactive slot. The FPGA's CPU is held in reset during the install, and the LCD shows progress driven by the bridge.
-5. The bridge reads the slot back through the XIP engine, which checks every tag under the new key, and reports the result.
-6. Only then does the TEE record the new slot, version and salt as current. A cut at any point before leaves the old record, so the old slot keeps booting.
+1. The loader receives a package from the staging area: production (LMS-signed, encrypted under the distribution key) or developer (MAC under the device's developer key).
+2. It checks the signature or MAC, and the version against the counter (`doc/se.md`, Version rule). Nothing is decrypted before this passes.
+3. It draws a new install salt, decrypts the package through the install port, and re-encrypts it per line under the new install key, streaming into the inactive slot through the flash bridge.
+   The ciphertext is hashed as it is decrypted and must match the signed digest, so a package changed between verification and install cannot inject code.
+4. It reads the slot back through the install port, checking every tag, then writes the header.
+5. Counter and boot record, in the order in `doc/flash.md`. A cut at any point before leaves the old slot active.
 
-Packages larger than RAM stream from the MicroSD card, or from Wi-Fi, through these steps. The ciphertext is hashed as it is decrypted, and the install is abandoned
-if the hash differs from the signed one, so a package changed between verification and install cannot inject code.
+The application core is held in reset during an application install; the loader keeps running from its own slot. The LCD overlay shows progress.
 
 ## Tag failure
 
-A line whose tag fails never enters the cache. The XIP engine holds the CPU in reset, clears the install key, and reports the failure over the link. The TEE logs it,
-marks the slot bad in its record, and boots the other slot by sending its boot image message. The C5 decides; the FPGA needs no lockdown path of its own.
+A line whose tag fails never enters a cache. The XIP engine raises lockdown (`doc/hw.md`): keys are cleared, the slot is marked bad in the boot record, and the next boot falls back to the other slot.
 
-## Cache
+## Caches
 
-| Parameter | Proposal | Notes |
-|---|---|---|
-| Line size | 64 bytes (16 cells, 32 instructions) | Measure 32 bytes too |
-| Size | 4 KB, 2-way set associative | Measure the hit rate on real applications |
-| Contents | Plaintext, only after the tag passes | Cleared on reset and on any failure |
-| Writes | None: the XIP region is read-only | Variables live in block RAM |
-| Prefetch | Next line on a sequential miss; LiteForth's proposed `touch` instruction | |
+| Parameter | Loader | Application | Notes |
+|---|---|---|---|
+| Line size | 64 bytes | 64 bytes | Measure 32 bytes too |
+| Size | 2 KB | 4 KB, 2-way set associative | Measure the hit rate on real applications |
+| Contents | Plaintext, only after the tag passes | Same | Cleared on reset and on any failure |
+| Writes | None | None | Variables live in block RAM |
+| Prefetch | Next line on a sequential miss | Same; LiteForth's proposed `touch` instruction | |
 
 ## Flash writes
 
-The FPGA's flash is written only during installs, with the CPU in reset, so nothing executes from it while it is busy. A miss while the bridge is in direct mode stalls
-rather than reading a busy flash, which would fail a tag and look like tampering.
+Flash is written only during installs and UART recovery, through QSPI direct mode, during which both caches stall rather than read a busy flash, which would fail a tag and look like tampering.
+The loader runs install code from its cache while the flash is busy; the install routine is sized to stay resident, as LiteForth's stage 1 does.
 
 ## Timing
 
-With a QSPI flash at 80 MHz, a 64-byte line and its tag take about 2 µs to read; the hard AES block produces the keystream and the tag mask during that time. A miss costs about 2 µs
-with GCM, a little more with CCM; hits cost nothing extra.
+With a QSPI flash at 80 MHz, a 64-byte line and its tag take about 2 µs to read; the hard AES block produces the keystream and the tag mask during that time. A miss costs about 2 µs with GCM,
+a little more with CCM; hits cost nothing extra.
 
 ## Open questions
 
-1. Line and cache sizes, from hit rates of real LiteForth applications.
-2. GCM or CCM, from what the hard AES block offers (F4), and its throughput when the XIP, link and recording engines share it.
-3. FPGA flash size, from the application size (two slots).
+See `doc/questions.md`: F6 (line, cache and slot sizes), F4 (GCM or CCM and hard-block throughput).

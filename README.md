@@ -1,16 +1,21 @@
 # It's all about the ROT
-Root of trust for an FPGA-based medical recording device, built on an Espressif ESP32-C5 and an FPGA (currently a Pango Logos2 PG2L50H, with the Lattice ECP5 as fallback).
+Root of trust for an FPGA-based medical recording device, built from three parts: an FPGA with an encrypted and authenticated bitstream,
+one QSPI NOR flash, and an ATECC608B secure element. There is no external microcontroller. The FPGA is a model of the ASIC that replaces it
+at volume (`doc/ics55.md`), so everything the FPGA does is generic RTL and Forth, and everything that depends on the FPGA family lives in `fpga/<family>/`.
 
-The device records like a high-speed EEG: four 24-bit channels from two CODECs, streamed to a MicroSD card or over Wi-Fi.
+The device records like a high-speed EEG: four 24-bit channels from two CODECs, streamed to a MicroSD card or, through an optional radio modem, to a server.
 Recordings are health data that can identify a person, so they are the primary asset.
 
-- **The ESP32-C5 is the root of trust and the gateway.** It holds the device's root keys, verifies every update, keeps the version records,
-  configures the FPGA, authenticates the replaceable temperature sensor, and does all storage and networking. Its own firmware never sees a recording in plaintext.
-- **The FPGA runs the application:** a LiteForth CPU executing in place from the FPGA's own QSPI flash, the acquisition front end, the LCD and the speaker.
-  Its per-device keys travel in a bitstream encrypted and authenticated under the FPGA's own per-device eFuse key, and it encrypts recordings to the host before they leave it.
+- **The FPGA is the root of trust and the application.** Its configuration engine authenticates and decrypts the bitstream with the device's own eFuse key;
+  the bitstream holds a boot ROM, a loader core that owns every key path and security decision, and an application core that runs the LiteForth application
+  and can reach nothing secret. Both cores execute in place from the flash through a decrypting, authenticating cache (`doc/xip.md`).
+- **The secure element holds what must survive the bitstream:** the device's keys, its identity, and the two monotonic counters that stop rollback.
+  It releases a key only to a bitstream that holds the current pairing key, and the data key only after the host has proved itself to the secure element directly (`doc/se.md`).
+- **The flash is untrusted storage** for the bitstream, the loader and the application, every line of code authenticated as it is fetched (`doc/flash.md`).
 
-The design has been through two earlier architectures: a root of trust in FPGA fabric with an ATECC608B secure element (commit `cecf901`),
-then the C5 alone running the application (commit `8c54b84`). This one keeps the C5 as root of trust and puts the application back in the FPGA.
+The design has been through three earlier architectures: a root of trust in FPGA fabric with an ATECC608B (commit `cecf901`), the ESP32-C5 alone running the application (`8c54b84`),
+and the C5 as root of trust with the application on the FPGA (`eb63f10`). This one returns to the FPGA and the secure element, keeps the medical application, sensor and recording designs
+of the later architectures, and adds hardware-enforced bitstream rollback protection, device attestation, and the ASIC key-source interface.
 
 ## Documents
 
@@ -18,85 +23,94 @@ then the C5 alone running the application (commit `8c54b84`). This one keeps the
 |---|---|
 | This README | Overview: chipset, keys, boot, updates, recordings, sensor, host sessions, radios and the CLI |
 | `doc/arch.md` | Trust boundary, threat model, risk assessment, algorithm bill of materials |
-| `doc/c5.md` | ESP32-C5 configuration: eFuse key map, boot chain, TEE, flash partitions, anti-rollback, radios |
-| `doc/fpga.md` | The FPGA, family-neutral: per-device encrypted bitstream, key isolation, the link to the C5, TRNG, resources |
-| `fpga/` | Everything family-specific, one folder per FPGA family: Pango Logos2 (current), ECP5 (fallback), CrossLink-NX, Titanium, Pango Logos |
-| `doc/xip.md` | Execute in place: per-line AES-256-GCM, with the C5 as installer |
+| `doc/hw.md` | Hardware modules: the two cores, the mailbox, the shared XIP engine, key paths, boot and lockdown, the key-source interface |
+| `doc/se.md` | Secure element: slot map, counters, the pairing-key ratchet, attestation, the I2C protocol |
+| `doc/flash.md` | Flash map: bitstream slots and multi-boot, loader and application slots, boot record, install order, staging |
+| `doc/fpga.md` | The FPGA, family-neutral: configuration from flash, per-device bitstreams, fallback, TRNG, resources |
+| `fpga/` | Everything family-specific, one folder per FPGA family, and the wish list a family must meet |
+| `doc/xip.md` | Execute in place: per-line AES-256-GCM for the loader and the application |
 | `doc/acquisition.md` | CODECs, data path, recording encryption, LCD, speaker and alarms |
 | `doc/sensor.md` | Replaceable temperature sensor: certificates, offline pairing, authenticated sessions, fail-safe behavior |
-| `doc/enrollment.md` | Device and sensor enrollment, the bitstream build service, detecting unknown identities, updates |
+| `doc/enrollment.md` | Device and sensor enrollment, secure element provisioning, the bitstream build service, detecting unknown identities, updates |
 | `doc/roles.md` | Manufacturer, application owner, developer and user; device-bound developer builds |
 | `doc/test.md` | Test plan and fault-injection campaigns |
 | `doc/fda.md` | FDA security architecture views |
-| `doc/ics55.md` | ASIC migration to the ICS55 55 nm process |
+| `doc/ics55.md` | ASIC migration to the ICS55 55 nm process: the PUF behind the key-source interface |
 | `doc/questions.md` | Every open question in one matrix, and the decisions taken |
 
 ## Chipset
 
-- **ESP32-C5HR8**: 240 MHz RISC-V, 384 KB SRAM, 8 MB PSRAM in the package, Wi-Fi 6 and Bluetooth LE (enabled by the application owner; see Radios).
-- **QSPI NOR flash for the C5**, 16 MB proposed: C5 bootloader, TEE and firmware (A/B), the FPGA's per-device bitstreams (A/B), TEE secure storage. Encrypted by the C5.
-- **FPGA: Pango Logos2 PG2L50H-6IFBG484** (50K-class), configured by the C5 in slave serial mode at every power-up with its encrypted, signed bitstream (`doc/fpga.md`, `fpga/logos2/`).
-  Its hard AES block, protected against power analysis, does the FPGA's cryptography. Fallback: Lattice ECP5 LFE5U-25F (`fpga/ecp5/`). Anything family-specific lives in `fpga/<family>/`.
-- **QSPI NOR flash for the FPGA**: the application images (A/B), encrypted and authenticated per cache line (`doc/xip.md`).
+- **FPGA with an encrypted and authenticated bitstream.** Current choice: **Pango Logos2 PG2L50H-6IFBG484** (50K-class), whose hard AES block is protected against power analysis
+  (`fpga/logos2/`). It configures itself from the flash at power-up in master SPI mode, with the vendor's multi-boot fallback to a second bitstream. Fallback family: **Lattice ECP5 LFE5U-25F**
+  (`fpga/ecp5/`), which encrypts but does not authenticate bitstreams; it is for a limited number of units, and its weaknesses are stated in `doc/arch.md`. Candidates: Microchip PolarFire,
+  Lattice CrossLink-NX, Efinix Titanium. The requirements a family must meet are in `fpga/README.md`.
+- **QSPI NOR flash**, 32 MB proposed: bitstream slots, loader images (A/B), application images (A/B), the boot record and a recovery staging area (`doc/flash.md`). Nothing in it is trusted.
+- **ATECC608B** secure element (Microchip), on an I2C bus that never leaves the sealed enclosure. Custom configuration (TrustCUSTOM, or blank parts provisioned at enrollment); the Trust Platform
+  provisioning service can carry the per-device key material and the device certificate. Second source: pin-compatible parts claiming compatibility, to be qualified.
 - **2 × NAU88C22** stereo CODECs: four acquisition channels, and the speaker driver (`doc/acquisition.md`).
 - **LCD panel and speaker** inside the enclosure, which carries a tamper-evident seal.
-- **MicroSD card socket**: encrypted recordings and user data, the event log, offline update packages. On the C5's SPI2 bus, shared with FPGA configuration and the link.
-- **Sensor connector**: a wired, two-way link to a replaceable temperature sensor, driven by the C5 (`doc/sensor.md`).
-- **UART** (USB-UART bridge or the C5's built-in USB serial port): status reports, and a wired fallback for host sessions, updates and the CLI.
-- Oscillators, voltage regulators, and test connectors not populated in production. The FPGA's JTAG is permanently disabled at enrollment.
+- **MicroSD card socket**, driven by the FPGA: encrypted recordings and user data, the event log, offline update packages.
+- **Sensor connector**: a wired, two-way link to a replaceable temperature sensor, driven by the loader core (`doc/sensor.md`).
+- **UART** (USB-UART bridge): status reports, and the wired path for host sessions, updates and the CLI.
+- **Radio modem (optional)**: a Wi-Fi/BLE module running its vendor's modem firmware, on a UART to the loader core, held in reset unless the application owner's radio policy enables it.
+  It is outside the trust boundary and only ever carries ciphertext (see Radios).
+- Oscillator, voltage regulators, and test connectors not populated in production. The FPGA's JTAG is permanently disabled at enrollment where the family allows it.
 
 ## Keys and what unlocks them
 
-| Key | Held in | Per device | Protects |
-|---|---|:-:|---|
-| Release signing keys (RSA-3072, main and backup) | Manufacturer HSM; digests in C5 eFuse | No | Secure boot of the C5's bootloader, TEE and firmware |
-| Package signing keys (LMS), main and backup | Manufacturer HSM (C5 and bitstream packages); application owner's HSM (application packages); public keys in the TEE image | No | Every update package, checked before anything is decrypted or installed |
-| C5 flash encryption key (XTS-AES) | C5 eFuse, generated on chip | Yes | The C5's external flash and PSRAM |
-| TEE storage key | C5 eFuse, generated on chip | Yes | TEE secure storage |
-| Device root key | C5 eFuse, from the HSM at enrollment, used only inside the TEE | Yes | Root of the identity, host, data, developer, FPGA link and FPGA image keys |
-| FPGA configuration key (AES-256-GCM on the Logos2) | FPGA eFuse; HSM | Yes | The bitstream, at rest and on the configuration bus |
-| Bitstream signing key (RSA-2048 on the Logos2) | Manufacturer HSM; public key data in FPGA eFuse | No | Only manufacturer bitstreams configure the FPGA |
-| FPGA link key | In the encrypted bitstream, and derived by the TEE | Yes | The C5–FPGA link |
-| FPGA image key | In the encrypted bitstream, and derived by the TEE | Yes | Application images in the FPGA's flash |
-| Distribution key | TEE secure storage, written at enrollment | No | Production application packages; a device never enrolled cannot install them |
-| Host key | Host, and derived by the TEE | Yes | Host and CLI sessions |
-| Host data secret | Host only; from a separate HSM master | Yes | Unlocks user data together with the device's data key |
-| Host recording key pair (ML-KEM-768) | Private key on the host; public key in TEE storage | Per host | Recordings: the device can encrypt them but not decrypt them |
-| Segment key | TEE and the FPGA's recording engine, for one segment, then erased | Per segment | One segment of a recording |
-| Sensor pairing key | TEE storage and the sensor | Per pairing | Sessions with one paired sensor |
+| Key | Held in | Per device | Unlocked by | Protects |
+|---|---|---|---|---|
+| Bitstream configuration key | FPGA eFuse; HSM | Yes | The FPGA alone | The bitstream at rest in flash and on the configuration bus |
+| Bitstream signing key | Manufacturer HSM; public key data in FPGA eFuse | No | — | Only manufacturer bitstreams configure the FPGA (where the family authenticates) |
+| **Pairing key** | The bitstream (key source) and secure element slot 0 | Yes, and per bitstream release | The bitstream itself | Every exchange with the secure element: MACs, encrypted reads, counter reads. Rotated with each bitstream release, which is what kills old bitstreams (`doc/se.md`, Ratchet) |
+| Application key | Secure element | Yes | Pairing key | Headers and per-line keys of the loader and application images in flash; the boot record |
+| **Data key** | Secure element | Yes | Pairing key **and** the host's proof to the secure element (CheckMac) | User data on the MicroSD card |
+| Host authorization key | Secure element (never readable) and the host | Yes | Never leaves either | Proving the host is present; the session key derivation |
+| Device identity key (symmetric) | Secure element (never readable); HSM | Yes | Used in place | Authenticating the device to the enrollment server, quantum-safe |
+| Device identity key (ECDSA P-256) | Secure element (never readable); certificate chained to the manufacturer CA | Yes | Pairing key | Signed attestation reports for hosts and third parties |
+| Distribution key | Secure element | No | Pairing key | Production application packages in transit; a device never enrolled cannot install them |
+| Developer key | Secure element | Yes | Pairing key, into hardware only | Developer builds for that one device (`doc/roles.md`) |
+| Log key | Secure element | Yes | Pairing key | The security event log's MAC chain |
+| Release LMS keys (platform; application), main and backup | HSMs; platform public key in the boot ROM, hashes of the application keys in the secure element | No | — | Every update package, checked before anything is decrypted or installed |
+| Host data secret | Host only; from a separate HSM master | Yes | — | Unlocks user data together with the device's data key |
+| Host recording key pair (ML-KEM-768) | Private key on the host; public key in flash, under the application key | Per host | — | Recordings: the device can encrypt them but not decrypt them |
+| Segment key | Loader domain and the recording engine, for one segment, then erased | Per segment | — | One segment of a recording |
+| Sensor pairing key | Flash (under the application key) and the sensor | Per pairing | — | Sessions with one paired sensor |
 
-The HSM derives every per-device key from a master key and the C5's chip ID (`doc/enrollment.md`). The FPGA's keys are never readable by its CPU (`doc/fpga.md`).
+The HSM derives every per-device key from a master key and the secure element's serial number (`doc/enrollment.md`). No key ever reaches software on either core: keys move from the
+secure element or the key source into hardware key registers (`doc/hw.md`, Key paths).
 
 ## Boot
 
-1. The C5's ROM checks its bootloader; the bootloader checks the TEE and the C5 firmware (RSA-3072, anti-rollback eFuses).
-2. The TEE starts, isolates its memory and peripherals, and starts the C5 firmware in user mode.
-3. The C5 firmware configures the FPGA with the bitstream slot the TEE chooses. The bitstream is checked and decrypted inside the FPGA only.
-4. The FPGA and the TEE run the link handshake: each proves it holds the link key, over nonces from both sides, and the TEE checks the bitstream's version.
-5. The TEE sends the boot image message (slot, version, install salt). The FPGA derives that install's key and releases the LiteForth CPU, which runs the application from flash,
-   checking every cache line.
-6. The C5 opens the sensor session and passes readings to the application over the link.
+1. The FPGA's configuration engine loads the active bitstream from flash, checks its signature and decrypts it with the device's eFuse key; anything else is refused. On failure it falls back to the other
+   bitstream slot (the family's multi-boot).
+2. The **boot ROM** (block RAM in the bitstream) starts on the loader core with the application core in reset. It authenticates to the secure element with the pairing key, reads counter 0,
+   unwraps the application key, checks the loader image's header and version, derives the loader's image key into the XIP engine, and jumps to the loader in flash.
+   If the secure element refuses the pairing key, this bitstream has been superseded: the boot ROM stops in recovery.
+3. The **loader** reads counter 1, checks the application image's header and version (or, for a developer build, device and epoch), derives its image key, and releases the application core.
+   Every cache line of either image is authenticated as it is fetched.
+4. The loader opens the sensor session, and, if the radio policy allows, releases the modem.
+5. The application runs. It reaches user data, recordings, the host, the sensor and the log only through the loader's mailbox services.
 
-Any failure falls back: to the other C5 image, the other bitstream, or the other application slot, each chosen by the C5.
+Any check that fails falls back to the other slot of that image, or stops in the safe state with a record in the boot record (`doc/hw.md`, Boot and lockdown).
 
 ## Updates
 
-Three kinds of package, all checked by the TEE before anything is decrypted or installed:
+Two signed chains, sharing nothing but the secure element:
 
-| Package | Contents | Scope | Signed by |
-|---|---|---|---|
-| C5 platform | Bootloader, TEE, C5 firmware | Fleet | RSA-3072 images (secure boot) inside an LMS-signed package (manufacturer) |
-| FPGA bitstream | One device's encrypted bitstream | Per device, built by the bitstream build service | LMS (manufacturer) |
-| Application | The LiteForth application, and its radio policy | Fleet; encrypted under the distribution key | LMS (application owner); developer builds: a MAC under the device's developer key |
+| Package | Contents | Scope | Signed by | Counter |
+|---|---|---|---|---|
+| Platform | This device's encrypted bitstream with its next pairing key, and a loader image | Per device, built by the bitstream build service | LMS (manufacturer), one signature per release over a manifest | 0 |
+| Application | The LiteForth application, and its radio policy | Fleet; encrypted under the distribution key | LMS (application owner); developer builds: a MAC under the device's developer key | 1 |
 
-Packages arrive over Wi-Fi, through the host, or on the MicroSD card; per-device bitstream packages for offline delivery are prepared for the one device.
-The TEE refuses anything older than its version record; security releases also advance the anti-rollback eFuses. Applications are re-encrypted per line by the TEE
-into the FPGA's flash (`doc/xip.md`).
+Packages arrive on the MicroSD card, over the UART from the host, or through the modem. The loader checks the signature and the version before decrypting anything, writes into the
+inactive slot, reads it back, advances the counter and switches the boot record (`doc/flash.md`, Install order). A bitstream update ends with the new bitstream, once it has booted,
+replacing the pairing key in the secure element with its next key, after which the old bitstream can no longer open the secure element.
 
 ## Recordings
 
-The TEE gives each recording segment a fresh key, encapsulates it with ML-KEM to the host's public key, and hands it to the FPGA, which encrypts the stream.
-The segment key is then erased, so the device cannot read its own past recordings, and neither can a thief. The C5 firmware, with its network stacks, only moves ciphertext. See `doc/acquisition.md`.
+The loader draws a fresh key for each segment, encapsulates it with ML-KEM to the host's public key, and loads it into the recording engine, which encrypts the stream in the FPGA's
+hard AES block and writes ciphertext to the card. The segment key is then erased, so the device cannot read its own past recordings, and neither can a thief (`doc/acquisition.md`).
 
 ## Sensor
 
@@ -105,26 +119,38 @@ and the server later confirms each pairing and catches clones (`doc/sensor.md`).
 
 ## Host sessions and user data
 
-The host and the TEE authenticate each other with the host key and fresh nonces, and every frame is encrypted and authenticated. User data other than recordings
-is encrypted under a key derived from both the device's data key and a secret the host sends in each session, which the device never stores.
-A lost host is re-issued from the HSM. A compromised host means retiring the device (`doc/arch.md`, R20).
+The host proves itself to the secure element, not to the loader: the secure element checks the host's response (CheckMac) and only then releases the data key, and derives the session key
+in place so that every frame is encrypted and authenticated. User data other than recordings is encrypted under a key derived from both the device's data key and a secret the host sends in each
+session, which the device never stores. A lost host is re-issued from the HSM. A compromised host means retiring the device (`doc/arch.md`, R20).
+
+## Attestation and identity
+
+The device proves what it is and what it runs in two ways (`doc/se.md`, Attestation):
+
+- to the enrollment server, with a MAC under its symmetric identity key over the server's nonce and a report of its versions and counters: quantum-safe, and the HSM can derive the key;
+- to a host or a third party, with an ECDSA P-256 signature by the secure element over the same report, under a per-device certificate chained to the manufacturer's CA.
+
+The secure element signs only for a bitstream that holds the current pairing key, so a report proves the pairing, the bitstream release, and the versions the loader measured.
 
 ## Radios and the CLI
 
-**The application owner decides** whether Wi-Fi and BLE are enabled, through a radio policy in the signed application package. The radio stacks run in the C5 firmware,
-never in the TEE, and never see plaintext recordings.
+**The application owner decides** whether Wi-Fi and BLE are enabled, through a radio policy in the signed application package. The radio stacks run in the modem, a separate module outside
+the trust boundary, which the loader holds in reset when the policy disables it. The modem never holds a key and never sees plaintext: recordings reach it already encrypted to the host,
+packages are signed and encrypted, and sessions are encrypted end to end.
 
-- **Wi-Fi** carries over-the-air updates, recording uploads (already encrypted to the host) and server contact. Outbound connections only.
-- **BLE** carries the CLI through a serial service over GATT (the C5 has no Bluetooth Classic, so no true SPP). Every CLI session runs our own authenticated, encrypted session;
-  advertising only after a user action, for a limited time, one connection, rotating private addresses.
-- **The UART** gives read-only status to anyone with a cable, and the same authenticated sessions as a wired fallback.
+- **Wi-Fi** carries over-the-air updates, recording uploads and server contact. Outbound connections only.
+- **BLE** carries the CLI through a serial service; every CLI session runs our own authenticated, encrypted session; advertising only after a user action, for a limited time, one connection.
+- **The UART** gives read-only status to anyone with a cable, and the same authenticated sessions as the wired path.
 
 | Session | Commands |
 |---|---|
 | None (UART status only) | Versions, build mode, faults, pairing state |
-| Host (host key) | User data, recordings, sensor pairing, updates, log export, Wi-Fi credentials |
+| Host (host authorization key) | User data, recordings, sensor pairing, updates, log export, Wi-Fi credentials, attestation |
 | Developer (developer key, developer builds only) | The above, plus the application's debug commands |
+
+Whether the product carries a modem at all is the integrator's decision (`doc/questions.md`, A9).
 
 ## ASIC conversion
 
-An ASIC on the ICS55 process could replace the FPGA, but it now needs per-device keys and has no non-volatile memory to keep them in (`doc/ics55.md`).
+The ASIC keeps the boot ROM (now mask ROM), the loader, the application chain, the secure element and the flash, and loses the bitstream. The one thing the bitstream carried,
+the pairing key, comes instead from a PUF behind the same key-source interface the FPGA build already uses, with the hardware to characterize it on silicon (`doc/ics55.md`).

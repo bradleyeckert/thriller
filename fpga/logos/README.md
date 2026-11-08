@@ -1,6 +1,6 @@
 # Pango Logos (PGL25G)
 
-**Status:** not usable. The Logos family is very low cost and **has no bitstream encryption**, so it cannot keep per-device keys in its bitstream (requirement 1 in `fpga/README.md`).
+**Status:** not usable. The Logos family is very low cost and **has no bitstream encryption**, so it cannot keep the pairing keys in its bitstream and cannot authenticate it (wish-list item 1 in `fpga/README.md`).
 The Logos2 family does have it; see `fpga/logos2/`. This page is kept for the analysis of the Logos UID-locking scheme.
 
 ## What the datasheet offers
@@ -19,7 +19,7 @@ and have the design read the UID at run time through the UID interface, recomput
    expected value for any UID. The scheme then rests on how hard the bitstream format is to reverse engineer: obscurity, not cryptography.
 3. **It protects the wrong asset.** UID locking stops a cloner copying a bitstream to a blank chip. Our bitstream carries per-device keys whose confidentiality matters (R31).
    A UID does nothing for confidentiality.
-4. **Deriving our keys from the UID makes things worse.** One could ship a fleet-wide bitstream and derive each device's link key as f(secret, UID). But then one secret, inside every
+4. **Deriving our keys from the UID makes things worse.** One could ship a fleet-wide bitstream and derive each device's pairing key as f(secret, UID). But then one secret, inside every
    bitstream, gives every device's keys, because the UIDs are public. One extraction would break the fleet, where today one break exposes one device.
 5. **Even with bitstream encryption, the UID adds little.** If the PGL25G encrypts bitstreams under a per-device key, that alone provides what UID locking was meant to,
    and our design needs nothing more. If it encrypts only under a fleet-wide key, UID locking stops copying but every device still shares that one key.
@@ -28,6 +28,6 @@ UID locking is a reasonable answer to IP cloning by a production subcontractor. 
 
 ## Without bitstream encryption
 
-The design would degrade, not collapse. A board prober who captures the plaintext bitstream learns that device's link and image keys. They could then read and forge link traffic
-(live data and future segment keys) and write their own application code into the FPGA's flash. Past recordings stay safe, because their segment keys were erased and only the host
-can decrypt them, and the C5's keys and version records are untouched. That is a weaker tier than the ECP5 gives, and it would have to be stated as such in the risk assessment.
+The design would collapse rather than degrade. A board prober who captures the plaintext bitstream learns that device's pairing keys, and with them can open the secure element,
+read every key it releases, and install any application. Only past recordings stay safe, because their segment keys were erased and only the host can decrypt them.
+Without encryption there is also no barrier to loading a modified bitstream. The family is not usable in this architecture.
