@@ -1,35 +1,41 @@
 # Lattice ECP5
 
 **Part:** LFE5U-25F-6BG256C: 24K LUTs, 1,008 Kbit (126 KB) of block RAM in 56 EBRs, 28 multipliers, speed grade 6, 256-ball BGA.
-This is the **fallback**; the current choice is the Pango Logos2 PG2L50H (`fpga/logos2/`). The ECP5 has no hard AES block, so its AES-256 cores and GHASH are soft logic, unprotected against power analysis.
+This is the **fallback, for a limited number of units**; the current choice is the Pango Logos2 PG2L50H (`fpga/logos2/`). The ECP5 fails wish-list item 1: it encrypts bitstreams (AES-128, key in eFuse)
+but does not authenticate them, so its configuration engine is a confidentiality anchor only. It also has no hard AES block, so its AES-256 cores and GHASH are soft logic, unprotected against power analysis.
 
-## Requirements
+## What "encrypted but unauthenticated" means here
+
+Without a MAC, an attacker who can write the flash can modify the ciphertext blindly. The secure element limits the damage: a bitstream whose pairing key was scrambled by an edit gets nothing,
+and a bitstream that does not pass the configuration CRC does not configure. A targeted useful edit without the key is impractical but not proven impossible (R32, F10). Because the configuration engine
+cannot refuse an old bitstream, the pairing-key ratchet is what makes a superseded ECP5 bitstream useless, exactly as on the Logos2.
+
+## The wish list
 
 | # | Requirement (`fpga/README.md`) | ECP5 |
 |---|---|---|
-| 1 | Bitstream encryption, per-device key | AES-128 with the key in eFuse key storage, programmed at enrollment |
+| 1 | Encryption and authentication | **Encryption only.** AES-128 with the key in eFuse key storage, programmed at enrollment. No MAC, no signature (R32) |
 | 2 | No fallback to unencrypted | The decrypt-only eFuse forces every incoming bitstream to be decrypted with the stored key |
-| 3 | Readback disabled | Bitstream preference setting |
-| 4 | Key not readable | eFuse key storage (what JTAG can do to it afterwards is open question F10) |
-| 5 | Configured by the C5 | Slave SPI port; the same pins carry the link after configuration |
-| 6 | Per-device constants from a script | Lattice Diamond's ECO editor, from a headless Tcl script, writes the key EBRs' `INIT_00` to `INIT_3F` properties in the routed design |
+| 3 | Readback disabled, key not readable | Readback disable is a bitstream preference setting; eFuse key storage (what JTAG can do to it afterwards is open question F10) |
+| 4 | Master SPI self-configuration with multi-boot | Master SPI and dual-boot are supported (sysCONFIG); the golden-image rule and addresses are to be confirmed and the flash map adjusted (F10) |
+| 5 | Per-device constants from a script | Lattice Diamond's ECO editor, from a headless Tcl script, writes the key EBRs' `INIT_00` to `INIT_3F` properties in the routed design |
+| 6 | Hard AES block | **None.** Soft AES-256 cores and GHASH, unprotected (R33) |
 | 7 | Ring-oscillator TRNG | To confirm with Diamond's timing and DRC settings |
-| 8 | Enough logic | About 11K to 16K LUTs for the security blocks (with soft AES) and CPU leaves roughly 6K to 13K for the application |
-| 9 | QSPI flash interface | General I/O |
-| — | Bitstream authentication | **None.** Encryption has no MAC, so an encrypted bitstream could be edited blindly (R32) |
+| 8 | Enough logic | About 14K to 22K LUTs for both cores and the security blocks with soft AES leaves little of 24K for the application; the LFE5U-45F may be needed |
+| 9 | QSPI and peripheral pins | General I/O |
 
 JTAG boundary scan stays available after the security settings (R43).
 
 ## Toolchains
 
-- **Production:** Lattice Diamond, with a free Lattice software licence. `bitgen` encrypts only designs placed and routed by Diamond (`.ncd`), so production bitstreams
-  come from Diamond. Synthesis can be Yosys (EDIF into Diamond) or Diamond's own.
+- **Production:** Lattice Diamond, with a free Lattice software licence. `bitgen` encrypts only designs placed and routed by Diamond (`.ncd`), so production bitstreams come from Diamond.
+  Synthesis can be Yosys (EDIF into Diamond) or Diamond's own.
 - **Development:** Yosys, nextpnr and `ecppack`, unencrypted, on unlocked boards.
-- The same RTL, constraints and tests must run on both builds (open question F10).
+- The same RTL, constraints and tests must run on both builds (F10).
 
 ## Enrollment
 
-Replaces step 7 of `doc/enrollment.md`:
+Replaces step 3 of `doc/enrollment.md`:
 
 1. Over JTAG (Diamond Programmer), program the device's AES-128 configuration key, from the HSM, into eFuse key storage.
 2. Burn the decrypt-only eFuse.
@@ -39,23 +45,25 @@ The key crosses the JTAG link once, inside the controlled area.
 
 ## Bitstream build
 
-1. Diamond builds the common design once per FPGA release, with placeholder key constants in dedicated EBRs, producing an `.ncd`.
-2. For each device, a headless Diamond Tcl script opens a copy in the ECO editor, writes the device's link and image keys into the key EBRs' `INIT` properties,
+1. Diamond builds the common design once per FPGA release, with placeholder constants in the key-source EBRs, producing an `.ncd`.
+2. For each device, a headless Diamond Tcl script opens a copy in the ECO editor, writes the device's inherited and own pairing keys and the version into the key EBRs' `INIT` properties,
    and runs `bitgen` with encryption under the device's configuration key. No re-place-and-route: seconds per device.
-3. The bitstream build service erases the keys and the HSM signs the package (`doc/enrollment.md`).
+3. The bitstream build service erases the keys and the HSM signs the manifest (`doc/enrollment.md`).
 
-The key EBRs should be placed with constraints so the script can find them by name in every build.
+The key EBRs are placed by constraint so the script can find them by name in every build.
 
 ## Bitstream size
 
-About 0.6 to 0.7 MB, well within the C5's bitstream slots.
+About 0.6 to 0.7 MB, well within the flash's bitstream slots.
 
 ## Risks specific to the ECP5
 
-- **R32:** no bitstream authentication; blind edits limited by the configuration CRC (width and mode: open question F10).
-- **R33:** neither the configuration decryptor nor the soft AES cores are hardened against power analysis; a break exposes one device.
+- **R32:** no bitstream authentication; blind edits limited by the configuration CRC and the pairing key check.
+- **R5, R33:** neither the configuration decryptor nor the soft AES and SHA-256 cores are hardened against power analysis; a break exposes one device.
 - **R43:** boundary scan after locking.
+
+Units built on the ECP5 should be counted and tracked in the enrollment database, so the fleet's exposure to these risks is known.
 
 ## Open questions
 
-F10 in `doc/questions.md`: eFuse burn order and JTAG access afterwards, encryption mode and CRC width, and keeping the development and production flows equivalent.
+F10 in `doc/questions.md`: eFuse burn order and JTAG access afterwards, encryption mode and CRC width, master SPI dual-boot layout, and keeping the development and production flows equivalent.

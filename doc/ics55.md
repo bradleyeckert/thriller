@@ -1,70 +1,73 @@
 # ICS55
 
-ICS55 is an open-source chip design initiative built on the ECOS toolchain and PDKs from 55nm foundries.
-It's conceptually similar to the 130nm open source flow launched previously by Google.
+ICS55 is an open-source chip design initiative built on the ECOS toolchain and PDKs from 55 nm foundries, conceptually similar to the 130 nm open-source flow launched earlier by Google.
+Preliminary research on its SRAM compiler gives a total macro area of 2 to 3 mm²/Mb; masked ROM would be quite a bit smaller.
+Standardized floorplan blocks are 1.5 × 1.5, 2.0 × 2.0 and 2.5 × 2.5 mm, fitting pin counts of 44–64, 80–100 and 144–208.
 
-Preliminary research on its SRAM compiler gives a total macro area of 2 to 3 mm2/Mb.
-Masked ROM would be quite a bit smaller.
+## `thriller` on ICS55
 
-Standardized floorplan blocks are 1.5 x 1.5, 2.0 x 2.0, and 2.5 x 2.5 mm.
-These would fit chips with pin counts of 44-64, 80-100, and 144-208 pins.
-
-
-## Commentary: `thriller` on ICS55
-
-The FPGA now runs the application and holds two per-device keys (the link key and the image key), carried in its encrypted bitstream (`doc/fpga.md`).
-An ASIC replacing it would do the same job, but it has no bitstream to carry keys in, and the ICsprout 55nm open PDK lists no OTP, eFuse or embedded flash cells.
-So the ASIC's one hard problem is the same one the earliest design faced: **where its per-device keys come from.** Everything else gets simpler.
+The FPGA is a model of this ASIC. The ASIC runs the same boot ROM (now mask ROM), the same loader and application chain, talks to the same secure element and flash, and drives the same
+peripherals. It loses the bitstream, and with it the one secret the bitstream carried: **the pairing keys.** The ICsprout 55 nm open PDK lists no OTP, eFuse or embedded flash cells,
+so the ASIC gets them from a PUF behind the key-source interface that the FPGA design already uses (`doc/hw.md`).
 
 ### What stays the same
 
-- The C5 remains the root of trust, installer and gateway. Version records, package checks, networking and storage do not move.
-- The XIP engine, link engine, recording engine and key isolation are the same RTL.
-- The link protocol and the boot image message are the same, so the C5's software does not change.
+- The secure element, its slot map and the ratchet. Counters, identity and the host's CheckMac do not move.
+- The flash map, the boot record, the loader and application chains, the XIP engine, the mailbox, the recording engine, the sensor and host protocols: the same RTL and the same Forth.
+- The attestation report: the "bitstream release" field becomes the silicon revision, and the pairing key version keeps its meaning.
 
 ### What gets simpler
 
-- No bitstream: no configuration bus to protect (R31), no blind bitstream edits (R32), no per-device bitstream builds (R42), no Lattice Diamond.
-- Logic cannot be replaced or reconfigured on the board (R17).
+- No bitstream: no configuration bus to protect (R31), no blind bitstream edits (R32), no per-device bitstream builds (R42), no vendor tools.
+- Logic cannot be replaced or reconfigured on the board (R17, R44).
+- The boot ROM is truly immutable.
 
-### Where the keys come from
+### What changes: the pairing key and the ratchet
+
+On the FPGA each bitstream release carries its own pairing key, and the ratchet retires the previous one. The ASIC has no bitstream, so there is one PUF-derived pairing key for the life
+of the chip, and the ratchet no longer applies: platform rollback is then counter 0 alone, exactly as the loader is protected today. Slot 0's encrypted-write path stays available for a key
+change at RMA.
+
+### Where the key comes from
 
 | Option | How | Cost |
 |---|---|---|
-| **SRAM PUF** (preferred) | At enrollment the ASIC derives a key from its SRAM's power-up pattern; the C5 stores the helper data (not secret) and the HSM records the derived link and image keys, or the ASIC and C5 agree them once and the C5 stores them in its TEE | Needs the SRAM to behave as a PUF on this process, and a fuzzy extractor in the ASIC; settled only on silicon |
-| Mask ROM key | One key for every ASIC, in ROM | Fleet-wide: breaking one ASIC breaks all. Not acceptable for recordings |
-| Keys from the C5 over the link at every boot | The C5 sends them in plaintext before any key exists | Visible on the board. Not acceptable |
+| **SRAM PUF** (preferred) | At enrollment the ASIC derives its pairing key from an SRAM block's power-up pattern through a fuzzy extractor; the helper data (not secret) goes into the flash's ASIC key blob (`doc/flash.md`); the HSM records the derived key by enrolling it into secure element slot 0 through the station, and keeps nothing else | Needs the SRAM to behave as a PUF on this process, and the extractor and its characterization logic in the ASIC; settled only on silicon |
+| Mask ROM key | One key for every ASIC, in ROM | Fleet-wide: breaking one ASIC breaks all. Not acceptable |
+| Key from the secure element | The secure element cannot release a key to a chip that has nothing to authenticate with | Circular. Not possible |
 
-With a PUF, the C5 pairs once with the ASIC at enrollment, matching how the C5 pairs with the FPGA today.
+With the PUF, the HSM cannot derive the ASIC's pairing key from the serial number. That changes one thing in `doc/enrollment.md`: the pairing key is exported once, at the station, wrapped to
+the HSM, instead of being derived. Everything the HSM derives from the device master is unchanged.
+
+### The key-source module on the ASIC
+
+Behind the interface in `doc/hw.md`:
+
+- **PUF SRAM:** a dedicated block, powered up unused before the first read, with its own power gate so it can be cycled for characterization.
+- **Fuzzy extractor:** a BCH or repetition-plus-BCH decoder over helper data read from flash by the boot ROM, producing the 256-bit key straight into the SHA-256 core's key port.
+- **Characterization port (`char_*`):** read raw PUF responses, run repeated power cycles, count bit errors against the enrolled response, read the extractor's error count and margin,
+  and set enrollment mode. Reachable only in the factory lifecycle state (slot 13) and from the loader, so a characterized chip can be screened before its key is enrolled.
+- **Enrollment mode:** generate the helper data for a fresh response and present the key once, wrapped to the HSM, for enrollment into the secure element.
+- **`key_fault`:** raised when the decoder cannot correct the response; the boot ROM then stays in recovery.
+
+On the FPGA the same port exists as a stub that returns fixed values, so the loader's characterization and enrollment code is written and tested before silicon.
 
 ### Memory budget
 
-At 2 to 3 mm2 per Mb, SRAM is expensive: 64 KB (0.5 Mb) takes about 1 to 1.5 mm2. The XIP cache (about 4 KB), the CPU's stacks and data RAM,
-and the recording and link buffers are the main users; the application's code stays in flash.
-
-### Migration hooks in the FPGA design
-
-| Hook | On the FPGA | On the ASIC |
-|---|---|---|
-| **Key source module.** The link and image keys reach the engines through one module with a fixed interface | Constants patched into block RAM | PUF key derivation |
-| **Memory and clock wrappers.** Every block RAM and clock primitive sits in a thin module | FPGA primitives | ASIC macros or synthesized logic |
-| **Secret-clear input.** All key registers and the cache share one clear input | Reset, reconfiguration, failures | Also scan entry and glitch detectors |
-| **No reliance on initialized RAM** outside the key constants | No effect | SRAM powers up random, which the PUF needs |
-| **Version report in the handshake** | Bitstream version | Silicon revision |
+At 2 to 3 mm² per Mb, SRAM is expensive: 64 KB (0.5 Mb) takes about 1 to 1.5 mm². The two XIP caches (6 KB), both cores' stacks and data RAM, the mailbox, the recording buffer and the PUF block
+are the main users; the application's code stays in flash.
 
 ### Things only silicon can answer
 
-- SRAM PUF reliability and uniqueness with the ICS55 SRAM compiler's cells.
+- SRAM PUF reliability and uniqueness with the ICS55 SRAM compiler's cells, across temperature and aging.
 - Ring-oscillator TRNG entropy.
-- Side-channel leakage of the AES cores. The FPGA's AES is a vendor hard block with DPA protection; the ASIC would need its own masked AES, a substantial design task.
+- Side-channel leakage of the AES core (a masked core replaces the FPGA's hard block) and the SHA-256 core.
 
-A small test chip on an early shuttle, carrying just these structures, would settle them before committing the full design.
+A small test chip on an early shuttle, carrying the PUF block, the extractor, the TRNG and the two crypto cores, would settle them before committing the full design.
 
 ### Open questions
 
-1. Whether the ICS55 SRAM is usable as a PUF.
-2. Whether OTP or eFlash IP will become available to open designs on this process.
-3. Pin count and package, once the CODEC, LCD and C5 interfaces are fixed.
+See `doc/questions.md` (ICS55 rows).
 
 ### Sources
 

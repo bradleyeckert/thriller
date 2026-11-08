@@ -1,6 +1,6 @@
 # Temperature Sensor
 
-The temperature sensor sits outside the box, at the end of a two-way link to the C5. It is replaceable, and a new sensor must pair
+The temperature sensor sits outside the box, at the end of a two-way link to the FPGA's loader core. It is replaceable, and a new sensor must pair
 **without a network**. Readings need authentication, not encryption.
 
 ## Requirements
@@ -32,23 +32,24 @@ At the sensor factory:
    a hash of the calibration data, the ML-KEM public key, and the signing key's ID.
 3. The certificate is stored in the sensor, and the serial and certificate hash go into the enrollment database (`doc/enrollment.md`).
 
-The public keys of the sensor CA (a main and a backup) are built into the TEE image. ML-DSA is used rather than LMS because the factory signs
+The public keys of the sensor CA (a main and a backup) are built into the loader image. ML-DSA is used rather than LMS because the factory signs
 one certificate per sensor, and LMS's one-time-key state is risky at that volume. LMS stays for firmware releases, which are few.
+ML-DSA verification and ML-KEM encapsulation run as Forth on the loader core, with the SHA-256 core doing the hashing; both run only at pairing (open question H5).
 
 A certificate is about 3.7 KB (1,184-byte public key, 2,420-byte signature, and fields). It crosses the link once per pairing.
 
 ## Pairing
 
-Pairing runs when the TEE sees a sensor whose serial does not match its stored pairing.
+Pairing runs when the loader sees a sensor whose serial does not match its stored pairing.
 
-| Step | Device (TEE) | Sensor |
+| Step | Device (loader) | Sensor |
 |---|---|---|
 | 1 | Request the certificate | Send the certificate |
 | 2 | Check the CA signature, the format, the model, and that the serial is not on the denylist | |
 | 3 | Encapsulate to the sensor's public key: ciphertext *ct*, shared secret *ss*. Send *ct*, a fresh nonce *Nd*, and the device ID | Decapsulate *ct* to get *ss*. Pick a fresh nonce *Ns* |
 | 4 | | Derive the pairing key and confirmation keys (below). Send *Ns* and its confirmation MAC |
 | 5 | Derive the same keys, check the sensor's MAC, send the device's confirmation MAC | Check the device's MAC; store the pairing key, replacing any earlier one |
-| 6 | Store the pairing record: serial, certificate hash, pairing key, time, state *unconfirmed*. Log it | |
+| 6 | Store the pairing record in the flash records region under the application key: serial, certificate hash, pairing key, time, state *unconfirmed*. Log it | |
 
 > pairing key = KDF(*ss*, "pair" ‖ *Nd* ‖ *Ns* ‖ device ID ‖ serial ‖ SHA-256(certificate) ‖ SHA-256(*ct*)), 256 bits, with the AES-256-CMAC counter-mode KDF
 
@@ -63,7 +64,7 @@ commands that matter.
 
 ## Server confirmation
 
-The next time the device reaches the enrollment server (through the host, or Wi-Fi if enabled), it reports each unconfirmed pairing:
+The next time the device reaches the enrollment server (through the host, or the modem if enabled), it reports each unconfirmed pairing:
 serial, certificate hash and pairing time. The server checks that:
 
 - the serial is enrolled and the certificate hash matches the database;
@@ -71,7 +72,7 @@ serial, certificate hash and pairing time. The server checks that:
 - the same serial is not paired to other devices in a pattern that suggests a clone.
 
 The server answers *confirmed* or *rejected*, authenticated under the device's identity key, together with the current denylist.
-On *rejected*, the TEE removes the pairing, logs it, and the FPGA application raises an alert. Denylists also travel inside every update package,
+On *rejected*, the loader removes the pairing, logs it, and raises an alert on the overlay and the speaker. Denylists also travel inside every update package,
 so offline devices receive them too.
 
 How long a pairing may stay unconfirmed, and what the device does meanwhile, is a clinical decision (open question).
@@ -80,7 +81,7 @@ How long a pairing may stay unconfirmed, and what the device does meanwhile, is 
 
 A session starts at power-up, after a link fault, and periodically (for example hourly):
 
-1. The TEE sends a fresh nonce *Nd'*; the sensor answers with *Ns'* and a MAC.
+1. The loader sends a fresh nonce *Nd'*; the sensor answers with *Ns'* and a MAC.
 2. Each side derives a key per direction: KDF(pairing key, "session" ‖ direction ‖ *Nd'* ‖ *Ns'*).
 3. Every frame carries a type, a 32-bit counter, the payload and a 128-bit AES-256-GCM tag, with the payload as associated data (GMAC: readings need authentication, not encryption). The counter must strictly increase per direction within a session.
 
@@ -91,9 +92,9 @@ A CRC may protect the physical layer against noise, but it is not a security con
 A MAC proves who sent a reading, not when. So:
 
 - **The device asks.** Each reading request carries the request counter, and the sensor's answer is bound to it, along with the sample's age as the sensor reports it.
-- **The TEE times the exchange** with a timer the C5 firmware cannot change: from issuing the request to receiving the answer. Age of the reading = that round-trip time + the sample age the sensor reports.
-  The C5 firmware moves the frames (`doc/c5.md`, TEE), so it can only make a reading look older, never newer.
-- **The TEE rejects a reading older than the maximum reading age,** a clinical parameter.
+- **The loader times the exchange** with the sensor age timer in its own domain (`doc/hw.md`): from issuing the request to receiving the answer. Age of the reading = that round-trip time + the sample age the sensor reports.
+  Nothing outside the loader domain touches the frames, so nothing can make a reading look newer.
+- **The loader rejects a reading older than the maximum reading age,** a clinical parameter.
 
 Anyone on the link can delay frames but not forge them, so the worst they can do is make readings late, and late readings are rejected.
 
@@ -107,16 +108,15 @@ Anyone on the link can delay frames but not forge them, so the worst they can do
 | Certificate invalid or denylisted | Refuse to pair; alarm; log |
 | Pairing rejected by the server | Remove the pairing; alarm; log |
 
-The TEE passes each reading, with its age and status, to the FPGA application over the authenticated link (`doc/fpga.md`). The application defines the safe state,
-and must not act on a reading the TEE has not passed. The time a reading spends crossing the link is added to its age.
+The loader passes each reading, with its age and status, to the application through the mailbox (`doc/hw.md`). The application defines the safe state,
+and must not act on a reading the loader has not passed. The time a reading waits in the mailbox is added to its age.
 
 ## Physical layer
 
-The link runs on the C5's peripherals: a UART for a byte-oriented link, the RMT for a custom pulse protocol, or MCPWM capture (3 channels at 160 MHz)
-and compare outputs where the protocol needs precise timing. ETM can connect GPIO edges and timers without software. The choice depends on the
-sensor's existing interface and the cable (open question). The protocol above does not depend on it.
+The link is driven by the sensor-link module in the loader core domain: a UART for a byte-oriented link, or a small custom serializer with a capture timer where the sensor's
+protocol needs precise timing. The choice depends on the sensor's existing interface and the cable (open question S2). The protocol above does not depend on it.
 
-The sensor link is wired, and nothing in it depends on Wi-Fi or BLE being up.
+The sensor link is wired, and nothing in it depends on the modem.
 
 ## Calibration
 
