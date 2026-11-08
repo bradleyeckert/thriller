@@ -8,7 +8,7 @@ Every device and every sensor is entered into the manufacturer's enrollment data
 - confirm sensor pairings and catch cloned sensors;
 - refuse updates to anything not enrolled.
 
-A device does not need to be online to work. It reports to the server when it can: through the modem if the application owner has enabled it, otherwise through the host.
+A device does not need to be online to work. It reports to the server when it can: over the network if the application owner has enabled the port, otherwise through the host.
 
 ## Keys held by the manufacturer
 

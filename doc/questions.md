@@ -56,25 +56,25 @@ Every open question in one place. Earlier architectures are kept in git history 
 | A2 | Host session protocol: frame format, timeouts, how the host stores its keys | [README](../README.md#host-sessions-and-user-data) | Specification | 2 |
 | A3 | The full list of logged events | [fda.md](fda.md#6-gaps-for-a-submission) | Specification | 3 |
 | A4 | Adopt the Code Secrecy Profile? | [arch.md](arch.md#optional-code-secrecy-profile) | Business decision | 3 |
-| A5 | CLI command set per session type, and attempt limits | [README](../README.md#radios-and-the-cli) | Specification | 2 |
-| A6 | BLE host tool: phone app, Web Bluetooth page, or desktop tool | [README](../README.md#radios-and-the-cli) | Decide | 2 |
-| A7 | Wi-Fi provisioning and TLS server authentication in the modem (pinned CA or key) | [README](../README.md#radios-and-the-cli) | Specification | 2 |
-| A8 | Modem interface: command set, framing over its UART, and how its firmware updates are forwarded | [hw.md](hw.md#loader-core-domain) | Part selection; specification | 2 |
-| A9 | Whether the product carries a radio modem at all, and which module | [README](../README.md#radios-and-the-cli) | Integrator's decision | 1 |
+| A5 | CLI command set per session type, and attempt limits | [README](../README.md#network-and-the-cli) | Specification | 2 |
+| A6 | Ethernet PHY (LAN8742A or LAN8720A), magnetics isolation grade, and whether to power the device over PoE | [README](../README.md#network-and-the-cli) | Board design | 2 |
+| A7 | Addressing: DHCP client in loader Forth with static fallback, how the server or proxy address is provisioned, and whether ICMP echo stays enabled | [hw.md](hw.md#ethernet-transport) | Specification | 2 |
+| A8 | The session protocol's ack-and-window layer for updates and uploads over UDP, keepalive interval for NAT, and maximum datagram size | [README](../README.md#network-and-the-cli) | Specification | 2 |
+| A9 | Edge proxy: the UDP-to-TLS relay for sites that only allow port 443, as software or an appliance, and how a device finds it | [README](../README.md#network-and-the-cli) | Specification; check target sites' network policies | 2 |
 | **Test** | | | | |
 | T1 | Fault-injection and side-channel lab: in house or contracted | [test.md](test.md#5-fault-injection) | Decide | 3 |
 | T2 | Independent penetration test supplier | [fda.md](fda.md#6-gaps-for-a-submission) | Decide | 3 |
 | **ICS55** | | | | |
 | I1 | Whether the ICS55 SRAM is usable as a PUF for the ASIC's pairing key | [ics55.md](ics55.md#where-the-key-comes-from) | Test chip | 3 |
 | I2 | Whether OTP or eFlash IP becomes available to open designs on this process | [ics55.md](ics55.md#open-questions) | Watch the PDK | 3 |
-| I3 | Pin count and package, once the CODEC, LCD, card, sensor and modem interfaces are fixed | [ics55.md](ics55.md) | Board design | 3 |
+| I3 | Pin count and package, once the CODEC, LCD, card, sensor and RMII interfaces are fixed | [ics55.md](ics55.md) | Board design | 3 |
 
 Closed:
 - **From the C5 architecture:** every C5 question (C1 to C14): there is no microcontroller. The link protocol and its message set (A8 in that architecture) are replaced by the mailbox (H2).
 - **FPGA:** a PUF built in fabric (set aside: the FPGA's pairing keys are constants in its encrypted bitstream, and the ASIC uses a hardened PUF behind the same interface); Pango's answers on DPA coverage
   (configuration and the hard AES block), JTAG (permanently disabled when locked) and command-line PDS; the Pango Logos PGL25G (no bitstream encryption; not usable).
 - **Secure element:** the earlier questions on whether to use one (yes), on the MAC-oracle risk (ReqRandom on slot 0), and on how to protect host sessions (session key from the secure element's KDF).
-- **Other:** D1 (developer signing: a per-device developer key, no signing service), E1 (server path: the modem when enabled, otherwise the host), E2 (pairing keys derived in the HSM on the FPGA;
+- **Other:** D1 (developer signing: a per-device developer key, no signing service), E1 (server path: Ethernet when enabled, otherwise the host), E2 (pairing keys derived in the HSM on the FPGA;
   exported once from the PUF on the ASIC), the watermark (removed), Q6 (safety alarms need no path independent of the application beyond the overlay), S1 (sensor frames use AES-256-GCM).
 
 ## Decisions taken
@@ -90,7 +90,7 @@ Closed:
 - No watermark; replay or substitution on I2S is left to the tamper-evident seal (R40).
 - The temperature sensor is replaceable and must pair without a network.
 - Enrollment in the manufacturer's database is required for updates, and the ecosystem flags unknown identities.
-- The application owner enables or disables each radio through the signed application package.
+- **No radios.** One wired Ethernet port, with the network side implemented as a UDP-only transport in hardware; a local edge proxy meets any port-443 requirement. The application owner enables or disables the port through the signed application package.
 
 ### By default (change any of these)
 
@@ -103,5 +103,5 @@ Closed:
 - **AES-256-GCM in the hard AES block** for lines, recordings, sessions and records; an AES-256-CMAC KDF; AES-CCM instead if the block cannot compute GHASH (F4). A ring-oscillator TRNG mixed with the secure element's.
 - **LMS on every package,** one signature per release over a manifest; ML-DSA certificates and ML-KEM pairing for the sensor; ML-KEM segment-key encapsulation to the host.
 - **Developer builds as applications** with a per-device developer key and an epoch from counter 1; offline, no signing service.
-- **Radios, if fitted, in an untrusted modem** outside the trust boundary, held in reset by the radio policy; **UART status is read-only.**
+- **The network is a second transport for the session protocol,** with no stack on any core; the PHY is held in reset by the network policy; **UART status is read-only.**
 - **Per-device platform packages** built by the bitstream build service from each device's reported key version.

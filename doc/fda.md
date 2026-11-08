@@ -28,16 +28,17 @@ Terms are defined in the README and `doc/arch.md`. Risk IDs (R1–R46) refer to 
 |---|---|---|
 | FPGA configuration engine | Vendor silicon (Pango Logos2). Checks the RSA-2048 signature and decrypts and authenticates the bitstream with its per-device AES-256-GCM eFuse key; refuses anything else; multi-boot fallback | Trusted, fixed; DPA-protected (R25) |
 | Boot ROM | Block RAM in the bitstream. Pairs with the secure element, checks the loader image, UART recovery | Trusted; part of the signed bitstream |
-| Loader core domain | LiteForth loader core and the security hardware: key registers, SHA-256 core, hard AES block, XIP engine, recording engine, I2C to the secure element, card, UART, sensor link, modem control | Trusted; holds every key path and security decision |
+| Loader core domain | LiteForth loader core and the security hardware: key registers, SHA-256 core, hard AES block, XIP engine, recording engine, I2C to the secure element, card, UART, sensor link, Ethernet transport | Trusted; holds every key path and security decision |
 | Application core domain | LiteForth application core, I2S acquisition, LCD; runs from its flash slot | Signed by the application owner, or a device-bound developer build; no path to any key |
 | ATECC608C secure element | Keys, counters, identity, host CheckMac, attestation signatures | Trusted; certified tamper-resistant; counters unauthenticated (R36) |
 | QSPI flash | Bitstreams, loader and application images, boot record, records | Untrusted storage; everything authenticated |
 | CODECs, LCD, speaker | Acquisition, display, alarms; plaintext inside the sealed enclosure | Physically protected only (R38) |
 | MicroSD card | Recordings (encrypted to the host), user data, logs, offline packages | Untrusted storage |
-| Radio modem (optional) | Wi-Fi/BLE module running its vendor's firmware, held in reset unless the radio policy enables it | Untrusted; carries only ciphertext (R23) |
+| Ethernet PHY | 10/100 RMII PHY (LAN8742A class) and magnetics; held in reset unless the network policy enables it | Untrusted transport; the FPGA's hardware UDP transport sits behind it (R23) |
+| Edge proxy (where needed) | Software or a small appliance on the site LAN that relays the device's UDP datagrams to the server over TLS 443 | Untrusted; carries only ciphertext (R29, R39) |
 | Temperature sensor | Replaceable, outside the box; certificate from its manufacturer, paired to the device | Trusted for its readings once authenticated |
-| Host PC or phone | Data and CLI sessions over the UART or the modem; decrypts recordings; relays to the server | Trusted by its user; authenticated by the secure element |
-| Wi-Fi network | Over-the-air updates, recording uploads, server contact, if enabled | Untrusted |
+| Host PC | Data and CLI sessions over the UART or the LAN; decrypts recordings; relays to the server when the network is unavailable | Trusted by its user; authenticated by the secure element |
+| Site network and Internet | Updates, recording uploads, server contact, sensor-pairing confirmation | Untrusted |
 | Enrollment and update server | Records devices, sensors and pairings; detects unknown identities; serves updates built for each device's state | Manufacturer-controlled |
 | Bitstream build service | Builds and encrypts each device's bitstream | Manufacturer-controlled; handles per-device keys (R42) |
 | HSMs | Masters, LMS keys, the bitstream signing key, the device CA, sensor CA keys, the distribution key | Manufacturer-controlled, highest trust |
@@ -56,7 +57,8 @@ flowchart LR
   subgraph EXT["Not manufacturer-controlled"]
     HOST["Host PC or phone"]
     SENS["Temperature sensor"]
-    NET["Wi-Fi network"]
+    NET["Site network, Internet"]
+    PRX["Edge proxy"]
   end
   subgraph DEV["Device (sealed enclosure)"]
     subgraph FPGA["FPGA"]
@@ -67,14 +69,14 @@ flowchart LR
     SE["ATECC608C"]
     FL["QSPI flash"]
     SD["MicroSD"]
-    MDM["Radio modem (optional)"]
+    PHY["Ethernet PHY"]
     COD["CODECs, LCD, speaker"]
   end
   HSM --> BLD --> SRV
   HSM --> SRV
   HSM --> MFG
-  SRV <-->|"TLS, identity MAC"| NET <--> MDM <-->|"ciphertext"| LDR
-  HOST <-->|"UART or BLE, authenticated + encrypted"| LDR
+  SRV <-->|"TLS 443"| PRX <-->|"UDP, ciphertext"| NET <--> PHY <-->|"RMII"| LDR
+  HOST <-->|"UART or LAN, authenticated + encrypted"| LDR
   SENS <-->|"sensor link, MAC per frame"| LDR
   MFG -.->|"factory only"| SE
   MFG -.->|"JTAG, factory only"| CFG
@@ -98,11 +100,11 @@ flowchart LR
 | I2S, LCD | Application domain ↔ CODECs and LCD | Samples, waveforms | Inside the sealed enclosure only (R38, R40) |
 | MicroSD | Loader domain ↔ card | Recordings, user data, logs, packages | All encrypted and authenticated (R1, R10, R26, R41) |
 | UART | Host ↔ loader domain | Status; sessions, packages, CLI | Status read-only (R30); sessions authenticated through the secure element, AES-256-GCM frames (R9) |
-| Modem UART | Loader domain ↔ modem | Session frames, packages, recording ciphertext, server exchanges | Everything already protected end to end; the modem holds no key; reset driven by the radio policy (R23, R28, R29, R39) |
+| Ethernet (RMII) | Loader domain ↔ PHY ↔ site network | UDP datagrams carrying session frames: packages, recording ciphertext, server exchanges, DHCP | Hardware transport that drops everything but ARP, ICMP echo and UDP to one port; every payload is an authenticated, encrypted session frame; PHY reset driven by the network policy (R23, R28, R29, R39) |
 | Sensor link | Sensor ↔ loader domain | Pairing, readings, commands | Certificates, ML-KEM pairing, per-frame MACs, maximum reading age (R11–R14) |
 | JTAG | Factory ↔ FPGA | Key programming, boundary scan | Permanently disabled at enrollment on the Logos2 (R7, R43) |
 
-**Integrator adds:** the host software and its environment, recording storage and review systems, the clinical interfaces and safe states, the modem choice, and any additional data flows.
+**Integrator adds:** the host software and its environment, recording storage and review systems, the clinical interfaces and safe states, the edge proxy deployment, and any additional data flows.
 
 ## 2. Multi-Patient Harm View
 
@@ -136,7 +138,6 @@ Cloned sensors and cloned secure elements are detected by the server.
 | Loader | Platform package, A/B loader slots | Counter 0 |
 | Bitstream, including the boot ROM | Platform package built for this device, A/B bitstream slots, the family's multi-boot | Counter 0 and the pairing-key ratchet |
 | Secure element slot contents | Slot 0 by the ratchet; slots 11 and 13 by the loader; everything else fixed | — |
-| Modem firmware | A package the loader forwards to the modem (vendor format) | The modem's own |
 | Sensor denylist, CA keys | Inside update packages, and online | With the package |
 | Sensor firmware | Integrator's choice (open question S6) | — |
 | FPGA configuration engine, secure element firmware | Cannot be updated | — |
@@ -144,7 +145,7 @@ Cloned sensors and cloned secure elements are detected by the server.
 ### End-to-end path
 
 1. The manufacturer builds per-device platform packages from each device's reported state; the application owner signs application packages.
-2. Packages reach the device through the modem, the host, or a card.
+2. Packages reach the device over the network, through the host, or on a card.
 3. The loader checks the LMS signature, the inclusion proof and the version before decrypting anything, then installs into the inactive slot.
 4. The new component is confirmed after its checks, or the previous one stays in use. A new bitstream completes its ratchet only after its loader has booted.
 
@@ -159,7 +160,7 @@ and releases the application core → every cache line is checked as fetched. An
 
 ### 4.2 Recording
 
-The loader draws a segment key, encapsulates it with ML-KEM to the host, and loads it into the recording engine; the application feeds samples; ciphertext goes to the card or the modem.
+The loader draws a segment key, encapsulates it with ML-KEM to the host, and loads it into the recording engine; the application feeds samples; ciphertext goes to the card or over the network.
 At the end of the segment the key is erased. The host decrypts and checks block and segment order (`doc/acquisition.md`).
 
 ### 4.3 Host session and user data
@@ -193,12 +194,12 @@ The server marks the device retired and the loader writes the retired state into
 | Category | How `thriller` addresses it | Gaps |
 |---|---|---|
 | Authentication | Vendor bitstream authentication; LMS on every package; per-line tags on both images; the secure element releases keys only to the holder of the pairing key; the host authenticates to the secure element; sensor certificates and per-frame MACs; device identity proven to the server and attested to hosts | No device certificate for the sensor to check |
-| Authorization | Loader services only, through the mailbox; keys with no CPU read path; user data only with the host's secret; developer builds bound to one device and epoch; radio policy set by the application owner and enforced on the modem's reset | Session timeouts to be set |
+| Authorization | Loader services only, through the mailbox; keys with no CPU read path; user data only with the host's secret; developer builds bound to one device and epoch; network policy set by the application owner and enforced on the PHY's reset | Session timeouts to be set |
 | Cryptography | NIST algorithms: AES-256-GCM and an AES-256-CMAC KDF in the DPA-protected hard AES block; SHA-256 and HMAC in the fabric; LMS, ML-KEM, ML-DSA on the loader core; ECDSA only in the secure element; per-device keys | The SHA-256 core's side-channel resistance to be tested (R33); vendor bitstream signature not quantum-safe (R24) |
 | Code, data and execution integrity | Bitstream authentication every power-up; headers and versions against secure element counters; per-line authentication on every fetch; two-core isolation; the ratchet | — |
 | Confidentiality | Recordings encrypted to the host inside the FPGA; bitstream, flash, card, sessions encrypted | Plaintext on I2S and the LCD inside the sealed enclosure (R38) |
 | Event detection and logging | HMAC-chained event log under the log key, written to the card, read by the host and uploaded to the server; lockdown records in the boot record | Event list to be completed |
-| Resiliency and recovery | A/B slots for every image, multi-boot for the bitstream; UART recovery for the loader; safe state on sensor loss | Behavior under denial of service on the UART and the modem to be defined |
+| Resiliency and recovery | A/B slots for every image, multi-boot for the bitstream; UART recovery for the loader; safe state on sensor loss | Behavior under denial of service on the UART and the network port to be defined |
 | Firmware and software updates | Signed, encrypted, interruption-safe updates for the platform and the application, online and offline | Per-device platform packages must be built from each device's reported state; sensor firmware updates not yet designed |
 
 ## 6. Gaps for a submission
@@ -208,12 +209,12 @@ The server marks the device retired and the loader writes the retired state into
 3. **Fault-injection and side-channel evidence** on the FPGA and the sensor (`doc/test.md`).
 4. **Sensor firmware update** path.
 5. **Decommissioning procedure** in detail.
-6. **SBOM:** LiteForth and the FPGA's RTL, the ML-KEM, ML-DSA and LMS code, cryptoauthlib's message formats, Pango Design Suite (Lattice Diamond for the ECP5 fallback), the modem's firmware,
+6. **SBOM:** LiteForth and the FPGA's RTL, the ML-KEM, ML-DSA and LMS code, cryptoauthlib's message formats, Pango Design Suite (Lattice Diamond for the ECP5 fallback), the edge proxy software,
    the sensor firmware, with support status and end-of-support dates. The FPGA vendor's and Microchip's advisories feed vulnerability monitoring.
 7. **Testing evidence:** security requirements, threat mitigation and vulnerability testing as planned in `doc/test.md`; independent penetration testing to be arranged.
 8. **Risk scoring:** the Risk Assessment rates likelihood; FDA asks for an exploitability-based, non-probabilistic approach with scores before and after mitigation.
-9. **Wireless:** if a modem is fitted, FDA's guidance on radio frequency wireless technology in medical devices also applies: coexistence testing, wireless quality of service, and the risk of a lost link.
-   The clinical function must not depend on the modem.
+9. **Network:** the clinical function must not depend on the network; a lost link affects uploads, updates and pairing confirmation only. The Ethernet port adds a mains-earth-referenced path,
+   so the patient-applied parts' isolation must be shown on the acquisition side (IEC 60601-1), an electrical-safety item rather than a cybersecurity one.
 
 ## Source
 

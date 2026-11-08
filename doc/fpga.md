@@ -27,13 +27,13 @@ flowchart LR
   SD["MicroSD"]
   SNS["Sensor"]
   HOST["Host UART"]
-  MDM["Radio modem<br/>(optional)"]
+  ETH["Ethernet PHY"]
   COD["2 x NAU88C22, LCD, speaker"]
   FL -->|"master SPI at power-up"| CFG
   CFG --> ROM --> LDR
   KEYS --> LDR
   LDR <-->|I2C| SE
-  LDR <--> SD & SNS & HOST & MDM
+  LDR <--> SD & SNS & HOST & ETH
   LDR --> APP
   XIP <--> FL
   XIP --> LDR & APP

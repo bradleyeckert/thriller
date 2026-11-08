@@ -7,7 +7,7 @@ the secure element protocol in `doc/se.md`, the flash map in `doc/flash.md`. Eve
 
 1. **Two cores.** A loader core runs the boot ROM and the loader and owns every secret and every security control. An application core runs the application.
    The loader is a firewall: the application reaches security functions only by sending it messages.
-2. **Separation by wiring.** The application core's buses have no connection to keys, the secure element, the security block, the sensor, the modem, the card or flash writing.
+2. **Separation by wiring.** The application core's buses have no connection to keys, the secure element, the security block, the sensor, the network, the card or flash writing.
    This is checked from the netlist's connectivity, not argued from a privilege state machine.
 3. **Both cores execute in place, through one shared XIP engine.** Each core has its own cache, flash window and image key; the QSPI controller, the AES path and the tag comparator are built once.
 4. **The FPGA mirrors the ASIC's boot chain.** A small boot ROM (block RAM on the FPGA, mask ROM on the ASIC) verifies the loader image in flash, and the loader verifies the application, on both.
@@ -34,7 +34,7 @@ flowchart TB
     SD["SD controller"]
     UART["Host UART"]
     SUART["Sensor link"]
-    MUART["Modem UART + reset"]
+    ETH["Ethernet transport<br/>RMII MAC, ARP, IPv4, UDP demux"]
     TRNG["TRNG + health tests"]
     WDT["Timers + watchdogs"]
     ACC["Application core control"]
@@ -45,7 +45,7 @@ flowchart TB
     REC["Recording engine"]
     LCPU -->|AXI4-Lite| LROM & LRAM & LXC
     LCPU --> LPB
-    LPB --> SHA & SEC & I2C & QD & SD & UART & SUART & MUART & TRNG & WDT & ACC & INST & REC
+    LPB --> SHA & SEC & I2C & QD & SD & UART & SUART & ETH & TRNG & WDT & ACC & INST & REC
   end
   subgraph MB["Mailbox"]
     MRAM["Shared message RAM"]
@@ -154,7 +154,7 @@ The mailbox is the only path from the application to the loader, so it is the fi
 - The latest sensor reading with its age and status (`doc/sensor.md`); the application acts only on readings the loader has passed
 - Append to the security event log
 - Install an application update from the staging area
-- Device identity, versions, build mode, radio policy, enrollment state
+- Device identity, versions, build mode, network policy, enrollment state
 - Alarms to raise on the speaker and the LCD overlay
 
 **Rules for the loader's message parser:**
@@ -183,7 +183,7 @@ The mailbox is the only path from the application to the loader, so it is the fi
 | SD controller | APB | RTL | RTL | Recordings (ciphertext), user data, logs, offline packages. SPI mode at first; 4-bit SD if the recording rate needs it |
 | Host UART | APB | RTL | RTL | Status, host protocol, the application's forwarded terminal |
 | Sensor link | APB | RTL | RTL | UART or the sensor's own physical layer (`doc/sensor.md`), with a capture timer for reading age |
-| Modem UART + reset | APB | RTL | RTL | The optional radio modem; the reset line is driven from the radio policy so a disabled radio cannot be powered by software |
+| Ethernet transport | APB (control, address registers), FIFOs (datagrams) | RTL | RTL | See Ethernet transport below. The PHY's reset is driven from the network policy, so a disabled port cannot be enabled by software |
 | TRNG + health tests | APB | Ring oscillators | Ring oscillators | Conditioned with AES-256-CMAC; mixed with the secure element's Random; also feeds the application's random numbers |
 | Timers + watchdogs | APB | RTL | RTL | One watchdog per core; the sensor age timer; the loader resets the application core on its timeout |
 | Application core control | APB | RTL | RTL | Holds the application core in reset until boot checks pass; lockdown holds it in reset |
@@ -212,6 +212,27 @@ The mailbox is the only path from the application to the loader, so it is the fi
 | Mailbox | AXI4-Lite + APB on both sides | Message RAM, doorbells, terminal FIFOs, sample FIFO |
 | Clock and reset | Private | One core clock domain; the oscillator also feeds the clock checker |
 | Test only: fault controller, trigger pin, debug bridge | Test builds only | Absent from production builds (`doc/test.md`) |
+
+## Ethernet transport
+
+The network side of the device is hardware in the loader domain; there is no network stack on either core.
+
+| Layer | What the RTL does | What it drops |
+|---|---|---|
+| RMII MAC, 10/100 | Frames to our unicast MAC address and to broadcast; CRC check; minimum and maximum length | Everything else, including multicast |
+| ARP | Answers requests for our IPv4 address; keeps one entry for the gateway (or the server, on the same subnet), refreshed by the loader | ARP for other addresses; gratuitous ARP |
+| IPv4 | Version 4, header length 5, no fragments, destination is our address (or broadcast, for DHCP before an address is set); header checksum | Options, fragments, other protocols except ICMP echo and UDP |
+| ICMP | Echo reply, so the port is pingable for commissioning (disable by policy) | All other ICMP |
+| UDP | Destination port equal to our session port, or the DHCP client port while leasing; length and checksum | Everything else |
+| Payload | Into the receive FIFO, with the source address and port; the loader's session frame parser is the next step | — |
+
+Transmit is the mirror: the loader writes a payload with a destination, and the RTL wraps it in UDP, IPv4 and Ethernet with the correct checksums.
+Our MAC address comes from the manufacturer's OUI block, assigned at enrollment and stored in the records region (it is not secret). Addressing is by DHCP, a short UDP exchange run by loader
+Forth through the same FIFOs, or by static settings written in a host session. Everything above the UDP payload is the session protocol the UART already carries, so the loader has one parser for two transports.
+
+**Why hardware.** A software stack would have to live on some core: on the loader core it would put a network parser in the trusted domain, on the application core it would make a remote
+exploit an application compromise (live plaintext samples), and a third core would cost logic, RAM and a third image. Header parsing in RTL is a few hundred LUTs, cannot be made to execute
+anything, and is fuzzed in simulation (`doc/test.md`). TCP, DNS, TLS and HTTP are left to the edge proxy, which is untrusted and sees only ciphertext.
 
 ## The key-source interface
 
@@ -304,10 +325,10 @@ The same chain runs on the FPGA and the ASIC. On the FPGA, the configuration eng
    If no loader slot checks, it stays in recovery.
 2. **Loader.** The loader moves any lockdown record into the event log, completes a pending ratchet (`doc/se.md`), reads counter 1, checks the application image header and its version
    (production) or device and epoch (developer), derives the application image key into port 1, and locks port 1. It unwraps the sensor pairing and host records, starts the sensor session,
-   and applies the radio policy to the modem's reset.
+   and applies the network policy to the PHY's reset, then obtains an address (DHCP, or the static settings in the records region).
 3. **Application.** The loader releases the application core, which starts executing from its XIP window.
 4. **Lockdown** (any detection, a tag failure on either port, a fault in the loader) enters the boot ROM through a hardware vector, never through loader code, which may be the flash that just failed. In order, it:
-   1. holds the application core in reset and the modem in reset;
+   1. holds the application core and the Ethernet PHY in reset;
    2. clears the key registers, pass tokens, both caches, the recording engine and the XIP port configuration through the secret-clear fan-out, and wipes the loader's stacks and registers;
    3. writes a lockdown record into the flash boot record: the cause, and for a tag failure the slot, which it marks bad. The record is not authenticated, because it can only cause logging and a fallback;
    4. halts until the next power-on reset.
@@ -348,10 +369,11 @@ Rough figures in 4-input-LUT equivalents, to be replaced by synthesis results:
 | SHA-256 core and LMS sequencer | 1K to 2K (more if masked) | — |
 | Security block, key registers, key gate | 0.5K to 1K | — |
 | Recording engine, sample FIFO | 0.5K to 1K | Block buffer |
-| I2C master, SD, three UARTs, timers | 0.5K to 1K | — |
+| I2C master, SD, two UARTs, timers | 0.5K to 1K | — |
+| Ethernet transport: RMII MAC, ARP, IPv4, ICMP echo, UDP demux, FIFOs | 0.5K to 1K | Frame buffers |
 | TRNG | Under 0.2K | — |
 | Two I2S masters, CODEC I2C, LCD controller with overlay | 1K to 2K | Line buffer |
-| **Total** | **About 8K to 16K, plus the hard AES block** | |
+| **Total** | **About 9K to 17K, plus the hard AES block** | |
 
 The PG2L50H leaves ample room for the application. On the ECP5 fallback, soft AES-256 and GHASH add about 6K LUTs, leaving little of the LFE5U-25F's 24K for the application (`fpga/ecp5/`).
 

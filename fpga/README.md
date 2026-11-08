@@ -26,7 +26,7 @@ What a family must provide, in order of how much the design depends on it. Items
 | 6 | **A hard AES block protected against power analysis**, usable from the fabric with keys loaded from fabric registers | All of the FPGA's key-dependent AES work runs there (R33, `doc/hw.md`). Without it, soft AES cores, unprotected |
 | 7 | **Combinational loops allowed** for a ring-oscillator TRNG | The FPGA needs its own nonces (`doc/fpga.md`) |
 | 8 | **Enough logic:** about 8K to 16K 4-input-LUT equivalents for the two cores and the security blocks with a hard AES block (about 6K more with soft AES), plus the application; block RAM for the boot ROM (8 to 16 KB), two caches, CPU memory and buffers | `doc/hw.md`, Resource estimate |
-| 9 | **A QSPI flash interface** shared between the configuration engine at power-up and the fabric afterwards, plus pins for the secure element's I2C, the card, three UARTs, two I2S buses, the CODEC I2C and the LCD | `doc/hw.md` |
+| 9 | **A QSPI flash interface** shared between the configuration engine at power-up and the fabric afterwards, plus pins for the secure element's I2C, the card, two UARTs, an RMII PHY (about 9 pins plus a 50 MHz reference), two I2S buses, the CODEC I2C and the LCD | `doc/hw.md` |
 
 **Desirable:** hardening of the configuration decryptor against power analysis and glitching (R5); on-die voltage and clock monitors; permanent JTAG disable (R43); revocation of the vendor signing key;
 a vendor-provided hardened PUF that wraps the configuration key or user keys (it costs nothing to use and models the ASIC); a licence that runs headless; a country of origin acceptable in the target markets (F11).

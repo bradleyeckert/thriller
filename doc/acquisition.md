@@ -22,7 +22,7 @@ Assuming the data is biometric, recordings are the primary asset (`doc/arch.md`)
 | Application core domain | Samples, for display and processing | Inside the FPGA |
 | Application → recording engine (sample FIFO) | Samples the application wants recorded | A one-way FIFO into the loader domain; the engine accepts samples only while a segment key is loaded |
 | FPGA → LCD | Displayed waveforms | Tamper-evident seal |
-| Recording engine → card or modem | Recording ciphertext | Encrypted to the host |
+| Recording engine → card or network | Recording ciphertext | Encrypted to the host |
 
 Plaintext exists only in the sealed enclosure: on the I2S buses, the LCD bus, and inside the FPGA (R38). Someone who breaks the seal could also replay or substitute samples on an I2S bus;
 nothing in the design detects that (R40). An enclosure-crossing data link, when present, carries only ciphertext (R39).
@@ -36,7 +36,7 @@ Recordings are encrypted so that **the device can write them but not read them b
    For each recipient it runs ML-KEM encapsulation to the recipient's public key and wraps the segment key with AES-256-GCM under a key derived from the shared secret (the one place the loader's code
    handles key material, masked; `doc/hw.md`). It then writes the segment header: device serial, recording ID, segment number, start sample index, build mode, and the encapsulations with their wrapped keys.
 3. **Stream.** The application feeds samples into the sample FIFO; the recording engine encrypts them in AES-256-GCM blocks (for example 4 KB) in the hard AES block, with the block number as the nonce
-   and the segment header as associated data in the first block, and the loader writes the ciphertext to the card or hands it to the modem.
+   and the segment header as associated data in the first block, and the loader writes the ciphertext to the card or sends it over the network.
 4. **Erase.** At the end of the segment the engine's key register is cleared. Nothing on the device can decrypt that segment again.
 5. **Order.** Block and segment numbers make dropped, reordered or substituted blocks and segments detectable at the host.
 6. **Provenance (optional).** The loader signs each segment's header and final block tag with a per-device ML-DSA key kept in the records region, registered at enrollment (open question Q5).

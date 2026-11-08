@@ -17,7 +17,7 @@ enters a cache. The loader installs images; the hardware checks them.
 ## Image header
 
 Each slot starts with a header: image kind (loader or application), version, mode (production, or developer with the device's serial number and epoch), length, the 128-bit **install salt** *R*,
-the radio policy (applications), and an HMAC-SHA256 under the application key over all of it. The header is the only thing the boot chain reads before deciding to trust a slot:
+the network policy (applications), and an HMAC-SHA256 under the application key over all of it. The header is the only thing the boot chain reads before deciding to trust a slot:
 
 | Check | Loader image (boot ROM) | Application image (loader) |
 |---|---|---|
