@@ -1,20 +1,18 @@
 # Acquisition and Recordings
 
-The device records like a high-speed EEG: four 24-bit channels from two stereo CODECs, streamed to the MicroSD card or, through the modem, to a server, at 0.4 to 0.9 MB/s.
-EEG data is health data and can identify a person, so recordings are the primary asset (`doc/arch.md`).
+One foreseen application streams digitized audio or video to the MicroSD card, whose files are sent to a server.
+Assuming the data is biometric, recordings are the primary asset (`doc/arch.md`).
 
 ## Hardware
 
 | Part | Role |
 |---|---|
-| 2 × NAU88C22 (24-bit stereo CODEC) | Four acquisition channels; one CODEC's DAC and speaker driver also drives the alarm speaker |
+| 24-bit stereo CODEC(s) | One CODEC's DAC and speaker driver also drives the alarm speaker |
 | FPGA, application core domain | Masters both I2S buses and generates the CODECs' master clock; controls the CODECs over their own I2C bus; drives the LCD |
 | FPGA, loader core domain | The recording engine, segment keys, the card |
 | LCD panel | Inside the enclosure, behind a window |
 | Speaker | Inside the enclosure, for audible alarms |
 | Enclosure | Tamper-evident seal |
-
-Four channels at 48 kHz in 24 bits come to about 0.58 MB/s before framing.
 
 ## Data path
 
@@ -27,7 +25,7 @@ Four channels at 48 kHz in 24 bits come to about 0.58 MB/s before framing.
 | Recording engine → card or modem | Recording ciphertext | Encrypted to the host |
 
 Plaintext exists only in the sealed enclosure: on the I2S buses, the LCD bus, and inside the FPGA (R38). Someone who breaks the seal could also replay or substitute samples on an I2S bus;
-nothing in the design detects that (R40). The modem, when present, carries only ciphertext (R39).
+nothing in the design detects that (R40). An enclosure-crossing data link, when present, carries only ciphertext (R39).
 
 ## Recording encryption
 

@@ -1,10 +1,7 @@
 # It's all about the ROT
-Root of trust for an FPGA-based medical recording device, built from three parts: an FPGA with an encrypted and authenticated bitstream,
-one QSPI NOR flash, and an ATECC608C secure element. There is no external microcontroller. The FPGA is a model of the ASIC that replaces it
-at volume (`doc/ics55.md`), so everything the FPGA does is generic RTL and Forth, and everything that depends on the FPGA family lives in `fpga/<family>/`.
-
-The device records like a high-speed EEG: four 24-bit channels from two CODECs, streamed to a MicroSD card or, through an optional radio modem, to a server.
-Recordings are health data that can identify a person, so they are the primary asset.
+Root of trust for an FPGA-based device platform, built from three parts: an FPGA with an encrypted and authenticated bitstream,
+one QSPI NOR flash, and an ATECC608C secure element. The FPGA is a model of the ASIC that replaces it
+at volume (`doc/ics55.md`), so everything the FPGA does is generic RTL and firmware, and everything that depends on the FPGA family lives in `fpga/<family>/`.
 
 - **The FPGA is the root of trust and the application.** Its configuration engine authenticates and decrypts the bitstream with the device's own eFuse key;
   the bitstream holds a boot ROM, a loader core that owns every key path and security decision, and an application core that runs the LiteForth application
@@ -13,9 +10,8 @@ Recordings are health data that can identify a person, so they are the primary a
   It releases a key only to a bitstream that holds the current pairing key, and the data key only after the host has proved itself to the secure element directly (`doc/se.md`).
 - **The flash is untrusted storage** for the bitstream, the loader and the application, every line of code authenticated as it is fetched (`doc/flash.md`).
 
-The design has been through three earlier architectures: a root of trust in FPGA fabric with an ATECC608B (commit `cecf901`), the ESP32-C5 alone running the application (`8c54b84`),
-and the C5 as root of trust with the application on the FPGA (`eb63f10`). This one returns to the FPGA and the secure element, keeps the medical application, sensor and recording designs
-of the later architectures, and adds hardware-enforced bitstream rollback protection, device attestation, and the ASIC key-source interface.
+The platform will encrypt files, so the ATECC608C is provisioned accordingly.
+To support DSP applications, audio CODECs are planned for.
 
 ## Documents
 
@@ -52,8 +48,6 @@ of the later architectures, and adds hardware-enforced bitstream rollback protec
 - **MicroSD card socket**, driven by the FPGA: encrypted recordings and user data, the event log, offline update packages.
 - **Sensor connector**: a wired, two-way link to a replaceable temperature sensor, driven by the loader core (`doc/sensor.md`).
 - **UART** (USB-UART bridge): status reports, and the wired path for host sessions, updates and the CLI.
-- **Radio modem (optional)**: a Wi-Fi/BLE module running its vendor's modem firmware, on a UART to the loader core, held in reset unless the application owner's radio policy enables it.
-  It is outside the trust boundary and only ever carries ciphertext (see Radios).
 - Oscillator, voltage regulators, and test connectors not populated in production. The FPGA's JTAG is permanently disabled at enrollment where the family allows it.
 
 ## Keys and what unlocks them
