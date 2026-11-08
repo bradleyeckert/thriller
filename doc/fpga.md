@@ -23,7 +23,7 @@ flowchart LR
     ACQ["2 x I2S, LCD"]
   end
   FL[("QSPI flash<br/>bitstreams, loader, application")]
-  SE["ATECC608B"]
+  SE["ATECC608C"]
   SD["MicroSD"]
   SNS["Sensor"]
   HOST["Host UART"]
@@ -80,7 +80,7 @@ Neither core has a read path to any of them, or to the hard AES block. Key regis
 ## TRNG
 
 A ring-oscillator TRNG with continuous health tests (repetition count and adaptive proportion, as in NIST SP 800-90B), conditioned with AES-256-CMAC in the hard AES block, and mixed with the
-secure element's Random output. It supplies every nonce, segment key and install salt. A health-test failure stops the boot chain before any key is unwrapped.
+secure element's certified random output, so every nonce has a certified source behind it even if the ring oscillators degrade. It supplies every nonce, segment key and install salt. A health-test failure stops the boot chain before any key is unwrapped.
 
 ## Resource estimate
 

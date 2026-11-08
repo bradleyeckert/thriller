@@ -30,7 +30,7 @@ Terms are defined in the README and `doc/arch.md`. Risk IDs (R1–R46) refer to 
 | Boot ROM | Block RAM in the bitstream. Pairs with the secure element, checks the loader image, UART recovery | Trusted; part of the signed bitstream |
 | Loader core domain | LiteForth loader core and the security hardware: key registers, SHA-256 core, hard AES block, XIP engine, recording engine, I2C to the secure element, card, UART, sensor link, modem control | Trusted; holds every key path and security decision |
 | Application core domain | LiteForth application core, I2S acquisition, LCD; runs from its flash slot | Signed by the application owner, or a device-bound developer build; no path to any key |
-| ATECC608B secure element | Keys, counters, identity, host CheckMac, attestation signatures | Trusted; certified tamper-resistant; counters unauthenticated (R36) |
+| ATECC608C secure element | Keys, counters, identity, host CheckMac, attestation signatures | Trusted; certified tamper-resistant; counters unauthenticated (R36) |
 | QSPI flash | Bitstreams, loader and application images, boot record, records | Untrusted storage; everything authenticated |
 | CODECs, LCD, speaker | Acquisition, display, alarms; plaintext inside the sealed enclosure | Physically protected only (R38) |
 | MicroSD card | Recordings (encrypted to the host), user data, logs, offline packages | Untrusted storage |
@@ -64,7 +64,7 @@ flowchart LR
       LDR["Loader domain<br/>keys, checks, sessions"]
       APP["Application domain<br/>LiteForth application"]
     end
-    SE["ATECC608B"]
+    SE["ATECC608C"]
     FL["QSPI flash"]
     SD["MicroSD"]
     MDM["Radio modem (optional)"]
@@ -93,7 +93,7 @@ flowchart LR
 |---|---|---|---|
 | QSPI (configuration) | Flash → configuration engine | The device's bitstream | Encrypted and authenticated under the FPGA's per-device eFuse key, RSA-signed; nothing else accepted; a bitstream without the current pairing key gets nothing from the secure element (R17, R31, R32, R44) |
 | QSPI (XIP) | Flash ↔ both cores | Loader and application lines, headers, boot record, records | Per-line AES-256-GCM under per-install keys; HMAC under the application key on headers and records (R2, R6, R34, R35) |
-| I2C (secure element) | Loader domain ↔ ATECC608B | Nonces, MACs, encrypted key reads, counter reads, CheckMac, KDF output, signatures | Every read MAC'd or encrypted under the pairing key over a fresh nonce; counters unauthenticated; bus inside the seal (R36) |
+| I2C (secure element) | Loader domain ↔ ATECC608C | Nonces, MACs, encrypted key reads, counter reads, CheckMac, KDF output, signatures | Every read MAC'd or encrypted under the pairing key over a fresh nonce; counters unauthenticated; bus inside the seal (R36) |
 | Mailbox and sample FIFO | Application domain → loader domain | Service requests, terminal bytes, samples | Fixed message set, fuzzed parser, one-way sample path (R45) |
 | I2S, LCD | Application domain ↔ CODECs and LCD | Samples, waveforms | Inside the sealed enclosure only (R38, R40) |
 | MicroSD | Loader domain ↔ card | Recordings, user data, logs, packages | All encrypted and authenticated (R1, R10, R26, R41) |

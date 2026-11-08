@@ -29,7 +29,7 @@ Each test names the risk it covers. The catalogue below is the traceability matr
 ## 2. Reference models
 
 - **Formats:** platform and application packages, manifests and inclusion proofs, developer packages, image headers, XIP lines and tags, the boot record, records in flash, secure element command and response frames, recording segment headers and blocks, sensor certificates and transcripts, session frames, user data records, log entries, attestation reports.
-- **Cryptography:** known-answer tests for each algorithm from the standards (LMS from RFC 8554, ML-KEM and ML-DSA from the FIPS 203 and 204 vectors, AES-GCM and AES-CMAC from the NIST vectors, the ATECC608B's SHA-256 message formats from cryptoauthlib); the same vectors drive the RTL and the Forth.
+- **Cryptography:** known-answer tests for each algorithm from the standards (LMS from RFC 8554, ML-KEM and ML-DSA from the FIPS 203 and 204 vectors, AES-GCM and AES-CMAC from the NIST vectors, the ATECC608C's SHA-256 message formats from cryptoauthlib); the same vectors drive the RTL and the Forth.
 - **Protocols:** both ends of the host session, the sensor protocol and the server exchange, so each end can be tested against a model of the other; a secure element model that enforces the slot configuration, so a configuration mistake shows up in simulation before a part is locked.
 
 The sensor's firmware is tested against the same models.

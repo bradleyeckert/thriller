@@ -149,7 +149,7 @@ FDA asks for an exploitability-based rating rather than likelihood; the table is
 | R43 | FPGA pins | Board prober with a JTAG pod | Use boundary scan to sample or drive the FPGA's pins while it runs | Boundary scan may stay available after the security settings | High | Medium | **Closed on the Logos2:** JTAG permanently disabled at enrollment, after the factory boundary-scan test. On the ECP5 fallback it remains, giving no access to keys or fabric state; equivalent to probing the pins (R36, R38, R40); JTAG connector not populated, inside the seal |
 | R44 | Bitstream fallback | Board prober | Corrupt the active bitstream slot to force the multi-boot fallback to an older bitstream | Multi-boot picks the other slot on failure | High | Medium | The fallback bitstream holds a retired pairing key once an update has completed, so it boots into recovery, not into service; the loader then reinstalls the current platform package from the card or the host |
 | R45 | Mailbox | Malicious application | Exploit the loader's message parser | The mailbox is the one interface between the cores | Critical | Medium | Fixed message set, lengths and offsets checked against fixed limits, every request copied out of shared RAM before use, parser fuzzed on the software platform (`doc/hw.md`, Mailbox) |
-| R46 | Secure element | Lab attacker | Decapsulate one secure element and read its keys | Any chip can be attacked in a lab | High | Low | A certified tamper-resistant part (JIL high); keys per device, so one break exposes one unit and one host's data key, never the host data secret, never past recordings |
+| R46 | Secure element | Lab attacker | Decapsulate one secure element and read its keys | Any chip can be attacked in a lab | High | Low | A certified tamper-resistant part (JIL high), the 608C chosen for its updated countermeasures; keys per device, so one break exposes one unit and one host's data key, never the host data secret, never past recordings |
 
 ## Optional: Code Secrecy Profile
 
@@ -170,8 +170,8 @@ one device. The profile changes nothing else in the design.
 | ML-DSA-44 | FIPS 204 | Loader core (verify only); optionally sign, for recording provenance | Sensor certificates |
 | ML-KEM-768 | FIPS 203 | Loader core (encapsulate), sensor (decapsulate), host (decapsulate) | Sensor pairing; recording segment keys |
 | ECDSA P-256, SHA-256 | FIPS 186-5 | Secure element only | Device attestation signatures; the device certificate |
-| SHA-256-based MAC, GenDig, CheckMac, KDF | Microchip ATECC608B command set | Secure element | Pairing, encrypted reads, counter reads, host authentication, session key derivation |
-| TRNG | SP 800-90B health tests | Ring-oscillator TRNG in the FPGA, mixed with the secure element's RNG; a TRNG on the sensor | Nonces, segment keys, install salts |
+| SHA-256-based MAC, GenDig, CheckMac, KDF | Microchip ATECC608C command set | Secure element | Pairing, encrypted reads, counter reads, host authentication, session key derivation |
+| TRNG | SP 800-90A/B/C | Ring-oscillator TRNG in the FPGA with SP 800-90B health tests, mixed with the ATECC608C's certified RNG (CMVP ESV); a TRNG on the sensor | Nonces, segment keys, install salts |
 
 **AES-256 everywhere we choose the symmetric algorithm.** The Logos2's hard AES block is protected against power analysis, so every key-dependent AES step in the FPGA runs there,
 with the key registers feeding it directly. If the block cannot compute GHASH, the FPGA uses AES-CCM instead of GCM so that no key-dependent step runs in unprotected fabric (open question F4).

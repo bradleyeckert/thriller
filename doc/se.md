@@ -1,13 +1,15 @@
 # Secure Element
 
-The ATECC608B holds what the FPGA cannot keep for itself: per-device keys, the device's identity, and two monotonic counters. This document lays out its slots,
+The ATECC608C holds what the FPGA cannot keep for itself: per-device keys, the device's identity, and two monotonic counters. This document lays out its slots,
 the protocol between the loader domain and the secure element, the pairing-key ratchet that kills superseded bitstreams, attestation, and the configuration that
 must be frozen before the part is locked. It is a proposal: every access rule must be confirmed against cryptoauthlib's configuration structures and tested on real parts
 before the configuration zone is locked, because a locked configuration cannot be changed (`doc/questions.md`, E5).
 
 ## Part
 
-- **ATECC608B**, I2C, UDFN or SOIC, on a bus that stays inside the sealed enclosure (R36). Certified tamper-resistant (JIL high).
+- **ATECC608C**, I2C, UDFN or SOIC, on a bus that stays inside the sealed enclosure (R36). Certified tamper-resistant (JIL high). Chosen over the ATECC608B for its random number generator,
+  certified against NIST SP 800-90A/B/C with a CMVP entropy source validation, and for its updated countermeasures against side-channel and invasive analysis (R46). The command set and slot
+  layout are the same, so cryptoauthlib and this slot map apply unchanged; any 608B-specific configuration difference is to be checked at E5.
 - **Custom configuration.** Microchip's TrustFLEX layout is built around ECC keys and TLS certificates; this design is mostly symmetric. Use TrustCUSTOM (Microchip provisions the
   configuration and keys from a definition the manufacturer supplies through the Trust Platform) or blank parts configured at enrollment (`doc/enrollment.md`). Either way, every per-device
   key is derived in the HSM from the part's serial number, so the database holds no key material.
@@ -17,7 +19,7 @@ before the configuration zone is locked, because a locked configuration cannot b
 
 ## Slots
 
-The ATECC608B has 16 slots: slots 0 to 7 hold 36 bytes, slot 8 holds 416 bytes, and slots 9 to 15 hold 72 bytes. Symmetric keys are 32 bytes (key type "SHA/other").
+The ATECC608C has 16 slots: slots 0 to 7 hold 36 bytes, slot 8 holds 416 bytes, and slots 9 to 15 hold 72 bytes. Symmetric keys are 32 bytes (key type "SHA/other").
 
 | Slot | Size | Contents | Per device | Read | Write after lock | Used for |
 |---|---|---|:-:|---|---|---|
@@ -52,7 +54,7 @@ Notes:
 
 ## Protocol between the loader domain and the secure element
 
-All messages follow the ATECC608B command set as cryptoauthlib implements it. The pairing key enters every computation through the SHA-256 core's key port, from the key source,
+All messages follow the ATECC608C command set as cryptoauthlib implements it. The pairing key enters every computation through the SHA-256 core's key port, from the key source,
 and the result goes to a comparator or a key register, so the Forth code on the loader core handles only ciphertext, nonces and MACs.
 
 | Need | Commands | Protection |
@@ -67,7 +69,7 @@ and the result goes to a comparator or a key register, so the Forth code on the 
 | Server authentication | MAC (slot 12) over the report digest; and CheckMac (slot 12) of the server's response | Symmetric, quantum-safe |
 | Ratchet | Nonce, GenDig (slot 0), Write (slot 0, encrypted): the next pairing key XORed with TempKey, with the data MAC | Only the holder of the current key can install the next |
 | Freshness, lifecycle | Encrypted Write (slots 11, 13) as above | |
-| Random | Random, mixed into the TRNG's conditioner | Two sources |
+| Random | Random, mixed into the TRNG's conditioner | Two sources; the secure element's is the certified one |
 
 The authenticated reads and the CheckMac flows are exactly the ones in cryptoauthlib; the fabric reproduces them with its SHA-256 core instead of a host library.
 

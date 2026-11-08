@@ -1,6 +1,6 @@
 # It's all about the ROT
 Root of trust for an FPGA-based medical recording device, built from three parts: an FPGA with an encrypted and authenticated bitstream,
-one QSPI NOR flash, and an ATECC608B secure element. There is no external microcontroller. The FPGA is a model of the ASIC that replaces it
+one QSPI NOR flash, and an ATECC608C secure element. There is no external microcontroller. The FPGA is a model of the ASIC that replaces it
 at volume (`doc/ics55.md`), so everything the FPGA does is generic RTL and Forth, and everything that depends on the FPGA family lives in `fpga/<family>/`.
 
 The device records like a high-speed EEG: four 24-bit channels from two CODECs, streamed to a MicroSD card or, through an optional radio modem, to a server.
@@ -45,7 +45,7 @@ of the later architectures, and adds hardware-enforced bitstream rollback protec
   (`fpga/ecp5/`), which encrypts but does not authenticate bitstreams; it is for a limited number of units, and its weaknesses are stated in `doc/arch.md`. Candidates: Microchip PolarFire,
   Lattice CrossLink-NX, Efinix Titanium. The requirements a family must meet are in `fpga/README.md`.
 - **QSPI NOR flash**, 32 MB proposed: bitstream slots, loader images (A/B), application images (A/B), the boot record and a recovery staging area (`doc/flash.md`). Nothing in it is trusted.
-- **ATECC608B** secure element (Microchip), on an I2C bus that never leaves the sealed enclosure. Custom configuration (TrustCUSTOM, or blank parts provisioned at enrollment); the Trust Platform
+- **ATECC608C** secure element (Microchip), on an I2C bus that never leaves the sealed enclosure. The 608C rather than the 608B for its NIST SP 800-90A/B/C-certified random number generator and its updated physical countermeasures. Custom configuration (TrustCUSTOM, or blank parts provisioned at enrollment); the Trust Platform
   provisioning service can carry the per-device key material and the device certificate. Second source: pin-compatible parts claiming compatibility, to be qualified.
 - **2 × NAU88C22** stereo CODECs: four acquisition channels, and the speaker driver (`doc/acquisition.md`).
 - **LCD panel and speaker** inside the enclosure, which carries a tamper-evident seal.

@@ -81,7 +81,7 @@ Closed:
 
 ### By you
 
-- **Chipset: an FPGA with an authenticated bitstream, one QSPI flash, and an ATECC608B.** No external microcontroller. The FPGA models the ASIC; family specifics live in `fpga/<family>/`.
+- **Chipset: an FPGA with an authenticated bitstream, one QSPI flash, and an ATECC608C.** No external microcontroller. The FPGA models the ASIC; family specifics live in `fpga/<family>/`.
 - **The application runs on the FPGA,** in LiteForth, executing in place from the flash.
 - **FPGA family:** the Pango Logos2 PG2L50H-6IFBG484 is the target; the ECP5 LFE5U-25F is the fallback for a limited number of units.
 - **Private keys travel in the bitstream rather than coming from a PUF in fabric.** The ASIC implements a hardened PUF with characterization hardware behind the same interface.
