@@ -5,11 +5,11 @@ and is also the ASIC design. Each family folder holds its notes, its build and k
 
 | Family | Folder | Status |
 |---|---|---|
-| Pango Logos2 (PG2L50H-6IFBG484) | [`logos2/`](logos2/README.md) | **Current choice** |
-| Lattice ECP5 (LFE5U-25F-6BG256C) | [`ecp5/`](ecp5/README.md) | Fallback, limited numbers |
+| Efinix Titanium (Ti60) | [`ti60/`](ti60/README.md) | Candidate |
+| Pango Logos2 (PG2L50H-6IFBG484) | [`logos2/`](logos2/README.md) | Candidate |
 | Microchip PolarFire | [`polarfire/`](polarfire/README.md) | Candidate |
 | Lattice CrossLink-NX (LIFCL) | [`lifcl/`](lifcl/README.md) | Candidate |
-| Efinix Titanium (Ti60) | [`ti60/`](ti60/README.md) | Candidate |
+| Lattice ECP5 (LFE5U-25F-6BG256C) | [`ecp5/`](ecp5/README.md) | Fallback, limited numbers |
 | Pango Logos (PGL25G) | [`logos/`](logos/README.md) | Not usable: no bitstream encryption |
 
 ## The wish list

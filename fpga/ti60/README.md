@@ -23,7 +23,13 @@ configuration; it is not quantum-safe (R24), but a forged bitstream would still 
 
 ## Open questions
 
-1. Per-device block RAM contents in a routed Efinity design, from a script.
+1. Per-device block RAM contents in a routed Efinity design, from a script: Yes, use the "BRAM Initial Content Updater".
 2. Active SPI multi-image layout and fallback behavior.
 3. Readback and key read-out protection; behavior of the JTAG disable options.
 4. Licence and headless operation of Efinity.
+
+## Brad's notes
+
+The TI60F225I3 is $38.60 from Digikey. Consignment to JLCPCB is possible. 0.65mm ball pitch would use epoxy-filled via-in-pad.
+Use a 0.2mm drill and 0.35mm pad. You should be able to use a 6-layer PCB.
+256-ball, 0.8mm pitch is not available, but not needed. 0.2mm/0.35mm vias cost nothing extra on 6L at JLCPCB.

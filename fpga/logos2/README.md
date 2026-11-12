@@ -68,7 +68,17 @@ The bitstream slots in `doc/flash.md` are sized at 4 MB pending F9.
 ## Toolchain
 
 Pango Design Suite (PDS), proprietary, runs from the command line. There is no open-source place-and-route for Logos2, so the development flow is PDS too.
-Licence terms and scripted block RAM updates with encryption and signing (F1) are open.
+Scripted block RAM updates with encryption and signing (F1) are open.
+License is free, but getting set up is not obvious. The steps are:
+
+1. Create an account at https://www.pangomicro.com/en/
+1. Once approved, log in using your email address and password (the password field is labeled PIN)
+1. Apply for a node-locked license for PDS.
+1. Download PDS. It is 2.0 GB, so it will take a while.
+1. You will get an email about your MAC being approved. That means your license file is ready. 
+1. Download the PDS license file from https://www.pangomicro.com/en/member/license/
+1. Create a new environmental variable PANGO_LICENSE_FILE that points to it.
+1. Launch PDS.
 
 ## Other considerations
 
