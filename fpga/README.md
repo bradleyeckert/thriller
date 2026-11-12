@@ -10,6 +10,7 @@ and is also the ASIC design. Each family folder holds its notes, its build and k
 | Microchip PolarFire | [`polarfire/`](polarfire/README.md) | Candidate |
 | Lattice CrossLink-NX (LIFCL) | [`lifcl/`](lifcl/README.md) | Candidate |
 | Efinix Titanium (Ti60) | [`ti60/`](ti60/README.md) | Candidate |
+| Gowin Arora V (GW5A-LV25) | [`gw5a/`](gw5a/README.md) | Fallback at best, behind the ECP5: AES-128 without authentication, no hard crypto |
 | Pango Logos (PGL25G) | [`logos/`](logos/README.md) | Not usable: no bitstream encryption |
 
 ## The wish list

@@ -22,7 +22,7 @@ Every open question in one place. Earlier architectures are kept in git history 
 | F8 | The LCD overlay band for developer mode and alarms that the application cannot draw over | [hw.md](hw.md#application-core-domain) | RTL design | 3 |
 | F9 | PG2L50H bitstream size, for the flash's bitstream slots | [flash.md](flash.md#regions) | Build | 2 |
 | F10 | ECP5 fallback: eFuse burn order, CRC width against blind edits (R32), master SPI and dual-boot layout, and keeping its Yosys/nextpnr and Diamond flows equivalent | [ecp5](../fpga/ecp5/README.md) | Only if the fallback is used | 3 |
-| F11 | PolarFire, CrossLink-NX and Titanium as alternatives: the open items in their folders, and the country-of-origin requirements of the target markets | [fpga/](../fpga/README.md) | Vendor documentation; business decision | 3 |
+| F11 | PolarFire, CrossLink-NX, Titanium and the Gowin GW5A as alternatives: the open items in their folders, and the country-of-origin requirements of the target markets | [fpga/](../fpga/README.md) | Vendor documentation; business decision | 3 |
 | **Hardware** | | | | |
 | H1 | AXI4-Lite latency: whether the decoder and slaves answer in the cycles LiteForth's memory state machine expects, or whether ROM and SRAM need a tightly coupled path | [hw.md](hw.md#bus-choice) | RTL and simulation | 2 |
 | H2 | Mailbox message set, formats and message RAM size | [hw.md](hw.md#mailbox) | Specification | 2 |
