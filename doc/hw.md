@@ -416,11 +416,16 @@ Rough figures in 4-input-LUT equivalents, to be replaced by synthesis results:
 | I2C master, SD, two UARTs, timers | 0.5K to 1K | — |
 | Ethernet transport: RMII MAC, ARP, IPv4, ICMP echo, UDP demux, FIFOs | 0.5K to 1K | Frame buffers |
 | Stream buffer: QSPI PSRAM controller, ring pointers, drain paths | 0.3K to 0.6K | Small staging FIFOs |
-| TRNG | Under 0.2K | — |
+| Entropy source: ring oscillators, SP 800-90B health tests, conditioner input buffering | 0.2K to 0.5K | — |
+| HMAC_DRBG sequencer and state (K, V, reseed counter; the HMACs run on the SHA-256 core) | 0.2K to 0.4K, about 550 flip-flops | — |
 | Two I2S masters, CODEC I2C, LCD controller with overlay | 1K to 2K | Line buffer |
-| **Total** | **About 13K to 24K with the masked Ascon core** | |
+| **Total** | **About 14K to 25K with the masked Ascon core** | |
 
 The PG2L50H and the Ti60 both leave room for the application.
+
+**DRBG in hardware or in Forth.** HMAC_DRBG is a handful of HMAC calls over a 512-bit state, so it could run as Forth on the loader core with the SHA-256 core in derive mode, at no LUT cost.
+The hardware sequencer is preferred because the DRBG state is a CSP: in hardware it never exists in the loader's SRAM or stacks, so the "software never sees key material" claim holds without exception,
+and the boot ROM can run the DRBG's known-answer tests before the loader is trusted. A CTR_DRBG would have needed its own AES core (1.5K to 3K LUTs); HMAC_DRBG on the existing core is why the choice is cheap (F4).
 
 ## Open questions
 
