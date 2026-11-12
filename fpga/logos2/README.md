@@ -19,7 +19,7 @@ From the *Logos2 Family FPGAs Device Datasheet*:
 | # | Requirement (`fpga/README.md`) | Logos2 |
 |---|---|---|
 | 1 | Encryption and authentication, per-device key | AES-256-GCM with the key in eFuse, programmed per device at enrollment, and RSA-2048 signatures. **Yes, twice.** Closes R32 |
-| 2 | No fallback | **Not automatic.** The eFuse key alone does not refuse plaintext bitstreams; separate deciphering and authentication enables must be set and locked (see The F2 caveat) |
+| 2 | No fallback | The configuration guide's procedure says only the corresponding encrypted bitstream can be configured once a key is programmed; an adjacent sentence is ambiguous about eFuse keys. Verify on a fused sample (see F2 below) |
 | 3 | Readback disabled, key not readable | Encrypted bitstreams cannot be read back or verified (guide 4.3.9.1); eFuse key; JTAGLOCK and SCANLOCK fuse bits |
 | 4 | Master SPI self-configuration with multi-boot | Yes: multi-boot stream with golden and application images, built by `cfg_gen_multi_file`; a status-register fallback flag. Golden-image rule and mode pins to confirm (F3) |
 | 5 | Per-device constants from a script | **Not in the Tcl guide** (see Per-device keys below). The primary plan is now wrapped pairing keys under the eFuse key through the hard AES block (F5), which needs no per-device bitstream |
@@ -115,13 +115,16 @@ writes the commands for any manual sequence, and `cfg_xxx -help` prints each com
 JTAGLOCK and SCANLOCK are the permanent JTAG disable the design relies on (R43): documented, one command. The 32 user eFuse bits (`cfg_program_user_efuse -value <32 binary digits>`) are
 available for a lifecycle mark if wanted.
 
-### The F2 caveat: does the eFuse key force encryption?
+### F2: does the eFuse key force encryption?
 
-Section 4.3.9.1 says that after a *temporary* key is loaded, "subsequent bitstream files must be encrypted with the key from the .nky file to download successfully; unencrypted bitstreams will fail.
-**This restriction does not apply to eFuse key .nky files.**" Read literally, programming the eFuse key does not by itself refuse plaintext bitstreams. The lock table's DECLOCK ("Lock Deciphering Enable")
-and KEYENLOCK ("Lock Efuse Key Enable") imply separate enable bits, presumably carried in the `.nky` or set at bitstream generation, that make decryption (and, with AUTLOCK, authentication) mandatory and are then
-locked. **Which bit does it, and how the `.nky` sets it, must be answered by Pango before any production part is fused.** Until then wish-list item 2 is open, and the station should verify on a fused sample that a
-plaintext bitstream is refused.
+Section 4.3.9.1 contains two statements in tension. The procedure's closing note says: "After configuring the key file, only the corresponding encrypted bitstream can be configured," with no distinction
+between key locations, which is the behavior the design needs. The introductory paragraph, contrasting the temporary key with the eFuse key, says that after a temporary key is loaded "unencrypted bitstreams
+will fail. This restriction does not apply to eFuse key .nky files," where "restriction" most plausibly refers to the temporary key's own property (bitstreams must match that key until power-off, when it is lost),
+and reads as a translation placing the sentence one step too far. The lock table's KEYENLOCK ("eFuse key enable") and DECLOCK ("deciphering enable") show that separate enable bits exist, as on other vendors'
+parts, and are presumably set by the `.nky` as a matter of course.
+
+Treated as an ambiguity, not a hole, and closed by one bench test during station bring-up: fuse a sample with its `.nky`, attempt a plaintext `.sbit` and an `.sbit` encrypted under another key, confirm both are
+refused, and read `cfg_read_device_property -mode 4` to record which enable bits the `.nky` set. Ask Pango in parallel how the `.nky` carries the enables.
 
 ## Flash and multi-boot
 
@@ -187,7 +190,7 @@ key is per device whether the pairing keys ride in the bitstream or in flash.
 
 | Question | Answer |
 |---|---|
-| Encrypted-only and signed-only configuration | **Not automatic:** the configuration guide says the eFuse key alone does not refuse plaintext bitstreams; the deciphering and authentication enables (locked by DECLOCK, AUTLOCK, KEYENLOCK) must be set and locked. How the `.nky` sets them: ask Pango (F2) |
+| Encrypted-only and signed-only configuration | The guide says only the corresponding encrypted bitstream can be configured after keying, with one ambiguous sentence about eFuse keys; enable bits exist (locked by DECLOCK, AUTLOCK, KEYENLOCK). Bench test on a fused sample (F2) |
 | Master SPI self-configuration and multi-boot | Multi-boot stream format and generation known (above); golden-image rule and mode pins open (F3) |
 | JTAG access to the eFuse key before JTAG is disabled | Key read-out not offered by the tool (only `cfg_read_device_property -mode 4`, the eFuse value, to confirm what it shows); JTAGLOCK and SCANLOCK fuse bits disable JTAG permanently |
 | DPA protection | Covers configuration and the hard AES block in the fabric |
