@@ -53,7 +53,8 @@ To support DSP applications, audio CODECs are planned for.
 - **Ethernet**, 10/100 over RMII to a PHY such as the LAN8742A: the path to the server for attestation, updates, uploads and sensor-pairing confirmation. The FPGA speaks only UDP on one port,
   implemented in hardware; there is no network stack anywhere in the device (see Network). An untrusted edge proxy on site relays the datagrams to the server over TLS where IT requires port 443.
 - **Real-time clock** with battery or supercapacitor backup and an alarm output (part to be chosen, A10). Its time is untrusted and never stands in for the server's time beacons (`doc/acquisition.md`); its job is
-  scheduling and local display, and **its alarm pin forces a full reconfiguration and reboot**, so every scheduled wake re-runs the entire trust chain from the configuration engine (`doc/hw.md`, Real-time clock).
+  scheduling and local display, and **its alarm output wakes the device from deep sleep** (the regulators' enables on the FPGA board, RST_N on the ASIC), so every scheduled wake is a cold start through the
+  entire trust chain. It also automates NIST SP 800-90B restart testing of the TRNG: a thousand wakes, each logging its first raw samples (`doc/hw.md`, Real-time clock).
 - Oscillator, voltage regulators, and test connectors not populated in production. The FPGA's JTAG is permanently disabled at enrollment where the family allows it.
 
 ## Keys and what unlocks them

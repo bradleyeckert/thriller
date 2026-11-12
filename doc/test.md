@@ -66,7 +66,7 @@ The sensor's firmware is tested against the same models.
 | Sensor pairing | Certificate signed by an unknown CA, altered certificate, denylisted serial, wrong private key (implicit rejection) all refused; power cut during pairing leaves the old pairing or none; server rejection removes the pairing | R14, R15 |
 | Sensor session | Forged, replayed, reordered and delayed frames rejected; readings older than the maximum age rejected; link cut puts the device in its safe state within the maximum age | R11, R12, R13 |
 | Recordings | Card and network capture show no plaintext; the loader's memory holds a segment key only in masked form and only during encapsulation; the recording engine accepts no samples without a key; the host detects dropped, reordered and substituted blocks and segments; segment keys erased at segment end | R39, R41 |
-| Real-time clock | An alarm during operation causes a full reconfiguration and a boot through the complete chain, with the boot cause recorded; a device whose RTC is set arbitrarily still attests correctly and its recordings still carry correct beacons; a forced reboot during a recording leaves a segment the host reads up to the last complete block | R49 |
+| Real-time clock | An alarm from deep sleep powers the device up through the complete chain, with the boot cause recorded; the loader's sleep sequence flushes the stream buffer and closes the card before releasing power-hold; a device whose RTC is set arbitrarily still attests correctly and its recordings still carry correct beacons; a forced reboot during a recording leaves a segment the host reads up to the last complete block | R49 |
 | Stream buffer | PSRAM bus capture shows only ciphertext; a block corrupted in the PSRAM is rejected by the host; a stalled card and a stalled network are ridden out for at least ten seconds without sample loss; overflow raises the alarm and the log entry and overwrites nothing; power loss during recording leaves a segment the host can read up to the last complete block | R48 |
 | Recording time | A forged or replayed beacon is rejected by the secure element; a header's beacon cannot be altered without the segment failing; offline recordings are bracketed by the last and next beacons; a slowed oscillator shows as a rate mismatch at the host; recordings from a never-connected device are marked undated | R47 |
 | Enrollment | Unenrolled device cannot install updates or authenticate; enrollment cannot be repeated; server flags unknown and duplicate identities | R16 |
@@ -105,6 +105,19 @@ On the configuration engine, a glitch could make it accept a bad bitstream; that
 | E. XIP tag check | Voltage and clock glitches during line fills; first in Verilator with injected faults, then on hardware | Execute a line whose tag failed | Never executed |
 | F. Configuration engine | Voltage and EM glitches during configuration | Configure an unsigned or altered bitstream | Never configures; the vendor's detectors fire where present |
 | G. Key gate | Glitches during key loading | Load a key without its pass token | Never loads |
+
+### TRNG characterization
+
+SP 800-90B wants two kinds of data from an entropy source: a long sequential run, and a **restart** data set of about a thousand power-ups with the first thousand samples from each, to show that the
+source is as random at a cold start as in steady state (ring oscillators are the classic case where it may not be). The RTC makes the second automatic:
+
+1. A test build whose boot ROM, before anything else, logs the first raw noise-source samples (pre-conditioning) and the health-test counters to the MicroSD card, then programs the RTC alarm a few
+   seconds ahead, and powers down.
+2. The RTC wakes the device from deep sleep a thousand times (`doc/hw.md`, Real-time clock), across the temperature and voltage corners the rig can set.
+3. The card's log feeds NIST's SP 800-90B estimator suite: the IID tests, the non-IID min-entropy estimators, and the restart tests (row and column), per corner.
+4. The result sets the conditioner's input ratio and the health-test cutoffs in production builds, and is the entropy evidence for any FIPS or FDA question about the source (A11).
+
+The same campaign runs on each FPGA family and on ASIC silicon, since ring-oscillator behavior is process-specific.
 
 ### Side channels
 

@@ -101,6 +101,10 @@ A ring-oscillator TRNG with continuous health tests (repetition count and adapti
 secure element's certified random output, so every nonce has a certified source behind it even if the ring oscillators degrade. It supplies every nonce, segment key and install salt, and seeds the PRNG that
 feeds the masked Ascon and SHA-256 cores with fresh shares, whose consumption sets the TRNG's required rate (F4). A health-test failure stops the boot chain before any key is unwrapped.
 
+The conditioning component is sized from measurement, not assumption: the RTC-driven restart campaign in `doc/test.md` (TRNG characterization) logs raw noise-source samples at a thousand cold starts,
+and the SP 800-90B estimators on that data give the entropy per sample that decides how many raw bits each conditioned output needs and whether a vetted conditioner (the SHA-256 core) can be run at a
+low ratio. The raw-sample logging path exists only in test builds and is reached only by the boot ROM before any key is unwrapped.
+
 ## Resource estimate
 
 See `doc/hw.md`, Resource estimate: about 8K to 16K LUT4 equivalents for the two cores and the security blocks, including the masked Ascon core, plus the application.

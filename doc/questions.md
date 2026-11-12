@@ -62,7 +62,7 @@ Every open question in one place. Earlier architectures are kept in git history 
 | A8 | The session protocol's ack-and-window layer for updates and uploads over UDP, keepalive interval for NAT, and maximum datagram size | [README](../README.md#network-and-the-cli) | Specification | 2 |
 | A9 | Edge proxy: the UDP-to-TLS relay for sites that only allow port 443, as software or an appliance, and how a device finds it | [README](../README.md#network-and-the-cli) | Specification; check target sites' network policies | 2 |
 | **Test** | | | | |
-| A10 | Real-time clock part: alarm output type (open-drain, active-low), backup source (battery or supercapacitor) and its lifetime, accuracy, I2C address, and whether its alarm also drives the power switch for a true power-down wake | [hw.md](hw.md#real-time-clock) | Part selection | 2 |
+| A10 | Real-time clock part: alarm output type (open-drain, latching), backup source (battery or supercapacitor) and its lifetime, accuracy, I2C address; the regulator-enable and power-hold wiring on the FPGA board and the RST_N wiring on the ASIC; which rails stay up in deep sleep | [hw.md](hw.md#real-time-clock) | Part selection | 2 |
 | A11 | FIPS: confirm CAVP algorithm testing is available for Ascon (SP 800-232); decide whether to design the loader domain's self-tests and documentation for a later FIPS 140-3 validation | [arch.md](arch.md#algorithm-bill-of-materials) | Check NIST's ACVP coverage; business decision | 3 |
 | T1 | Fault-injection and side-channel lab: in house or contracted | [test.md](test.md#5-fault-injection) | Decide | 3 |
 | T2 | Independent penetration test supplier | [fda.md](fda.md#6-gaps-for-a-submission) | Decide | 3 |

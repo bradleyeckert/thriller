@@ -353,21 +353,29 @@ not a lockdown loop. Lockdowns are counted in the boot record; past a threshold 
 
 ## Real-time clock
 
-A battery-backed RTC chip gives the device local time across power cycles and a way to wake on schedule. It is **untrusted**: anyone on the board can set it, so it never
+A battery-backed RTC chip gives the device local time across power cycles and a way to wake from deep sleep on schedule. It is **untrusted**: anyone on the board can set it, so it never
 stands in for the server's time beacons (`doc/acquisition.md`, When a recording was made). What it does:
 
-- **Scheduled wakes and forced reboots.** The loader programs the alarm; the RTC's alarm output is wired, open-drain, to the configuration engine's program pin (PROGRAM_B on the Logos2,
-  CRESET_N on the Ti60) and, where the board has one, to the power switch's enable. An alarm therefore does not interrupt running logic: it **forces a full reconfiguration**, and the device comes
-  up through the configuration engine, the boot ROM, the pairing, the loader and the application, exactly as at power-on. There is no path by which a scheduled wake resumes old state, so a
-  compromise of running software cannot outlive the next alarm, and a nightly alarm bounds any runtime compromise to one day.
-- **Boot cause.** The boot ROM reads the RTC's alarm flag over I2C and records the boot cause (power-on, alarm, watchdog, lockdown) in the boot record and the attestation report.
+- **Wake from deep sleep.** Deep sleep is a real power-down: the FPGA, flash, PSRAM, CODECs and PHY are off, and only the RTC (on its backup source) and the secure element's rail stay up.
+  The RTC's alarm output, open-drain and latching until cleared over I2C, is wired-OR with the power button into the **voltage regulators' enable** on the FPGA board, and into **RST_N** on the ASIC.
+  An alarm therefore brings the device up from nothing: configuration engine, boot ROM, pairing, loader, application, exactly as at power-on. There is no path by which a wake resumes old state, so a
+  compromise of running software cannot outlive the next sleep, and a device that sleeps nightly bounds any runtime compromise to one day. The power-up sequence is: the alarm asserts the enables; the
+  boot ROM asserts a power-hold line so the enables stay asserted; the loader clears the alarm flag. To sleep, the loader programs the next alarm, flushes the stream buffer, closes the card, and
+  releases power-hold, which cuts its own power.
+- **Boot cause.** The boot ROM reads the RTC's alarm flag over I2C and records the boot cause (power-on, alarm, button, watchdog, lockdown) in the boot record and the attestation report.
+- **TRNG restart testing.** NIST SP 800-90B assesses an entropy source not only on long runs but on **restarts**: the first samples after each of many power-ups must show the same entropy as
+  steady state, and the standard's restart tests want on the order of a thousand restarts. The RTC automates that: a test build sleeps and wakes a thousand times on a short alarm, and at each cold start the
+  boot ROM logs the first raw noise-source samples to the MicroSD card before anything else runs. The log feeds the SP 800-90B estimators (`doc/test.md`, TRNG characterization). A measured, defensible
+  entropy figure is what lets the conditioning component be sized to need rather than to pessimism: a vetted conditioner over a source whose raw entropy is known is lighter than the alternatives
+  (`doc/fpga.md`, TRNG).
 - **Local time.** For the display, for log entries (marked as local time, distinct from beacon-anchored time), and for interpolating between beacons when the device has been powered down,
   where the sample count cannot run; the host treats that interpolation as an estimate inside the beacon bracket, never as evidence.
 - **Scheduling discipline.** The loader never sets an alarm inside a recording it has started, and flushes the stream buffer before any planned power-down; an alarm that arrives anyway
   (a hostile or mis-set RTC) ends the segment the way a power cut does, visibly to the host (R49).
 
-The alarm line is a reset source, so an attacker who controls the RTC can reboot the device at will. That is denial of service, equivalent to cycling power, and it is accepted; the device
-always comes back through the same authenticated chain. Nothing about the chain depends on the RTC being honest.
+The alarm line is a power control, so an attacker who controls the RTC can wake or, through the loader's own sleep logic, fail to wake the device. That is denial of service, equivalent to
+cycling power, and it is accepted; the device always comes back through the same authenticated chain. Nothing about the chain depends on the RTC being honest. On the FPGA board the RTC does not touch
+the configuration engine's program pin: a wake is a power cycle, which is cleaner than a reconfiguration of a powered part and is what the ASIC's RST_N gives.
 
 ## Clocks, resets and errors
 
