@@ -355,7 +355,9 @@ not a lockdown loop. Lockdowns are counted in the boot record; past a threshold 
 ## Real-time clock
 
 The RTC is a **YXC YSN8130E**: a 3225 module with its 32.768 kHz crystal built in, 1.6 to 5.5 V, 0.9 µA timekeeping, ±23 ppm at 25 °C, backup-battery charge control, an /INT alarm output and a
-programmable-period FOUT, on I2C. It gives the device local time across power cycles and a way to wake from deep sleep on schedule. It is **untrusted**: anyone on the board can set it, so it never
+programmable-period FOUT, on I2C. Per its block diagram, /INT is open-drain and is **not reset by a VDD cycle**, which is what lets it hold the regulators' enables asserted from a powered-down
+state until the loader clears the flag. Backup is **two SR44 silver-oxide cells in series** (about 3.1 V, primary, not rechargeable), chosen over a single lithium cell for shipping regulations; the
+RTC's charge-control function is therefore disabled. It gives the device local time across power cycles and a way to wake from deep sleep on schedule. It is **untrusted**: anyone on the board can set it, so it never
 stands in for the server's time beacons (`doc/acquisition.md`, When a recording was made). What it does:
 
 - **Wake from deep sleep.** Deep sleep is a real power-down: the FPGA, flash, PSRAM, CODECs and PHY are off, and only the RTC (on its backup source) and the secure element's rail stay up.
