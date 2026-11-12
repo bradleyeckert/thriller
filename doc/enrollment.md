@@ -19,7 +19,7 @@ so the HSM can recompute any device's keys without storing them.
 |---|---|
 | Pairing master | KDF(pairing master, serial, version): the pairing key of each bitstream release for each device |
 | Device master | The application, data, developer, log and symmetric identity keys of each device: KDF(device master, serial, label) |
-| FPGA configuration master | Each device's bitstream encryption key: KDF(master, serial), sized for the family (256 bits on the Logos2, 128 on the ECP5) |
+| FPGA configuration master | Each device's bitstream encryption key: KDF(master, serial), 256 bits on both the Logos2 and the Ti60 |
 | Host master | Each device's host authorization key |
 | Host data master | Each device's host data secret. Separate from the device master because the device must never be able to compute it |
 | Distribution key | Encrypting production application packages; written into each device at enrollment |
@@ -62,9 +62,9 @@ Each device has its own bitstream, because its pairing keys are inside it (`doc/
    signs it with the vendor flow where the family authenticates, and erases the keys.
 4. The platform package for the device (bitstream, loader image, version, inherited and own key versions) gets its inclusion proof in the release manifest, which the HSM signs once with the platform LMS key.
 
-On the Logos2 the primary plan is instead a **common bitstream with wrapped pairing keys** (`doc/fpga.md`, Wrapped pairing keys): the HSM wraps each device's keys under a key only that FPGA holds, the station
-writes them into the flash records region, and steps 2 and 3 above collapse to one release build and one signature. Per-device bitstreams are the fallback, and whether PDS can produce them is open question F1. For the ECP5 fallback it is Lattice Diamond's
-ECO editor from a headless Tcl script (`fpga/ecp5/`). The service handles per-device keys in plaintext, so it is isolated, audited, dual-controlled, and gets keys only per job (R42).
+On the Logos2 and the Ti60 the bitstream is per device: the Ti60's BRAM Initial Content Updater does step 3 from a script, and on the Logos2 whether a DRM INIT change forces re-synthesis is open question F1.
+A **common bitstream with wrapped pairing keys** (`doc/fpga.md`, Wrapped pairing keys) remains the route on a family with a PUF-protected key store such as PolarFire. The service handles per-device keys in plaintext,
+so it is isolated, audited, dual-controlled, and gets keys only per job (R42).
 
 Because a device's bitstream must carry the pairing key the device currently holds, the server builds a device's platform package from the key version the device last reported, and
 offline packages are prepared the same way for one device.

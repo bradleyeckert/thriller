@@ -198,6 +198,7 @@ The mailbox is the only path from the application to the loader, so it is the fi
 | Sensor link | APB | RTL | RTL | UART or the sensor's own physical layer (`doc/sensor.md`), with a capture timer for reading age |
 | Ethernet transport | APB (control, address registers), FIFOs (datagrams) | RTL | RTL | See Ethernet transport below. The PHY's reset is driven from the network policy, so a disabled port cannot be enabled by software |
 | TRNG + health tests + mask PRNG | APB | Ring oscillators | Ring oscillators | Conditioned in the SHA-256 core; mixed with the secure element's Random; seeds the Ascon core's mask PRNG; also feeds the application's random numbers |
+| RTC I2C master | APB | RTL | RTL | The real-time clock, on its own bus (the secure element's carries nothing else). Boot cause and alarm flags read at boot; alarms set by the loader. See Real-time clock |
 | Timers + watchdogs | APB | RTL | RTL | One watchdog per core; the sensor age timer; the loader resets the application core on its timeout |
 | Application core control | APB | RTL | RTL | Holds the application core in reset until boot checks pass; lockdown holds it in reset |
 | Recording engine | APB (control), private FIFO (data) | RTL | RTL | Ascon-AEAD128 blocks over the sample stream in the Ascon core; segment key register cleared at segment end; output goes to the stream buffer |
@@ -350,13 +351,31 @@ The same chain runs on the FPGA and the ASIC. On the FPGA, the configuration eng
 On the next boot, the boot ROM and the loader skip slots marked bad and fall back to the other slot, or to recovery if both are bad. A single flash bit error therefore costs one slot,
 not a lockdown loop. Lockdowns are counted in the boot record; past a threshold the device stays in update-only mode.
 
+## Real-time clock
+
+A battery-backed RTC chip gives the device local time across power cycles and a way to wake on schedule. It is **untrusted**: anyone on the board can set it, so it never
+stands in for the server's time beacons (`doc/acquisition.md`, When a recording was made). What it does:
+
+- **Scheduled wakes and forced reboots.** The loader programs the alarm; the RTC's alarm output is wired, open-drain, to the configuration engine's program pin (PROGRAM_B on the Logos2,
+  CRESET_N on the Ti60) and, where the board has one, to the power switch's enable. An alarm therefore does not interrupt running logic: it **forces a full reconfiguration**, and the device comes
+  up through the configuration engine, the boot ROM, the pairing, the loader and the application, exactly as at power-on. There is no path by which a scheduled wake resumes old state, so a
+  compromise of running software cannot outlive the next alarm, and a nightly alarm bounds any runtime compromise to one day.
+- **Boot cause.** The boot ROM reads the RTC's alarm flag over I2C and records the boot cause (power-on, alarm, watchdog, lockdown) in the boot record and the attestation report.
+- **Local time.** For the display, for log entries (marked as local time, distinct from beacon-anchored time), and for interpolating between beacons when the device has been powered down,
+  where the sample count cannot run; the host treats that interpolation as an estimate inside the beacon bracket, never as evidence.
+- **Scheduling discipline.** The loader never sets an alarm inside a recording it has started, and flushes the stream buffer before any planned power-down; an alarm that arrives anyway
+  (a hostile or mis-set RTC) ends the segment the way a power cut does, visibly to the host (R49).
+
+The alarm line is a reset source, so an attacker who controls the RTC can reboot the device at will. That is denial of service, equivalent to cycling power, and it is accepted; the device
+always comes back through the same authenticated chain. Nothing about the chain depends on the RTC being honest.
+
 ## Clocks, resets and errors
 
 - **One core clock domain** for both cores and all security logic, from the oscillator through the PLL. The mailbox needs no clock-domain crossing. The I2S masters derive their clocks from it.
 - **QSPI** is clocked from the core clock (with DDR outputs if a faster flash clock is needed).
 - **The TRNG's ring oscillators** are asynchronous by design and pass through a synchronizer into the health tests.
 - **Clock checker:** compares the core clock with the oscillator to detect clock glitching; **supply monitor:** an external supervisor's output is an input to the security block where the family has no detectors.
-- **Resets:** power-on and the loader watchdog reset both cores and clear everything the secret-clear fan-out reaches; the boot ROM then starts again. Lockdown halts instead.
+- **Resets:** power-on, the RTC alarm (through reconfiguration) and the loader watchdog reset both cores and clear everything the secret-clear fan-out reaches; the boot ROM then starts again. Lockdown halts instead.
   The application watchdog resets only the application core.
 - **One UART, two channels.** The host UART carries the host protocol and the application's forwarded terminal. Each frame carries a channel number.
 - **Errors:** a bus error or `PSLVERR` becomes an ior in the core that caused it. An XIP tag failure goes to the lockdown, on either port.
@@ -390,7 +409,7 @@ Rough figures in 4-input-LUT equivalents, to be replaced by synthesis results:
 | Two I2S masters, CODEC I2C, LCD controller with overlay | 1K to 2K | Line buffer |
 | **Total** | **About 13K to 24K with the masked Ascon core** | |
 
-The PG2L50H leaves room for the application. The LFE5U-25F does not: the ECP5 fallback needs the LFE5U-45F, or an unmasked Ascon core with the loss recorded in R33 (`fpga/ecp5/`).
+The PG2L50H and the Ti60 both leave room for the application.
 
 ## Open questions
 

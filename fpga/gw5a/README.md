@@ -2,7 +2,7 @@
 
 **Part:** GW5A-LV25 (GW5AT-LV25 for the automotive grade): 23,040 LUT4, 1,008 Kb BSRAM in 56 blocks, 28 DSP (27×18), 22 nm SRAM process,
 packages from LQ100 and LQ144 (QFP) up to UG324 (239 I/O).
-**Status:** evaluated November 2026 from the public datasheets; **a fallback at best, behind the ECP5, not a target.** Its security features stop where the ECP5's do:
+**Status:** evaluated November 2026 from the public datasheets; **dropped, like the ECP5.** Its security features stop where the ECP5's do:
 AES-128 bitstream encryption with no authentication, and no hardened crypto block. It is included so nobody repeats the evaluation.
 
 ## What the datasheets say

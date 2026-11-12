@@ -216,7 +216,7 @@ The server marks the device retired and the loader writes the retired state into
 3. **Fault-injection and side-channel evidence** on the FPGA and the sensor (`doc/test.md`).
 4. **Sensor firmware update** path.
 5. **Decommissioning procedure** in detail.
-6. **SBOM:** LiteForth and the FPGA's RTL, the ML-KEM, ML-DSA and LMS code, cryptoauthlib's message formats, Pango Design Suite (Lattice Diamond for the ECP5 fallback), the edge proxy software,
+6. **SBOM:** LiteForth and the FPGA's RTL, the ML-KEM, ML-DSA and LMS code, cryptoauthlib's message formats, Pango Design Suite (Efinity for the Ti60 fallback), the edge proxy software,
    the sensor firmware, with support status and end-of-support dates. The FPGA vendor's and Microchip's advisories feed vulnerability monitoring.
 7. **Testing evidence:** security requirements, threat mitigation and vulnerability testing as planned in `doc/test.md`; independent penetration testing to be arranged.
 8. **Risk scoring:** the Risk Assessment rates likelihood; FDA asks for an exploitability-based, non-probabilistic approach with scores before and after mitigation.

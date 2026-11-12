@@ -1,7 +1,7 @@
 # Pango Logos2 (PG2L50H)
 
 **Part under consideration:** PG2L50H-6IFBG484 (50K-class logic, speed grade 6, industrial temperature, 484-ball BGA).
-**Status:** current choice, with the ECP5 as fallback. Its bitstream security meets the hard requirements of the wish list. Its "DPA protection" turned out to mean authentication before decryption of the bitstream, not a hardened cipher the fabric can use,
+**Status:** current choice, with the Efinix Ti60 as fallback (`fpga/ti60/`). Its bitstream security meets the hard requirements of the wish list. Its "DPA protection" turned out to mean authentication before decryption of the bitstream, not a hardened cipher the fabric can use,
 so the design's symmetric cryptography runs in a masked Ascon core of our own (`doc/hw.md`), as it would on any family. The deciding unknowns are the build flow (item 5, F1) and the master SPI multi-boot behavior (item 4, F3).
 
 ## What the datasheet claims
@@ -28,16 +28,19 @@ From the *Logos2 Family FPGAs Device Datasheet*:
 | 8 | Enough logic | A 50K-class part: ample room for both cores, the security blocks and the application. LUT size and block RAM to confirm |
 | 9 | QSPI and peripheral pins | General I/O; 484 balls |
 
-## What it improves over the ECP5
+## Against the Ti60 fallback
 
-| Risk | ECP5 | Logos2 |
+| | Logos2 PG2L50H | Efinix Ti60 |
 |---|---|---|
-| R32: blind edits to an encrypted bitstream | Open: no MAC, only the CRC | **Closed:** AES-GCM authenticates every bitstream under the device's own key; RSA-2048 adds an origin signature |
-| R5: power analysis on configuration | Not hardened | Signature checked before decryption: no chosen-ciphertext traces; the fixed bitstream still leaks on repeated power-ups |
-| R33: power analysis in the fabric | Our masked Ascon and SHA-256 cores | The same; no vendor help on either part |
-| R43: boundary scan after locking | Remains available | **Can be removed** by permanently disabling JTAG, after the board's boundary-scan test at the factory |
-| Bitstream key size | AES-128 | AES-256 |
-| Fit | 24K LUTs, tight | 50K class, roomy |
+| Bitstream authentication | RSA-2048 over SHA-3, plus AES-256-GCM | RSA-4096, plus AES-256-GCM |
+| Power analysis on configuration (R5) | Signature checked before decryption | To confirm |
+| Per-device constants (item 5, F1) | Open: DRM INIT re-synthesis test | Yes: BRAM Initial Content Updater |
+| Permanent JTAG disable (R43) | JTAGLOCK, SCANLOCK fuses | JTAG disable option |
+| Fit | 50K class | 60K class |
+| Toolchain | PDS, free node-locked licence, Tcl and `cdt_cfg` headless | Efinity; headless operation to confirm |
+| Origin | Pango (China) | Efinix (US) |
+
+The fabric-side cryptography (R33) is the same masked Ascon and SHA-256 cores on both.
 
 ## No hard AES for the fabric
 

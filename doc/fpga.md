@@ -1,8 +1,7 @@
 # FPGA
 
 This document is family-neutral. What a family must provide, and how each candidate provides it, is in `fpga/` at the top of the repository:
-`fpga/README.md` (the requirements), and one folder per family. The current choice is the **Pango Logos2 PG2L50H-6IFBG484** (`fpga/logos2/`), with the **ECP5 LFE5U-25F** as fallback
-for a limited number of units (`fpga/ecp5/`).
+`fpga/README.md` (the requirements), and one folder per family. The current choice is the **Pango Logos2 PG2L50H-6IFBG484** (`fpga/logos2/`), with the **Efinix Titanium Ti60** as fallback (`fpga/ti60/`).
 
 The FPGA is the root of trust and runs the application. Its configuration engine is the immutable anchor; its bitstream carries the boot ROM, the two cores and the pairing keys;
 everything else it needs (keys, counters, identity) is in the secure element, and everything it executes is in the flash, authenticated line by line (`doc/hw.md`, `doc/se.md`, `doc/xip.md`).
@@ -50,15 +49,15 @@ flowchart LR
 - **Encrypted by the FPGA's own key.** The bitstream is encrypted under the FPGA's per-device configuration key, held in its eFuses, so it stays encrypted in flash and on the configuration bus.
   The pairing keys exist in plaintext only inside the FPGA and the HSM (R31).
 - **No fallback.** The FPGA must be set to refuse any unencrypted or unsigned configuration. A bitstream without the current pairing key gets nothing from the secure element anyway (R17).
-- **Authentication is family-dependent.** The Logos2 authenticates every bitstream twice (AES-256-GCM under the device's key, RSA-2048 over SHA-3), which closes blind modification of an
-  encrypted bitstream (R32). The ECP5 fallback does not, so it relies on the configuration CRC and on the secure element refusing a damaged pairing key.
+- **Authentication is required.** The Logos2 authenticates every bitstream twice (AES-256-GCM under the device's key, RSA-2048 over SHA-3) and the Ti60 with RSA-4096, which closes blind modification
+  of an encrypted bitstream (R32). Families that only encrypt (ECP5, GW5A) were dropped for this reason.
 - **Superseded bitstreams are dead, not refused.** The configuration engine will load any correctly encrypted and signed bitstream of this device, old or new; the pairing-key ratchet in the secure
   element makes an old one useless (`doc/se.md`).
 
 ## Wrapped pairing keys: the alternative to per-device bitstreams
 
 Per-device bitstreams need a tool that rewrites block RAM contents in a routed design and then encrypts and signs the result. Some families have one (Efinix's BRAM Initial Content Updater,
-Diamond's ECO editor for the ECP5); Pango's PDS, as far as its Tcl guide goes, does not (F1). The cleaner solution, where the family allows it, is to **keep one bitstream for the whole fleet
+Diamond's ECO editor on Lattice parts); Pango's PDS, as far as its Tcl guide goes, does not (F1). The cleaner solution, where the family allows it, is to **keep one bitstream for the whole fleet
 and wrap the pairing keys under a key the FPGA alone holds:**
 
 - The configuration engine's eFuse key is per device and never leaves the silicon. If the family gives the fabric a way to decrypt under that key, or under a PUF-protected key, without seeing it

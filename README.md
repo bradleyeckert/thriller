@@ -38,9 +38,8 @@ To support DSP applications, audio CODECs are planned for.
 ## Chipset
 
 - **FPGA with an encrypted and authenticated bitstream.** Current choice: **Pango Logos2 PG2L50H-6IFBG484** (50K-class), which authenticates bitstreams before decrypting them
-  (`fpga/logos2/`). No family offers a hardened cipher usable from the fabric, so all symmetric cryptography runs in a masked Ascon core of our own (`doc/hw.md`). It configures itself from the flash at power-up in master SPI mode, with the vendor's multi-boot fallback to a second bitstream. Fallback family: **Lattice ECP5 LFE5U-25F**
-  (`fpga/ecp5/`), which encrypts but does not authenticate bitstreams; it is for a limited number of units, and its weaknesses are stated in `doc/arch.md`. Candidates: Microchip PolarFire,
-  Lattice CrossLink-NX, Efinix Titanium. The requirements a family must meet are in `fpga/README.md`.
+  (`fpga/logos2/`). No family offers a hardened cipher usable from the fabric, so all symmetric cryptography runs in a masked Ascon core of our own (`doc/hw.md`). It configures itself from the flash at power-up in master SPI mode, with the vendor's multi-boot fallback to a second bitstream. Fallback: **Efinix Titanium Ti60** (`fpga/ti60/`), which meets the same hard requirements with RSA-4096 authentication
+  and a scripted BRAM content updater. Candidates: Microchip PolarFire, Lattice CrossLink-NX. The ECP5 and Gowin GW5A were evaluated and dropped for lacking bitstream authentication. The requirements a family must meet are in `fpga/README.md`.
 - **QSPI NOR flash**, 32 MB proposed: bitstream slots, loader images (A/B), application images (A/B), the boot record and a recovery staging area (`doc/flash.md`). Nothing in it is trusted.
 - **ATECC608C** secure element (Microchip), on an I2C bus that never leaves the sealed enclosure. The 608C rather than the 608B for its NIST SP 800-90A/B/C-certified random number generator and its updated physical countermeasures. Custom configuration (TrustCUSTOM, or blank parts provisioned at enrollment); the Trust Platform
   provisioning service can carry the per-device key material and the device certificate. Second source: pin-compatible parts claiming compatibility, to be qualified.
@@ -53,6 +52,8 @@ To support DSP applications, audio CODECs are planned for.
 - **UART** (USB-UART bridge): status reports, and the wired path for host sessions, updates and the CLI.
 - **Ethernet**, 10/100 over RMII to a PHY such as the LAN8742A: the path to the server for attestation, updates, uploads and sensor-pairing confirmation. The FPGA speaks only UDP on one port,
   implemented in hardware; there is no network stack anywhere in the device (see Network). An untrusted edge proxy on site relays the datagrams to the server over TLS where IT requires port 443.
+- **Real-time clock** with battery or supercapacitor backup and an alarm output (part to be chosen, A10). Its time is untrusted and never stands in for the server's time beacons (`doc/acquisition.md`); its job is
+  scheduling and local display, and **its alarm pin forces a full reconfiguration and reboot**, so every scheduled wake re-runs the entire trust chain from the configuration engine (`doc/hw.md`, Real-time clock).
 - Oscillator, voltage regulators, and test connectors not populated in production. The FPGA's JTAG is permanently disabled at enrollment where the family allows it.
 
 ## Keys and what unlocks them

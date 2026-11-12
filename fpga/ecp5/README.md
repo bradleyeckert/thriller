@@ -1,7 +1,7 @@
 # Lattice ECP5
 
 **Part:** LFE5U-25F-6BG256C: 24K LUTs, 1,008 Kbit (126 KB) of block RAM in 56 EBRs, 28 multipliers, speed grade 6, 256-ball BGA.
-This is the **fallback, for a limited number of units**; the current choice is the Pango Logos2 PG2L50H (`fpga/logos2/`). The ECP5 fails wish-list item 1: it encrypts bitstreams (AES-128, key in eFuse)
+**Status: dropped.** With the Logos2 as the target and the Ti60 as a known-good fallback, a family without bitstream authentication has no role; this folder is kept for the record. The ECP5 fails wish-list item 1: it encrypts bitstreams (AES-128, key in eFuse)
 but does not authenticate them, so its configuration engine is a confidentiality anchor only. Like every candidate it has no cipher block the fabric can use; the design's masked Ascon core is soft logic on it as on the others, and the LFE5U-25F is tight for it.
 
 ## What "encrypted but unauthenticated" means here

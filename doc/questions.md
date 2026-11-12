@@ -21,8 +21,8 @@ Every open question in one place. Earlier architectures are kept in git history 
 | F7 | Ring-oscillator TRNG design and health-test thresholds on the FPGA | [fpga.md](fpga.md#trng) | Characterize on hardware | 2 |
 | F8 | The LCD overlay band for developer mode and alarms that the application cannot draw over | [hw.md](hw.md#application-core-domain) | RTL design | 3 |
 | F9 | PG2L50H bitstream size, for the flash's bitstream slots | [flash.md](flash.md#regions) | Build | 2 |
-| F10 | ECP5 fallback: eFuse burn order, CRC width against blind edits (R32), master SPI and dual-boot layout, and keeping its Yosys/nextpnr and Diamond flows equivalent | [ecp5](../fpga/ecp5/README.md) | Only if the fallback is used | 3 |
-| F11 | PolarFire, CrossLink-NX, Titanium and the Gowin GW5A as alternatives: the open items in their folders, and the country-of-origin requirements of the target markets | [fpga/](../fpga/README.md) | Vendor documentation; business decision | 3 |
+| F10 | Ti60 fallback: headless Efinity flow, active SPI multi-image layout, readback and key protection, R5 assessment; the items in its folder | [ti60](../fpga/ti60/README.md) | Only if the fallback is used | 3 |
+| F11 | PolarFire and CrossLink-NX as alternatives: the open items in their folders, and the country-of-origin requirements of the target markets | [fpga/](../fpga/README.md) | Vendor documentation; business decision | 3 |
 | **Hardware** | | | | |
 | H1 | AXI4-Lite latency: whether the decoder and slaves answer in the cycles LiteForth's memory state machine expects, or whether ROM and SRAM need a tightly coupled path | [hw.md](hw.md#bus-choice) | RTL and simulation | 2 |
 | H2 | Mailbox message set, formats and message RAM size | [hw.md](hw.md#mailbox) | Specification | 2 |
@@ -62,12 +62,14 @@ Every open question in one place. Earlier architectures are kept in git history 
 | A8 | The session protocol's ack-and-window layer for updates and uploads over UDP, keepalive interval for NAT, and maximum datagram size | [README](../README.md#network-and-the-cli) | Specification | 2 |
 | A9 | Edge proxy: the UDP-to-TLS relay for sites that only allow port 443, as software or an appliance, and how a device finds it | [README](../README.md#network-and-the-cli) | Specification; check target sites' network policies | 2 |
 | **Test** | | | | |
+| A10 | Real-time clock part: alarm output type (open-drain, active-low), backup source (battery or supercapacitor) and its lifetime, accuracy, I2C address, and whether its alarm also drives the power switch for a true power-down wake | [hw.md](hw.md#real-time-clock) | Part selection | 2 |
+| A11 | FIPS: confirm CAVP algorithm testing is available for Ascon (SP 800-232); decide whether to design the loader domain's self-tests and documentation for a later FIPS 140-3 validation | [arch.md](arch.md#algorithm-bill-of-materials) | Check NIST's ACVP coverage; business decision | 3 |
 | T1 | Fault-injection and side-channel lab: in house or contracted | [test.md](test.md#5-fault-injection) | Decide | 3 |
 | T2 | Independent penetration test supplier | [fda.md](fda.md#6-gaps-for-a-submission) | Decide | 3 |
 | **ICS55** | | | | |
 | I1 | Whether the ICS55 SRAM is usable as a PUF for the ASIC's pairing key | [ics55.md](ics55.md#where-the-key-comes-from) | Test chip | 3 |
 | I2 | Whether OTP or eFlash IP becomes available to open designs on this process | [ics55.md](ics55.md#open-questions) | Watch the PDK | 3 |
-| I3 | Pin count and package, once the CODEC, LCD, card, PSRAM, sensor and RMII interfaces are fixed | [ics55.md](ics55.md) | Board design | 3 |
+| I3 | Pin count and package, once the CODEC, LCD, card, PSRAM, RTC, sensor and RMII interfaces are fixed | [ics55.md](ics55.md) | Board design | 3 |
 
 Closed:
 - **From the C5 architecture:** every C5 question (C1 to C14): there is no microcontroller. The link protocol and its message set (A8 in that architecture) are replaced by the mailbox (H2).
@@ -83,7 +85,7 @@ Closed:
 
 - **Chipset: an FPGA with an authenticated bitstream, one QSPI flash, and an ATECC608C.** No external microcontroller. The FPGA models the ASIC; family specifics live in `fpga/<family>/`.
 - **The application runs on the FPGA,** in LiteForth, executing in place from the flash.
-- **FPGA family:** the Pango Logos2 PG2L50H-6IFBG484 is the target; the ECP5 LFE5U-25F is the fallback for a limited number of units.
+- **FPGA family:** the Pango Logos2 PG2L50H-6IFBG484 is the target; the Efinix Ti60 is the fallback. The ECP5 and the Gowin GW5A were dropped for lacking bitstream authentication.
 - **Private keys travel in the bitstream rather than coming from a PUF in fabric.** The ASIC implements a hardened PUF with characterization hardware behind the same interface.
 - Recordings encrypted in the FPGA with segment keys erased at segment end, so nothing on the device can read them back.
 - Four channels from two NAU88C22 CODECs; LCD and speaker inside a tamper-evident enclosure.

@@ -5,11 +5,12 @@ and is also the ASIC design. Each family folder holds its notes, its build and k
 
 | Family | Folder | Status |
 |---|---|---|
-| Efinix Titanium (Ti60) | [`ti60/`](ti60/README.md) | Candidate |
-| Pango Logos2 (PG2L50H-6IFBG484) | [`logos2/`](logos2/README.md) | Candidate |
+| Efinix Titanium (Ti60) | [`ti60/`](ti60/README.md) | **Known good: fallback.** Meets items 1 to 5 (RSA-4096 authentication, BRAM Initial Content Updater) |
+| Pango Logos2 (PG2L50H-6IFBG484) | [`logos2/`](logos2/README.md) | **Known good: target.** Items 1 to 4 met; item 5 pending the DRM INIT test (F1) |
 | Microchip PolarFire | [`polarfire/`](polarfire/README.md) | Candidate |
 | Lattice CrossLink-NX (LIFCL) | [`lifcl/`](lifcl/README.md) | Candidate |
-| Lattice ECP5 (LFE5U-25F-6BG256C) | [`ecp5/`](ecp5/README.md) | Fallback, limited numbers |
+| Lattice ECP5 (LFE5U-25F) | [`ecp5/`](ecp5/README.md) | Dropped: no bitstream authentication. Kept for the record |
+| Gowin Arora V (GW5A-LV25) | [`gw5a/`](gw5a/README.md) | Dropped: no bitstream authentication. Kept for the record |
 | Pango Logos (PGL25G) | [`logos/`](logos/README.md) | Not usable: no bitstream encryption |
 
 ## The wish list

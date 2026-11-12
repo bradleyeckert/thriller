@@ -78,6 +78,8 @@ timestamp proves only what the device believed. Instead, **time comes from the s
   and the host shows that interval rather than a false timestamp.
 - **What it defeats.** Backdating or postdating a recording by setting a clock; presenting an old recording as new (its beacon is old and the server knows when it issued it);
   claiming a recording was made during a period when the device was provably offline or elsewhere (R47).
+- **The real-time clock is not a substitute.** The board's RTC (`doc/hw.md`, Real-time clock) is settable by anyone with board access, so its reading is recorded in headers only as an untrusted
+  estimate: useful for interpolating between beacons across power cycles, when the sample count cannot run, and shown by the host as such, inside the trusted bracket.
 - **What it does not do.** It does not make the device's oscillator trustworthy: a prober who slows the clock stretches the sample count, which the next beacon exposes as a rate mismatch the host
   can flag. It does not give a time to a device that has never contacted the server; such recordings carry no beacon and the host marks them as undated.
 
