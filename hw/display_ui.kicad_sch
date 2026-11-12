@@ -1,5 +1,5 @@
 (kicad_sch (version 20250114) (generator "eeschema") (generator_version "9.0")
-  (uuid "40827ee1-edd7-4c70-a5c0-6150b0298188")
+  (uuid "40169e53-925a-4971-9eb0-3afcbdcce335")
   (paper "A3")
   (title_block
     (title "thriller: display_ui")
@@ -10,7 +10,7 @@
   (lib_symbols)
   (text "display_ui: LCD connector and backlight, power/wake pushbutton, user buttons, status LEDs, enclosure-open switch" (exclude_from_sim no) (at 12 12 0)
     (effects (font (size 1.5 1.5)) (justify left))
-    (uuid "408ec36b-3367-4a50-a3df-2020eda18575")
+    (uuid "c177408c-43ba-4ab0-9d66-a46345f934e5")
   )
   (embedded_fonts no)
 )

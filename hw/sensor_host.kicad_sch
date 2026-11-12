@@ -1,5 +1,5 @@
 (kicad_sch (version 20250114) (generator "eeschema") (generator_version "9.0")
-  (uuid "194b718f-1ff6-4fff-9787-b1ecf5fcb791")
+  (uuid "db282f19-ac83-411b-866c-c931963a24e7")
   (paper "A3")
   (title_block
     (title "thriller: sensor_host")
@@ -10,7 +10,7 @@
   (lib_symbols)
   (text "sensor_host: Temperature sensor connector and link interface (protection, level); USB-C with USB-UART bridge for the host UART" (exclude_from_sim no) (at 12 12 0)
     (effects (font (size 1.5 1.5)) (justify left))
-    (uuid "bf3289f5-7de4-4dbd-a169-db21f3b137b9")
+    (uuid "db34c3c6-691b-47c2-8ce0-19c01f148c1f")
   )
   (embedded_fonts no)
 )

@@ -1,5 +1,5 @@
 (kicad_sch (version 20250114) (generator "eeschema") (generator_version "9.0")
-  (uuid "436500c0-2c32-41b4-9b56-5fa74fe7e7f6")
+  (uuid "8fb343a1-f9e5-47c6-8e94-a42aea574abb")
   (paper "A3")
   (title_block
     (title "thriller: power")
@@ -10,7 +10,7 @@
   (lib_symbols)
   (text "power: 5 V in, protection, always-on 3.3 V LDO (RTC, ATECC608C, power control); power control: EN = WAKE | PB | RTC /INT; bucks 1.0 V (VCC, VCC_DRM), 1.8 V (VCCA), 3.3 V (I/O domain); sequencing, PGOOD" (exclude_from_sim no) (at 12 12 0)
     (effects (font (size 1.5 1.5)) (justify left))
-    (uuid "8b8d82c9-04c2-4bb7-bf16-1b41ea50d2d7")
+    (uuid "d5429a33-3588-4a0b-8f00-1306362915c3")
   )
   (embedded_fonts no)
 )

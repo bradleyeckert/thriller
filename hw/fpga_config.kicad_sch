@@ -1,5 +1,5 @@
 (kicad_sch (version 20250114) (generator "eeschema") (generator_version "9.0")
-  (uuid "b67f7b3c-a7b2-43c8-8120-9783048d5242")
+  (uuid "ff8b902a-b4ba-4736-8424-c34f42c66465")
   (paper "A3")
   (title_block
     (title "thriller: fpga_config")
@@ -10,7 +10,7 @@
   (lib_symbols)
   (text "fpga_config: Config bank: MODE[2:0]=001 (Master SPI x4 at 3.3 V), SCBV -> VCCIOCFG, RSTN, INIT_FLAG_N, CFG_DONE, CFG_CLK; QSPI config flash; JTAG header (not populated in production); main oscillator -> GMCLK; WAKE, RTC_INT_N, PB_N" (exclude_from_sim no) (at 12 12 0)
     (effects (font (size 1.5 1.5)) (justify left))
-    (uuid "7fb1be3f-3374-4be2-b805-33768af44716")
+    (uuid "c8a83323-eacf-416a-a6eb-48bd758f3c8e")
   )
   (embedded_fonts no)
 )

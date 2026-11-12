@@ -1,5 +1,5 @@
 (kicad_sch (version 20250114) (generator "eeschema") (generator_version "9.0")
-  (uuid "fb31a0f4-b8de-4d89-b3fb-4199b69d82c6")
+  (uuid "bb3a43bc-fbaa-4d73-a320-da7ff0d6038e")
   (paper "A3")
   (title_block
     (title "thriller: memory")
@@ -10,7 +10,7 @@
   (lib_symbols)
   (text "memory: QSPI NOR 256 Mbit (bitstreams, loader, application; also the config flash), ESP-PSRAM64H stream buffer on its own QSPI, MicroSD socket" (exclude_from_sim no) (at 12 12 0)
     (effects (font (size 1.5 1.5)) (justify left))
-    (uuid "209aae3d-8d01-43ce-a91f-7da1afc9c9de")
+    (uuid "df7b20b9-870d-4a44-af70-32979427e938")
   )
   (embedded_fonts no)
 )

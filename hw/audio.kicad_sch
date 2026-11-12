@@ -1,5 +1,5 @@
 (kicad_sch (version 20250114) (generator "eeschema") (generator_version "9.0")
-  (uuid "b698ef34-3952-4938-bd2a-9069a748497d")
+  (uuid "d3313d23-dfdb-4d4a-8698-be4d48e67865")
   (paper "A3")
   (title_block
     (title "thriller: audio")
@@ -10,7 +10,7 @@
   (lib_symbols)
   (text "audio: 2x NAU88C22: MCLK, 2x I2S, CODEC I2C; electrode/analog front-end connectors; speaker" (exclude_from_sim no) (at 12 12 0)
     (effects (font (size 1.5 1.5)) (justify left))
-    (uuid "7d8236ac-c3a6-4d81-96b9-5dba072856e8")
+    (uuid "ba821f60-1b3a-4e86-af7c-4a5dda5bb20a")
   )
   (embedded_fonts no)
 )
