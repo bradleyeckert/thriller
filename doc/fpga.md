@@ -97,8 +97,8 @@ Neither core has a read path to any of them, or to the Ascon core. Key registers
 
 ## TRNG
 
-A ring-oscillator TRNG with continuous health tests (repetition count and adaptive proportion, as in NIST SP 800-90B), conditioned in the SHA-256 core, and mixed with the
-secure element's certified random output, so every nonce has a certified source behind it even if the ring oscillators degrade. It supplies every nonce, segment key and install salt, and seeds the PRNG that
+A ring-oscillator TRNG with continuous health tests (repetition count and adaptive proportion, as in NIST SP 800-90B), conditioned in the SHA-256 core (a vetted conditioning function), feeding an SP 800-90A HMAC_DRBG on the same core with the
+secure element's certified random output as additional input, so every nonce has a certified source behind it even if the ring oscillators degrade. The DRBG supplies every key, nonce, segment key and install salt, and seeds the PRNG that
 feeds the masked Ascon and SHA-256 cores with fresh shares, whose consumption sets the TRNG's required rate (F4). A health-test failure stops the boot chain before any key is unwrapped.
 
 The conditioning component is sized from measurement, not assumption: the RTC-driven restart campaign in `doc/test.md` (TRNG characterization) logs raw noise-source samples at a thousand cold starts,

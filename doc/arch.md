@@ -194,11 +194,8 @@ None is on a hot path: LMS at install, ML-KEM once per recording segment and onc
 
 **P-256** only where the secure element dictates it.
 
-**FIPS.** A FIPS 140-3 validation of the device is not a goal, but the design is kept validatable so that it stays an option: every algorithm is a NIST standard with CAVP algorithm testing
-available or announced (SHA-256, HMAC, the SP 800-108 KDF, LMS per SP 800-208, ML-KEM per FIPS 203, ML-DSA per FIPS 204, ECDSA in the secure element, and Ascon per SP 800-232, whose CAVP coverage is
-recent and must be confirmed, A11); the TRNG follows SP 800-90B with the health tests it requires and is mixed with an entropy source that already holds a CMVP ESV certificate (the ATECC608C's);
-and the loader domain is a candidate cryptographic boundary with its key registers, zeroization path (the secret-clear fan-out) and self-tests. What a validation would add is the known-answer self-tests
-at boot, documented roles and services, and the paperwork; what it would not change is any algorithm choice above.
+**FIPS 140-3 through the CMVP is the long-term target.** Every algorithm above is approved and CAVP-testable (Ascon's coverage is recent and to be confirmed, A11); the TRNG is an SP 800-90B source
+feeding an SP 800-90A HMAC_DRBG; the module boundary, self-tests, roles, zeroization and the design changes the target forces now are in `doc/fips.md`.
 
 ## Open questions
 

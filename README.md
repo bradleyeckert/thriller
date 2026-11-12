@@ -32,6 +32,7 @@ To support DSP applications, audio CODECs are planned for.
 | `doc/test.md` | Test plan and fault-injection campaigns |
 | `doc/fda.md` | FDA security architecture views |
 | `doc/network.md` | Network security posture: why the device cannot be a network attack vector, for IT departments and the FDA |
+| `doc/fips.md` | FIPS 140-3 as the long-term target: module boundary, approved algorithms, DRBG, self-tests, roles, zeroization, and what it changes now |
 | `doc/ics55.md` | ASIC migration to the ICS55 55 nm process: the PUF behind the key-source interface |
 | `doc/questions.md` | Every open question in one matrix, and the decisions taken |
 

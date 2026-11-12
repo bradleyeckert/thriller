@@ -17,7 +17,7 @@ Every open question in one place. Earlier architectures are kept in git history 
 | F3 | Multi-boot on the PG2L50H: stream format and generation are known (`cfg_gen_multi_file`, 8 KB headers, sector-aligned starts, watchdog fallback, status bit 22). Open: whether the golden image is fixed at the base address or the boot address can be redirected by the fabric or the loader; master SPI mode pins | [logos2](../fpga/logos2/README.md#flash-and-multi-boot), [flash.md](flash.md#regions) | Pango documentation; bench | 1 |
 | F4 | The masked Ascon core: masking order (first-order TI as the baseline), round unrolling, mask-randomness consumption and the TRNG-seeded PRNG rate behind it, sharing among three users, and TVLA results | [hw.md](hw.md#the-ascon-core) | RTL design; TVLA on hardware (`doc/test.md`) | 2 |
 | F5 | Wrapped pairing keys need a vendor engine the fabric can drive under the eFuse or a PUF-protected key. **Closed for the Logos2** (no such engine; its DPA protection is authenticate-before-decrypt); open as the natural route on PolarFire. Reopen only if Pango shows otherwise | [fpga.md](fpga.md#wrapped-pairing-keys), [polarfire](../fpga/polarfire/README.md) | Pango support, low priority | 3 |
-| F6 | XIP line and cache sizes, loader and application slot sizes | [xip.md](xip.md#caches) | Measure on real LiteForth code | 2 |
+| F6 | XIP line and cache sizes, loader and application slot sizes; tag length (64-bit as designed, or 128-bit if SP 800-232 or the validation requires it) | [xip.md](xip.md#caches) | Measure on real LiteForth code | 2 |
 | F7 | Ring-oscillator TRNG design and health-test thresholds on the FPGA | [fpga.md](fpga.md#trng) | Characterize on hardware | 2 |
 | F8 | The LCD overlay band for developer mode and alarms that the application cannot draw over | [hw.md](hw.md#application-core-domain) | RTL design | 3 |
 | F9 | PG2L50H bitstream size, for the flash's bitstream slots | [flash.md](flash.md#regions) | Build | 2 |
@@ -35,6 +35,8 @@ Every open question in one place. Earlier architectures are kept in git history 
 | E5 | Confirm the slot configuration on real parts before locking: ReqRandom on slot 0, ReqAuth on slots 3 and 7, the encrypted write on slot 0 that the ratchet needs, the KDF command with slot 1 as source and encrypted output | [se.md](se.md#decisions-to-freeze-before-locking) | cryptoauthlib on a development kit | 1 |
 | E6 | A second-source part, qualified against the slot map | [se.md](se.md#part) | Qualification | 3 |
 | E7 | Slot 11 write endurance against the session rate | [se.md](se.md#user-data-freshness) | Datasheet and the expected session rate | 2 |
+| E9 | Secure element under FIPS: can the ATECC608C's SHA-256 and ECDSA be CAVP-tested through its command interface, and is its key transport acceptable as internal handling inside boundary A; or move to a validated secure element with approved key wrapping (Microchip TA101 class), which would also allow the sub-chip boundary B | [fips.md](fips.md#module-boundary) | Laboratory consultation; part evaluation | 2 |
+| E10 | Level 3 identity-based authentication would need a key per host rather than one host authorization key per device; decide whether to design for it now | [fips.md](fips.md#roles-services-authentication) | Decide | 3 |
 | E8 | TrustCUSTOM parts from Microchip, or blank parts provisioned at the station | [enrollment.md](enrollment.md#device-enrollment) | Business decision; volume | 1 |
 | **Acquisition and recordings** | | | | |
 | Q3 | Sample rate per channel and segment length | [acquisition.md](acquisition.md#hardware) | Device design | 2 |
@@ -63,7 +65,7 @@ Every open question in one place. Earlier architectures are kept in git history 
 | A9 | Edge proxy: the UDP-to-TLS relay for sites that only allow port 443, as software or an appliance, and how a device finds it | [README](../README.md#network-and-the-cli) | Specification; check target sites' network policies | 2 |
 | **Test** | | | | |
 | A10 | Real-time clock part: alarm output type (open-drain, latching), backup source (battery or supercapacitor) and its lifetime, accuracy, I2C address; the regulator-enable and power-hold wiring on the FPGA board and the RST_N wiring on the ASIC; which rails stay up in deep sleep | [hw.md](hw.md#real-time-clock) | Part selection | 2 |
-| A11 | FIPS: confirm CAVP algorithm testing is available for Ascon (SP 800-232); decide whether to design the loader domain's self-tests and documentation for a later FIPS 140-3 validation | [arch.md](arch.md#algorithm-bill-of-materials) | Check NIST's ACVP coverage; business decision | 3 |
+| A11 | FIPS 140-3 (long-term target, `doc/fips.md`): confirm CAVP coverage for Ascon (SP 800-232); confirm SP 800-232's minimum tag length for the 64-bit XIP tags (F6); choose Level 2 or 3; pick the laboratory and the validation timeline | [fips.md](fips.md) | Check NIST's ACVP coverage; business decision | 2 |
 | T1 | Fault-injection and side-channel lab: in house or contracted | [test.md](test.md#5-fault-injection) | Decide | 3 |
 | T2 | Independent penetration test supplier | [fda.md](fda.md#6-gaps-for-a-submission) | Decide | 3 |
 | **ICS55** | | | | |

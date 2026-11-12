@@ -211,6 +211,8 @@ The server marks the device retired and the loader writes the retired state into
 
 ## 6. Gaps for a submission
 
+**FIPS 140-3** is the long-term target (`doc/fips.md`); until the module is validated, the submission describes the approved algorithms and the SP 800-90B entropy evidence without claiming validation. Gaps:
+
 1. **Event list** for the log, and how the host displays it.
 2. **Clinical parameters:** maximum reading age, behavior during an unconfirmed pairing, the safe state.
 3. **Fault-injection and side-channel evidence** on the FPGA and the sensor (`doc/test.md`).

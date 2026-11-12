@@ -189,7 +189,7 @@ The mailbox is the only path from the application to the loader, so it is the fi
 | SHA-256 core + LMS chain sequencer | APB | RTL | RTL | Private key input (pairing key, unwrapped keys) and private keyed-digest output; the one key-dependent soft block (R33, open question H4) |
 | Install port | APB | RTL | RTL | The loader's Ascon-AEAD128 work through the Ascon core |
 | Key registers and key gate | Private | RTL | RTL | Loaded only from the SHA unwrap or derive path, with pass tokens; never readable |
-| Security block | APB | RTL | RTL | Comparators, flow counter, key gate tokens, glitch and clock detectors, lockdown, fault status, secret-clear fan-out; drives the LCD overlay's developer-mode and alarm inputs |
+| Security block | APB | RTL | RTL | Comparators, flow counter, key gate tokens, glitch and clock detectors, lockdown, fault status, secret-clear fan-out (the zeroization path, with the ratchet-to-random in `doc/fips.md`); drives the LCD overlay's developer-mode and alarm inputs |
 | Key source | Private to SHA | Block RAM patched per device | PUF + helper data + characterization | See The key-source interface |
 | I2C master | APB | RTL | RTL | The secure element's bus, and nothing else on it |
 | QSPI direct mode, XIP control | APB | RTL | RTL | Erase and program during installs; both caches stall meanwhile. Port window and key setup, write-once |
@@ -197,7 +197,7 @@ The mailbox is the only path from the application to the loader, so it is the fi
 | Host UART | APB | RTL | RTL | Status, host protocol, the application's forwarded terminal |
 | Sensor link | APB | RTL | RTL | UART or the sensor's own physical layer (`doc/sensor.md`), with a capture timer for reading age |
 | Ethernet transport | APB (control, address registers), FIFOs (datagrams) | RTL | RTL | See Ethernet transport below. The PHY's reset is driven from the network policy, so a disabled port cannot be enabled by software |
-| TRNG + health tests + mask PRNG | APB | Ring oscillators | Ring oscillators | Conditioned in the SHA-256 core; mixed with the secure element's Random; seeds the Ascon core's mask PRNG; also feeds the application's random numbers |
+| TRNG + health tests + HMAC_DRBG + mask PRNG | APB | Ring oscillators | Ring oscillators | SP 800-90B source with continuous health tests, conditioned in the SHA-256 core, feeding an SP 800-90A HMAC_DRBG on the same core, with the secure element's Random as additional input; every key, nonce and salt comes from the DRBG; the DRBG seeds the Ascon core's mask PRNG and the application's random numbers (`doc/fips.md`) |
 | RTC I2C master | APB | RTL | RTL | The real-time clock, on its own bus (the secure element's carries nothing else). Boot cause and alarm flags read at boot; alarms set by the loader. See Real-time clock |
 | Timers + watchdogs | APB | RTL | RTL | One watchdog per core; the sensor age timer; the loader resets the application core on its timeout |
 | Application core control | APB | RTL | RTL | Holds the application core in reset until boot checks pass; lockdown holds it in reset |
@@ -318,6 +318,7 @@ and the application core has no path to them at all.
 The boot ROM holds everything that must run before the loader is trusted, or while flash cannot be read:
 
 - Reset, clocking and SRAM test; on the ASIC, the PUF reconstruction (`doc/ics55.md`)
+- Pre-operational self-tests: known-answer tests of the Ascon, SHA-256, HMAC, KBKDF, HMAC_DRBG, LMS, ML-KEM and ML-DSA implementations, and a whole-image integrity check of the loader slot before it is used, in addition to the per-line tags (`doc/fips.md`, Self-tests); a failure takes the lockdown path
 - Drivers for the SHA-256, I2C and QSPI cores, and the TRNG health check
 - The secure element pairing exchange (own key first, inherited key second), authenticated counter reads, and the encrypted read of the application key
 - The loader header check: HMAC, version against counter 0, image key derivation, then configuring and locking XIP port 0
