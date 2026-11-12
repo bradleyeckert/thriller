@@ -362,7 +362,9 @@ stands in for the server's time beacons (`doc/acquisition.md`, When a recording 
   compromise of running software cannot outlive the next sleep, and a device that sleeps nightly bounds any runtime compromise to one day. The power-up sequence is: the alarm asserts the enables; the
   boot ROM asserts a power-hold line so the enables stay asserted; the loader clears the alarm flag. To sleep, the loader programs the next alarm, flushes the stream buffer, closes the card, and
   releases power-hold, which cuts its own power.
-- **Boot cause.** The boot ROM reads the RTC's alarm flag over I2C and records the boot cause (power-on, alarm, button, watchdog, lockdown) in the boot record and the attestation report.
+- **The alarm is also an input pin.** Besides the power path, the alarm line lands on an FPGA (and ASIC) input in the loader domain. At boot it tells the boot ROM the boot cause (power-on, alarm, button,
+  watchdog, lockdown) without an I2C transaction, and the cause goes into the boot record and the attestation report. While awake, an alarm is an interrupt to the loader (a scheduled event, such as
+  a server contact or the start of a recording window) rather than a power event, since power-hold is already asserted. The same pin is what the test build polls in the TRNG restart campaign.
 - **TRNG restart testing.** NIST SP 800-90B assesses an entropy source not only on long runs but on **restarts**: the first samples after each of many power-ups must show the same entropy as
   steady state, and the standard's restart tests want on the order of a thousand restarts. The RTC automates that: a test build sleeps and wakes a thousand times on a short alarm, and at each cold start the
   boot ROM logs the first raw noise-source samples to the MicroSD card before anything else runs. The log feeds the SP 800-90B estimators (`doc/test.md`, TRNG characterization). A measured, defensible
