@@ -354,7 +354,8 @@ not a lockdown loop. Lockdowns are counted in the boot record; past a threshold 
 
 ## Real-time clock
 
-A battery-backed RTC chip gives the device local time across power cycles and a way to wake from deep sleep on schedule. It is **untrusted**: anyone on the board can set it, so it never
+The RTC is a **YXC YSN8130E**: a 3225 module with its 32.768 kHz crystal built in, 1.6 to 5.5 V, 0.9 µA timekeeping, ±23 ppm at 25 °C, backup-battery charge control, an /INT alarm output and a
+programmable-period FOUT, on I2C. It gives the device local time across power cycles and a way to wake from deep sleep on schedule. It is **untrusted**: anyone on the board can set it, so it never
 stands in for the server's time beacons (`doc/acquisition.md`, When a recording was made). What it does:
 
 - **Wake from deep sleep.** Deep sleep is a real power-down: the FPGA, flash, PSRAM, CODECs and PHY are off, and only the RTC (on its backup source) and the secure element's rail stay up.
@@ -423,7 +424,7 @@ Rough figures in 4-input-LUT equivalents, to be replaced by synthesis results:
 
 The PG2L50H and the Ti60 both leave room for the application.
 
-**DRBG in hardware or in Forth.** HMAC_DRBG is a handful of HMAC calls over a 512-bit state, so it could run as Forth on the loader core with the SHA-256 core in derive mode, at no LUT cost.
+**DRBG in hardware or in firmware.** HMAC_DRBG is a handful of HMAC calls over a 512-bit state, so it could run as loader firmware with the SHA-256 core in derive mode, at no LUT cost.
 The hardware sequencer is preferred because the DRBG state is a CSP: in hardware it never exists in the loader's SRAM or stacks, so the "software never sees key material" claim holds without exception,
 and the boot ROM can run the DRBG's known-answer tests before the loader is trusted. A CTR_DRBG would have needed its own AES core (1.5K to 3K LUTs); HMAC_DRBG on the existing core is why the choice is cheap (F4).
 
