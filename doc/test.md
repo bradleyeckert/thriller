@@ -18,7 +18,7 @@ Testing therefore concentrates on:
 |---|---|---|
 | 1. Reference models | Python models of every format and protocol: package layout and signatures, key derivations, per-line GCM (and CCM), headers and boot record, secure element exchanges, ratchet, recording segments, host session, sensor pairing and session, user data records, event log chain, attestation report | Workstation; produce test vectors |
 | 2. Unit tests | RTL modules against the vectors in Verilator; loader Forth against the same vectors in LiteForth's `vm.c` with modeled peripherals; cryptoauthlib against a real secure element for the exchanges | Workstation and bench |
-| 3. System tests | Whole device against simulated host, sensor, server, modem and card | Hardware-in-the-loop rig |
+| 3. System tests | Whole device against simulated host, sensor, server, network and card | Hardware-in-the-loop rig |
 | 4. Fault injection and side channels | Attacks on one unit | Lab bench |
 | 5. Penetration test | Independent team, whole system | External |
 
@@ -39,8 +39,10 @@ The sensor's firmware is tested against the same models.
 - A production-configured board (locked FPGA, locked secure element, flash, CODECs, LCD, card), plus boards with the eFuses left open, an unlocked FPGA and an unlocked secure element for debugging.
 - **Interposers** on the QSPI flash (or a flash emulator), on the secure element's I2C bus, and on one I2S bus, able to record, replay and alter traffic.
 - **Signal source** on the CODEC inputs: synthetic EEG at known levels.
-- **Host simulator** on the UART, and through a modem on BLE and Wi-Fi, driven by test scripts.
-- **Controllable Wi-Fi access point and server simulator**, able to impersonate the real server.
+- **Host simulator** on the UART and on the LAN, driven by test scripts.
+- **Network test harness:** a switch, a packet generator and a server simulator able to act as the edge proxy, the DHCP server or a fake server, and to drop, delay, replay and flood.
+  Everything from the RMII pins outward is attacker territory, so the harness is driven as an attacker: boofuzz (the successor to Sulley) generates the malformed ARP, IP, ICMP, UDP and DHCP
+  traffic and the malformed session frames, with the device's response and its UART status as the monitor.
 - **Sensor simulator** on the sensor link, able to misbehave on command (bad certificates, wrong MACs, replays, delays, silence), and a **link interposer** between it and the device.
 - **Power control** for power cuts at chosen points during installs, the ratchet write and pairing.
 - A flash programmer, and a JTAG pod on unlocked FPGAs.
@@ -63,14 +65,16 @@ The sensor's firmware is tested against the same models.
 | Attestation | A report with a stale nonce, a forged signature or a wrong MAC is rejected by the verifier model; a report from a bitstream with a retired pairing key cannot be obtained; the report's versions match the installed images | R16 |
 | Sensor pairing | Certificate signed by an unknown CA, altered certificate, denylisted serial, wrong private key (implicit rejection) all refused; power cut during pairing leaves the old pairing or none; server rejection removes the pairing | R14, R15 |
 | Sensor session | Forged, replayed, reordered and delayed frames rejected; readings older than the maximum age rejected; link cut puts the device in its safe state within the maximum age | R11, R12, R13 |
-| Recordings | Card and modem capture show no plaintext; the loader's memory holds a segment key only in masked form and only during encapsulation; the recording engine accepts no samples without a key; the host detects dropped, reordered and substituted blocks and segments; segment keys erased at segment end | R39, R41 |
+| Recordings | Card and network capture show no plaintext; the loader's memory holds a segment key only in masked form and only during encapsulation; the recording engine accepts no samples without a key; the host detects dropped, reordered and substituted blocks and segments; segment keys erased at segment end | R39, R41 |
+| Stream buffer | PSRAM bus capture shows only ciphertext; a block corrupted in the PSRAM is rejected by the host; a stalled card and a stalled network are ridden out for at least ten seconds without sample loss; overflow raises the alarm and the log entry and overwrites nothing; power loss during recording leaves a segment the host can read up to the last complete block | R48 |
+| Recording time | A forged or replayed beacon is rejected by the secure element; a header's beacon cannot be altered without the segment failing; offline recordings are bracketed by the last and next beacons; a slowed oscillator shows as a rate mismatch at the host; recordings from a never-connected device are marked undated | R47 |
 | Enrollment | Unenrolled device cannot install updates or authenticate; enrollment cannot be repeated; server flags unknown and duplicate identities | R16 |
 | Developer builds | Package for another device refused; old-epoch builds refused after an epoch release; counter 1 unchanged by developer installs; developer mode shown on the overlay whatever the application draws | R21, R22 |
 | Event log | Removed or altered entries detected by the host and the server | R26 |
-| Radio policy and modem | A release with a radio disabled holds the modem in reset, and no software path releases it; modem fuzzing (malformed PDUs, connection floods) never reaches a key or plaintext; CLI refuses commands without a session; developer commands absent from production builds | R23, R28 |
+| Network policy and transport | A release with the port disabled holds the PHY in reset, and no software path releases it; RTL fuzzing of the Ethernet transport (malformed ARP, IP, ICMP and UDP headers, bad checksums, runt and giant frames, floods) in simulation and on hardware never delivers a payload that is not a well-formed UDP datagram to our port, and never wedges the transport beyond a re-initialization; ARP and DHCP spoofing cause only loss of connectivity; CLI refuses commands without a session; developer commands absent from production builds | R23, R28 |
 | Over-the-air updates | Fake access point and fake server: forged, old and truncated packages refused; interrupted download leaves the old image active; server authentication failure stops the exchange | R29 |
 | UART status | Status output contains no user data or keys | R30 |
-| Coexistence | Sensor timing and safe-state behavior unaffected by recording, card and modem load | R13 |
+| Coexistence | Sensor timing and safe-state behavior unaffected by recording, card and network load, including floods | R13 |
 
 ## 5. Fault injection
 
@@ -117,7 +121,7 @@ On the configuration engine, a glitch could make it accept a bad bitstream; that
 | LiteForth `vm.c` and `stage1sim` | The loader and application Forth with modeled peripherals; two cores and the mailbox |
 | cryptoauthlib and a Microchip development kit | Exercising the slot configuration on real secure elements before locking |
 | Python (`cryptography`, reference implementations of LMS, ML-KEM, ML-DSA) | Reference models and vectors |
-| A BLE fuzzer and a controllable Wi-Fi access point | Modem tests |
+| boofuzz, Scapy and a managed switch | Protocol fuzzing of the Ethernet transport and the session protocol from the network; the edge proxy, DHCP and fake-server cases. boofuzz's block-based grammars suit the fixed header and frame formats, and the same grammars drive the RTL fuzzing in Verilator through a Python harness |
 | ChipWhisperer-Husky, a voltage glitch stage, an EMFI probe | Fault injection |
 | A scope or ChipWhisperer for power traces | TVLA |
 | The family's programmer and tools | eFuse state, encrypted bitstream generation |

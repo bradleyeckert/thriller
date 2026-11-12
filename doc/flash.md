@@ -20,7 +20,7 @@ Sizes are proposals, to be confirmed against real bitstream, loader and applicat
 | `0x0810000` | 512 KB | Loader A | Loader image in XIP layout (`doc/xip.md`): a header, then 64-byte lines with 8-byte tags |
 | `0x0890000` | 512 KB | Loader B | The other loader slot |
 | `0x0910000` | 512 KB | Recovery staging | Raw ciphertext of a loader package received by UART recovery, before it is verified |
-| `0x0990000` | 64 KB | Records | Hosts' recording public keys, sensor pairing records, the denylist, the radio policy, the event log head: each record encrypted and authenticated under the application key |
+| `0x0990000` | 64 KB | Records | Hosts' recording public keys, sensor pairing records, the denylist, the network settings and MAC address, the latest time beacon, the event log head: each record encrypted and authenticated under the application key |
 | `0x09A0000` | 64 KB | ASIC key blob | On the ASIC: PUF helper data (`doc/ics55.md`). Reserved on the FPGA |
 | `0x09B0000` | 320 KB | Reserved | |
 | `0x0A00000` | 11 MB | Application A | Application image in XIP layout |
@@ -70,7 +70,7 @@ fails its version check and boot falls back to the new slot, which is why step 2
 
 Update packages are not staged in flash. Reading a staged package back from flash would need QSPI direct mode, which stalls every XIP fetch, including the loader's own code. Instead:
 
-- A package received over the UART or the modem is written to a staging file on the MicroSD card.
+- A package received over the UART or the network is written to a staging file on the MicroSD card.
 - An offline package already on the card is used where it is.
 - The loader reads the staged package from the card, verifies it, and writes the result into the inactive flash slot. Only those writes need direct mode.
 

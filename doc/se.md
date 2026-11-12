@@ -149,7 +149,7 @@ The device can prove what it is and what it runs. The loader builds a **report**
 | Counter 0, counter 1 | Authenticated counter reads |
 | Lockdown count, last lockdown cause | Boot record |
 | Enrollment and lifecycle state | Slot 13 |
-| Radio policy | Application header |
+| Network policy | Application header |
 | Verifier's nonce; loader's nonce | The request; the TRNG |
 
 and has the secure element sign its SHA-256 digest in one or both ways:

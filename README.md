@@ -17,7 +17,7 @@ To support DSP applications, audio CODECs are planned for.
 
 | Document | Contents |
 |---|---|
-| This README | Overview: chipset, keys, boot, updates, recordings, sensor, host sessions, radios and the CLI |
+| This README | Overview: chipset, keys, boot, updates, recordings, sensor, host sessions, the network and the CLI |
 | `doc/arch.md` | Trust boundary, threat model, risk assessment, algorithm bill of materials |
 | `doc/hw.md` | Hardware modules: the two cores, the mailbox, the shared XIP engine, key paths, boot and lockdown, the key-source interface |
 | `doc/se.md` | Secure element: slot map, counters, the pairing-key ratchet, attestation, the I2C protocol |
@@ -31,6 +31,7 @@ To support DSP applications, audio CODECs are planned for.
 | `doc/roles.md` | Manufacturer, application owner, developer and user; device-bound developer builds |
 | `doc/test.md` | Test plan and fault-injection campaigns |
 | `doc/fda.md` | FDA security architecture views |
+| `doc/network.md` | Network security posture: why the device cannot be a network attack vector, for IT departments and the FDA |
 | `doc/ics55.md` | ASIC migration to the ICS55 55 nm process: the PUF behind the key-source interface |
 | `doc/questions.md` | Every open question in one matrix, and the decisions taken |
 
@@ -46,8 +47,12 @@ To support DSP applications, audio CODECs are planned for.
 - **2 × NAU88C22** stereo CODECs: four acquisition channels, and the speaker driver (`doc/acquisition.md`).
 - **LCD panel and speaker** inside the enclosure, which carries a tamper-evident seal.
 - **MicroSD card socket**, driven by the FPGA: encrypted recordings and user data, the event log, offline update packages.
+- **ESP-PSRAM64H** (8 MB QSPI PSRAM): a ring buffer for the encrypted recording stream between the recording engine and the card or the network, riding out card write latency and network stalls.
+  It holds ciphertext only, about ten seconds of it at the full rate, and is outside the trust boundary like the card (`doc/acquisition.md`, Stream buffer).
 - **Sensor connector**: a wired, two-way link to a replaceable temperature sensor, driven by the loader core (`doc/sensor.md`).
 - **UART** (USB-UART bridge): status reports, and the wired path for host sessions, updates and the CLI.
+- **Ethernet**, 10/100 over RMII to a PHY such as the LAN8742A: the path to the server for attestation, updates, uploads and sensor-pairing confirmation. The FPGA speaks only UDP on one port,
+  implemented in hardware; there is no network stack anywhere in the device (see Network). An untrusted edge proxy on site relays the datagrams to the server over TLS where IT requires port 443.
 - Oscillator, voltage regulators, and test connectors not populated in production. The FPGA's JTAG is permanently disabled at enrollment where the family allows it.
 
 ## Keys and what unlocks them
@@ -83,7 +88,7 @@ secure element or the key source into hardware key registers (`doc/hw.md`, Key p
    If the secure element refuses the pairing key, this bitstream has been superseded: the boot ROM stops in recovery.
 3. The **loader** reads counter 1, checks the application image's header and version (or, for a developer build, device and epoch), derives its image key, and releases the application core.
    Every cache line of either image is authenticated as it is fetched.
-4. The loader opens the sensor session, and, if the radio policy allows, releases the modem.
+4. The loader opens the sensor session and, if the network policy allows, releases the Ethernet PHY from reset and brings up its address.
 5. The application runs. It reaches user data, recordings, the host, the sensor and the log only through the loader's mailbox services.
 
 Any check that fails falls back to the other slot of that image, or stops in the safe state with a record in the boot record (`doc/hw.md`, Boot and lockdown).
@@ -95,9 +100,9 @@ Two signed chains, sharing nothing but the secure element:
 | Package | Contents | Scope | Signed by | Counter |
 |---|---|---|---|---|
 | Platform | This device's encrypted bitstream with its next pairing key, and a loader image | Per device, built by the bitstream build service | LMS (manufacturer), one signature per release over a manifest | 0 |
-| Application | The LiteForth application, and its radio policy | Fleet; encrypted under the distribution key | LMS (application owner); developer builds: a MAC under the device's developer key | 1 |
+| Application | The LiteForth application, and its network policy | Fleet; encrypted under the distribution key | LMS (application owner); developer builds: a MAC under the device's developer key | 1 |
 
-Packages arrive on the MicroSD card, over the UART from the host, or through the modem. The loader checks the signature and the version before decrypting anything, writes into the
+Packages arrive on the MicroSD card, over the UART from the host, or over the network. The loader checks the signature and the version before decrypting anything, writes into the
 inactive slot, reads it back, advances the counter and switches the boot record (`doc/flash.md`, Install order). A bitstream update ends with the new bitstream, once it has booted,
 replacing the pairing key in the secure element with its next key, after which the old bitstream can no longer open the secure element.
 
@@ -126,23 +131,29 @@ The device proves what it is and what it runs in two ways (`doc/se.md`, Attestat
 
 The secure element signs only for a bitstream that holds the current pairing key, so a report proves the pairing, the bitstream release, and the versions the loader measured.
 
-## Radios and the CLI
+## Network and the CLI
 
-**The application owner decides** whether Wi-Fi and BLE are enabled, through a radio policy in the signed application package. The radio stacks run in the modem, a separate module outside
-the trust boundary, which the loader holds in reset when the policy disables it. The modem never holds a key and never sees plaintext: recordings reach it already encrypted to the host,
-packages are signed and encrypted, and sessions are encrypted end to end.
+There are no radios. The device has one wired Ethernet port, and the FPGA implements the whole of its network side in hardware (`doc/hw.md`, Ethernet transport): an RMII MAC, an ARP
+responder for its own address, IPv4 without fragments or options, ICMP echo, and a UDP demultiplexer that delivers datagrams on one port into the loader domain and drops everything else.
+The payload is the same authenticated, encrypted session frame the loader already parses from the UART, so the network is a second transport for one protocol, with no TCP, DNS, TLS or HTTP
+anywhere in the device. Flows are outbound only, with keepalives; the ack-and-window layer that makes updates and uploads reliable over a lossy path is part of the session protocol.
 
-- **Wi-Fi** carries over-the-air updates, recording uploads and server contact. Outbound connections only.
-- **BLE** carries the CLI through a serial service; every CLI session runs our own authenticated, encrypted session; advertising only after a user action, for a limited time, one connection.
-- **The UART** gives read-only status to anyone with a cable, and the same authenticated sessions as the wired path.
+Where a site's IT policy only allows TCP on port 443, a small **edge proxy** (software on a PC or a gateway appliance on the same LAN) relays the device's datagrams to the server over TLS.
+It is outside the trust boundary and sees only ciphertext: it can drop, delay or replay, and every one of those is already handled by the session protocol.
+
+**The application owner decides** whether the port is enabled, through a network policy in the signed application package; the loader holds the PHY in reset when it is disabled.
+Addressing is by DHCP, with static addresses settable in a host session; the server (or proxy) address is set the same way.
+
+- **The UART** gives read-only status to anyone with a cable, and authenticated sessions.
+- **The network** carries authenticated sessions with the server, and with a host on the same LAN.
 
 | Session | Commands |
 |---|---|
 | None (UART status only) | Versions, build mode, faults, pairing state |
-| Host (host authorization key) | User data, recordings, sensor pairing, updates, log export, Wi-Fi credentials, attestation |
+| Host (host authorization key) | User data, recordings, sensor pairing, updates, log export, network settings, attestation |
 | Developer (developer key, developer builds only) | The above, plus the application's debug commands |
 
-Whether the product carries a modem at all is the integrator's decision (`doc/questions.md`, A9).
+The PHY choice, PoE and the edge proxy are open items (`doc/questions.md`, A6 to A9).
 
 ## ASIC conversion
 

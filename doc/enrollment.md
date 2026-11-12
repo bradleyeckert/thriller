@@ -8,7 +8,7 @@ Every device and every sensor is entered into the manufacturer's enrollment data
 - confirm sensor pairings and catch cloned sensors;
 - refuse updates to anything not enrolled.
 
-A device does not need to be online to work. It reports to the server when it can: through the modem if the application owner has enabled it, otherwise through the host.
+A device does not need to be online to work. It reports to the server when it can: over the network if the application owner has enabled the port, otherwise through the host.
 
 ## Keys held by the manufacturer
 
@@ -81,6 +81,7 @@ After authentication, the exchange runs under a session key derived from both no
 - uploads its event log since the last contact;
 - reports unconfirmed sensor pairings, and receives *confirmed* or *rejected* for each;
 - receives the current sensor denylist;
+- receives time beacons throughout the contact, and keeps the latest for recording headers and the event log (`doc/acquisition.md`, When a recording was made);
 - can receive an update package built for its reported state.
 
 ## Detecting unknown identities

@@ -64,7 +64,7 @@ commands that matter.
 
 ## Server confirmation
 
-The next time the device reaches the enrollment server (through the host, or the modem if enabled), it reports each unconfirmed pairing:
+The next time the device reaches the enrollment server (over the network if enabled, otherwise through the host), it reports each unconfirmed pairing:
 serial, certificate hash and pairing time. The server checks that:
 
 - the serial is enrolled and the certificate hash matches the database;
@@ -116,7 +116,7 @@ and must not act on a reading the loader has not passed. The time a reading wait
 The link is driven by the sensor-link module in the loader core domain: a UART for a byte-oriented link, or a small custom serializer with a capture timer where the sensor's
 protocol needs precise timing. The choice depends on the sensor's existing interface and the cable (open question S2). The protocol above does not depend on it.
 
-The sensor link is wired, and nothing in it depends on the modem.
+The sensor link is wired, and nothing in it depends on the network: pairing completes offline, and the network only makes the server's confirmation arrive sooner.
 
 ## Calibration
 

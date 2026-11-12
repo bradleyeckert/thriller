@@ -8,7 +8,7 @@ a developer can run their own application on their own device, and nowhere else.
 | Role | Holds | Can |
 |---|---|---|
 | **Manufacturer** | The HSMs: pairing, device, FPGA configuration, host and host data masters, the bitstream signing key, platform LMS keys, the device CA, the distribution key, sensor CA keys (unless the sensor maker holds them); the bitstream build service | Build and sign each device's platform packages; enroll devices; issue host and developer keys |
-| **Application owner** | The application LMS keys (in an HSM) | Sign production LiteForth application releases, including their radio policy. May be the manufacturer or a customer (open question A1) |
+| **Application owner** | The application LMS keys (in an HSM) | Sign production LiteForth application releases, including their network policy. May be the manufacturer or a customer (open question A1) |
 | **Developer** | A developer key for each device they own, for the current epoch | Build, sign and install applications for those devices only |
 | **User** | A host, with its host authorization key, host data secret and recording key pair | Open host sessions, read recordings and user data, pair sensors, install signed updates |
 
@@ -33,7 +33,7 @@ A leaked developer key exposes only its own device, so no revocation is needed.
 A developer package carries:
 
 - the application image, encrypted with AES-256-GCM under a package key derived from the working key;
-- a header naming the target device's serial number and the epoch, marked as a developer build, with the developer's chosen radio policy;
+- a header naming the target device's serial number and the epoch, marked as a developer build, with the developer's chosen network policy;
 - a MAC over the whole package under a MAC key derived from the working key.
 
 The developer's tools derive both package keys from the working key with labels, so one key from the HSM is all a developer needs.
@@ -49,7 +49,7 @@ Symmetric keys keep the tools simple and stateless, and they are quantum-safe.
 | Install | Re-encrypted per line under a fresh install salt into the inactive slot (`doc/xip.md`) | Same |
 | Header mode | *Production*, version | *Developer*, serial number, epoch; refused once the epoch has moved on |
 
-Packages arrive over the UART from the developer's tools, through the modem, or on a card.
+Packages arrive over the UART from the developer's tools, over the network, or on a card.
 
 **Developer builds never move counter 1.** Developers pick version numbers freely; a build numbered 9999 must not block production releases.
 
