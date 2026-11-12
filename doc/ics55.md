@@ -61,7 +61,7 @@ are the main users; the application's code stays in flash.
 
 - SRAM PUF reliability and uniqueness with the ICS55 SRAM compiler's cells, across temperature and aging.
 - Ring-oscillator TRNG entropy.
-- Side-channel leakage of the AES core (a masked core replaces the FPGA's hard block) and the SHA-256 core.
+- Side-channel leakage of the masked Ascon and SHA-256 cores on this process (the same RTL as the FPGA).
 
 A small test chip on an early shuttle, carrying the PUF block, the extractor, the TRNG and the two crypto cores, would settle them before committing the full design.
 

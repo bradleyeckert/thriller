@@ -33,10 +33,10 @@ Recordings are encrypted so that **the device can write them but not read them b
 
 1. **Recipient keys.** The host (and optionally a clinic server) gives the device its ML-KEM-768 public key during an authenticated host session. The loader stores it in the records region of the flash, under the application key.
 2. **Segments.** A recording is cut into segments, for example a few minutes each. For each segment the loader draws a fresh 256-bit segment key from the TRNG into the recording engine's key register.
-   For each recipient it runs ML-KEM encapsulation to the recipient's public key and wraps the segment key with AES-256-GCM under a key derived from the shared secret (the one place the loader's code
+   For each recipient it runs ML-KEM encapsulation to the recipient's public key and wraps the segment key with Ascon-AEAD128 under a key derived from the shared secret (the one place the loader's code
    handles key material, masked; `doc/hw.md`). It then writes the segment header: device serial, recording ID, segment number, start sample index, build mode, the latest time beacon with the
    sample count since it (below), and the encapsulations with their wrapped keys.
-3. **Stream.** The application feeds samples into the sample FIFO; the recording engine encrypts them in AES-256-GCM blocks (for example 4 KB) in the hard AES block, with the block number as the nonce
+3. **Stream.** The application feeds samples into the sample FIFO; the recording engine encrypts them in Ascon-AEAD128 blocks (for example 4 KB) in the Ascon core, with the block number in the nonce
    and the segment header as associated data in the first block, and the loader writes the ciphertext to the card or sends it over the network.
 4. **Erase.** At the end of the segment the engine's key register is cleared. Nothing on the device can decrypt that segment again.
 5. **Order.** Block and segment numbers make dropped, reordered or substituted blocks and segments detectable at the host.
@@ -49,7 +49,7 @@ A thief who breaks the device gets the segment in progress at most, never earlie
 The card and the network both stall: an SD card can pause for hundreds of milliseconds on a wear-leveling or garbage-collection cycle, and a network path can lose connectivity for longer.
 The recording engine cannot stall, because samples arrive at a fixed rate. Between them sits a **stream buffer**: an 8 MB QSPI PSRAM (ESP-PSRAM64H) used as a ring of encrypted blocks.
 
-- **Ciphertext only.** The recording engine writes finished, authenticated AES-256-GCM blocks into the ring; the loader's stream-buffer controller drains them to the SD controller, the Ethernet
+- **Ciphertext only.** The recording engine writes finished, authenticated Ascon-AEAD128 blocks into the ring; the loader's stream-buffer controller drains them to the SD controller, the Ethernet
   transport, or both, with the loader choosing destinations and watching the fill level. No plaintext and no key ever reaches the PSRAM, so it is outside the trust boundary like the card:
   a board prober who reads it sees ciphertext, and one who corrupts it corrupts a block the host will reject (R41).
 - **Capacity.** 8 MB is about ten seconds of stream at the highest foreseen rate and twenty at the lowest, far beyond card latency, and enough to cover a network hiccup. A longer outage simply

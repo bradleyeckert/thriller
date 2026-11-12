@@ -1,8 +1,8 @@
 # Pango Logos2 (PG2L50H)
 
 **Part under consideration:** PG2L50H-6IFBG484 (50K-class logic, speed grade 6, industrial temperature, 484-ball BGA).
-**Status:** current choice, with the ECP5 as fallback. Its bitstream security meets the hard requirements of the wish list, and its DPA-protected hard AES block carries all of the FPGA's cryptography.
-The deciding unknowns are the build flow (item 5, F1) and the master SPI multi-boot behavior (item 4, F3).
+**Status:** current choice, with the ECP5 as fallback. Its bitstream security meets the hard requirements of the wish list. Its "DPA protection" turned out to mean authentication before decryption of the bitstream, not a hardened cipher the fabric can use,
+so the design's symmetric cryptography runs in a masked Ascon core of our own (`doc/hw.md`), as it would on any family. The deciding unknowns are the build flow (item 5, F1) and the master SPI multi-boot behavior (item 4, F3).
 
 ## What the datasheet claims
 
@@ -12,7 +12,7 @@ From the *Logos2 Family FPGAs Device Datasheet*:
 - Key storage in eFuse or battery-backed RAM (BB-RAM).
 - Protection against bitstream readback.
 - JTAG security management, including permanently disabling JTAG.
-- Protection against differential power analysis (DPA) of the key.
+- Protection against differential power analysis (DPA) of the key. **In practice this is authentication before decryption:** the RSA signature over the ciphertext is checked first, so an attacker cannot feed chosen ciphertexts to the decryptor. It is not a hardened AES engine, and no AES engine is exposed to the fabric.
 
 ## The wish list
 
@@ -22,8 +22,8 @@ From the *Logos2 Family FPGAs Device Datasheet*:
 | 2 | No fallback | The configuration guide's procedure says only the corresponding encrypted bitstream can be configured once a key is programmed; an adjacent sentence is ambiguous about eFuse keys. Verify on a fused sample (see F2 below) |
 | 3 | Readback disabled, key not readable | Encrypted bitstreams cannot be read back or verified (guide 4.3.9.1); eFuse key; JTAGLOCK and SCANLOCK fuse bits |
 | 4 | Master SPI self-configuration with multi-boot | Yes: multi-boot stream with golden and application images, built by `cfg_gen_multi_file`; a status-register fallback flag. Golden-image rule and mode pins to confirm (F3) |
-| 5 | Per-device constants from a script | **Not in the Tcl guide** (see Per-device keys below). The primary plan is now wrapped pairing keys under the eFuse key through the hard AES block (F5), which needs no per-device bitstream |
-| 6 | Hard AES block, DPA-protected, usable from the fabric | Yes (claimed). Open (F4): AES-256 support, GHASH, throughput for three users, instances, key-loading interface |
+| 5 | Per-device constants from a script | **Not in the Tcl guide** (see Per-device keys below). Per-device re-encryption is cheap; whether a DRM INIT change forces re-synthesis is the open item (F1) |
+| 6 | Room for a masked Ascon core | Yes; a 50K-class part. No vendor cipher block is usable from the fabric, so the core is ours (F4) |
 | 7 | Ring-oscillator TRNG | To confirm |
 | 8 | Enough logic | A 50K-class part: ample room for both cores, the security blocks and the application. LUT size and block RAM to confirm |
 | 9 | QSPI and peripheral pins | General I/O; 484 balls |
@@ -33,17 +33,18 @@ From the *Logos2 Family FPGAs Device Datasheet*:
 | Risk | ECP5 | Logos2 |
 |---|---|---|
 | R32: blind edits to an encrypted bitstream | Open: no MAC, only the CRC | **Closed:** AES-GCM authenticates every bitstream under the device's own key; RSA-2048 adds an origin signature |
-| R5, R33: power analysis | Neither configuration nor soft AES hardened | **DPA protection** for configuration and for the hard AES block |
+| R5: power analysis on configuration | Not hardened | Signature checked before decryption: no chosen-ciphertext traces; the fixed bitstream still leaks on repeated power-ups |
+| R33: power analysis in the fabric | Our masked Ascon and SHA-256 cores | The same; no vendor help on either part |
 | R43: boundary scan after locking | Remains available | **Can be removed** by permanently disabling JTAG, after the board's boundary-scan test at the factory |
 | Bitstream key size | AES-128 | AES-256 |
 | Fit | 24K LUTs, tight | 50K class, roomy |
 
-## The hard AES block
+## No hard AES for the fabric
 
-Pango's DPA protection covers configuration and the **hard AES block in the fabric**. That is why the design uses AES-256 rather than Ascon: the XIP engine, the recording engine and the install
-port all run their cryptography in that block, and the key registers feed it directly. Open (F4): AES-256 support, whether the block computes GHASH (if not, AES-CCM so that no key-dependent step
-runs in unprotected fabric), throughput, number of instances, and the key-loading interface. Also open (F5): whether the block can use the eFuse key, or a key derived from it, which would let the pairing
-keys be wrapped rather than stored in the bitstream.
+An earlier version of this design assumed the Logos2's DPA protection was a hardened AES engine the fabric could use, and built the XIP engine, the recording engine and the install port on it.
+It is not: Pango's countermeasure is to authenticate the bitstream (RSA-2048 over the ciphertext) before decrypting it, which denies an attacker chosen ciphertexts, and nothing in the datasheet exposes an
+AES engine to user logic. The design therefore runs all symmetric cryptography in a first-order masked Ascon-AEAD128 core of its own (`doc/hw.md`, The Ascon core), as it would on every other candidate family,
+and F5 (wrapping the pairing keys under the eFuse key) is closed for this part.
 
 ## Key storage: eFuse or BB-RAM
 
@@ -57,7 +58,7 @@ Replaces step 3 of `doc/enrollment.md`. Everything below is scriptable through t
 
 1. Run the board's boundary-scan test.
 2. Program the device's `.nky` key file into eFuse: the AES-256 key (from the HSM) and the RSA-2048 public key digest (`cfg_program_key_file -key_location 1`).
-3. Confirm that decryption and authentication are mandatory (F2, see the caveat below), then lock the key, the digest, and the authentication, decryption and DPA enables (`cfg_efuse_lock`).
+3. Confirm that decryption and authentication are mandatory (F2, see the caveat below), then lock the key, the digest, and the authentication, decryption and DPA enables (`cfg_efuse_lock`); DPALOCK and DRMDPALOCK are kept set, whatever they protect, since there is no reason to leave them open.
 4. After the first boot and the attestation check, lock JTAG and scan mode (`cfg_efuse_lock -lock C`, `-lock D`), or lock everything with `-lock FF`.
 
 ### Headless station flow
@@ -170,8 +171,8 @@ key is per device whether the pairing keys ride in the bitstream or in flash.
    `define_attribute` handles only `PAP_REGION` and `PAP_LOC`. There is no equivalent of Xilinx `updatemem`, Efinix's BRAM Initial Content Updater, or Diamond's ECO INIT edit.
 
 **Consequences, in order of preference:**
-1. **Wrapped pairing keys (F5), the primary plan.** If the hard AES block can decrypt under the eFuse key or a derivative, the bitstream is common to the fleet and no per-device build is needed
-   (`doc/fpga.md`, Wrapped pairing keys).
+1. **Test whether a DRM INIT change forces re-synthesis.** If PDS treats the key-source block RAM's initial contents as bitstream data (as Xilinx does), per-device bitstreams cost one `gen_bit_stream` each
+   and F1 is settled. If it forces a new synthesis and PnR, the pairing keys need another per-device carrier (below) or per-device PnR.
 2. **Per-device encryption from the project.** Per device, the station either edits the key file path in the `.pds` (its format to confirm) or leaves the key names blank and harvests the `.nky` PDS generates.
    To settle: the `.nky` format, so HSM-derived AES keys can be written into one (letting PDS's RNG pick them and escrowing the `.nky` is acceptable, since the station is already the trusted build service, R42);
    and the RSA signing key, which must be a fixed named file and never regenerated, and which therefore lives on the isolated station rather than in an HSM. Remaining question for Pango: whether a DRM INIT
@@ -193,8 +194,8 @@ key is per device whether the pairing keys ride in the bitstream or in flash.
 | Encrypted-only and signed-only configuration | The guide says only the corresponding encrypted bitstream can be configured after keying, with one ambiguous sentence about eFuse keys; enable bits exist (locked by DECLOCK, AUTLOCK, KEYENLOCK). Bench test on a fused sample (F2) |
 | Master SPI self-configuration and multi-boot | Multi-boot stream format and generation known (above); golden-image rule and mode pins open (F3) |
 | JTAG access to the eFuse key before JTAG is disabled | Key read-out not offered by the tool (only `cfg_read_device_property -mode 4`, the eFuse value, to confirm what it shows); JTAGLOCK and SCANLOCK fuse bits disable JTAG permanently |
-| DPA protection | Covers configuration and the hard AES block in the fabric |
+| DPA protection | Authentication before decryption of the bitstream only; no hardened engine for the fabric |
 | PDS from the command line | Yes |
 | Block RAM contents in a routed design, from a script, then encrypt and sign | **Not in the Tcl guide v2.0;** three questions for Pango support (F1, now the fallback) |
-| Hard AES block: AES-256, GHASH, throughput, instances, key loading | **Open (F4)** |
-| Hard AES block using the eFuse key | **Open (F5), now the primary plan** for per-device keys |
+| A cipher block usable from the fabric | **None.** Symmetric cryptography is our masked Ascon core (F4) |
+| Wrapping the pairing keys under the eFuse key | **Closed (F5):** no engine to do it with |

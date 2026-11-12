@@ -24,7 +24,7 @@ for exactly the role `thriller` gives the FPGA:
 | 3 | Readback disabled, key not readable | Yes (claimed): no configuration readback; keys protected by the PUF |
 | 4 | Self-configuration with fallback | **Different model:** configuration is in on-chip flash, so there is no power-up bitstream read. In-application programming from an external SPI flash with a golden and an update image gives the A/B behavior; `doc/flash.md` would change accordingly |
 | 5 | Per-device constants from a script | The pairing keys could live in the sNVM under the PUF instead of in the bitstream, so a per-device bitstream might not be needed at all: one common bitstream, per-device sNVM data written at enrollment through the programmer. To confirm |
-| 6 | Hard AES block, DPA-protected, usable from the fabric | On "S" parts, through system controller services. **Open:** whether the service latency is acceptable for per-line XIP keystream generation, or whether the fabric needs its own AES with the hard block kept for key handling |
+| 6 | Room for a masked Ascon core | Yes. PolarFire is also the one candidate with a DPA-hardened crypto coprocessor ("S" parts, through system controller services); its service latency rules it out for per-line XIP, but it could handle key unwrapping, which is what the wrapped-key route (F5) needs |
 | 7 | Ring-oscillator TRNG | To confirm; the system controller also offers a certified DRBG |
 | 8 | Enough logic | MPF100T class and up: ample |
 | 9 | QSPI and peripheral pins | General I/O |
@@ -42,7 +42,7 @@ for exactly the role `thriller` gives the FPGA:
 
 - Price: several times the PG2L50H or the LFE5U-25F.
 - Libero SoC is the only toolchain; no open-source flow. Licence terms for the security features to confirm.
-- The "S" crypto coprocessor's service model may be too slow for XIP (item 6), in which case the design falls back to soft AES in fabric for lines, which is the ECP5's position on R33.
+- The "S" crypto coprocessor's service model is too slow for XIP; lines use the design's own masked Ascon core here as everywhere, and the coprocessor's value is key unwrapping under the PUF-protected key (F5).
 
 ## Open questions
 

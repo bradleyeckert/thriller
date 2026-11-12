@@ -9,11 +9,11 @@ the secure element protocol in `doc/se.md`, the flash map in `doc/flash.md`. Eve
    The loader is a firewall: the application reaches security functions only by sending it messages.
 2. **Separation by wiring.** The application core's buses have no connection to keys, the secure element, the security block, the sensor, the network, the card or flash writing.
    This is checked from the netlist's connectivity, not argued from a privilege state machine.
-3. **Both cores execute in place, through one shared XIP engine.** Each core has its own cache, flash window and image key; the QSPI controller, the AES path and the tag comparator are built once.
+3. **Both cores execute in place, through one shared XIP engine.** Each core has its own cache, flash window and image key; the QSPI controller, the cipher path and the tag comparator are built once.
 4. **The FPGA mirrors the ASIC's boot chain.** A small boot ROM (block RAM on the FPGA, mask ROM on the ASIC) verifies the loader image in flash, and the loader verifies the application, on both.
    The ASIC's boot chain is tested from the first FPGA build.
 5. **One key-source interface.** The pairing keys reach the SHA-256 core through a module with a fixed interface: patched block RAM constants on the FPGA, a PUF with its characterization logic on the ASIC (`doc/ics55.md`).
-6. **Secrets never cross a bus.** Keys, comparator results and the XIP fill pipeline use private, point-to-point connections, and all AES work runs in the hard AES block.
+6. **Secrets never cross a bus.** Keys, comparator results and the XIP fill pipeline use private, point-to-point connections, and all key-dependent symmetric work runs in one masked Ascon core.
 7. **Two buses per core, chosen by speed.** AXI4-Lite for memory; APB4 for peripherals. Each core is the only master on its own buses. No DMA except the recording path: the recording engine's private sample FIFO in, and the stream buffer's private drain to the card and network controllers out. Both carry ciphertext or samples, never keys, and neither can address memory on either core's bus.
 8. **Same Forth code everywhere.** Peripherals are reached through LiteForth's I/O ports (`>sys` and `sys>`), which `vm.c` and MCU builds implement in C.
 
@@ -40,7 +40,7 @@ flowchart TB
     ACC["Application core control"]
     KEY["Key source<br/>(pairing keys, version)"]
     KREG["Key registers<br/>(write-only, gated)"]
-    AES["Hard AES block<br/>(DPA-protected)"]
+    ASC["Ascon core<br/>(masked)"]
     INST["Install port"]
     REC["Recording engine"]
     PSR["Stream buffer<br/>QSPI PSRAM controller"]
@@ -75,7 +75,7 @@ flowchart TB
   LPB --> DB & TF
   APB2 --> DB & TF & RFIFO
   RFIFO -.-> REC
-  LXC <-->|"port 0 (priority)"| XENG["Shared XIP engine<br/>QSPI XIP mode, keystream and tag<br/>via the hard AES block,<br/>per-port window and image key"]
+  LXC <-->|"port 0 (priority)"| XENG["Shared XIP engine<br/>QSPI XIP mode, decrypt and tag<br/>via the Ascon core,<br/>per-port window and image key"]
   XIPC <-->|"port 1"| XENG
   XENG <--> QSPI[("QSPI NOR flash")]
   QD -.->|"shares the QSPI pins; both caches stall"| XENG
@@ -83,8 +83,8 @@ flowchart TB
   SHA -.->|"private: keyed digest"| SEC
   SHA -.->|"private: unwrap or derive into key register"| KREG
   SEC -.->|pass tokens| KREG
-  KREG -.-> AES
-  AES -.-> XENG & INST & REC
+  KREG -.-> ASC
+  ASC -.-> XENG & INST & REC
   ACC -.->|"reset, run"| ACPU
   SEC -.->|"developer mode, alarms"| LCD
 ```
@@ -106,26 +106,36 @@ LiteForth's I/O ports have a 9-bit immediate index, so each core has 512 ports, 
 Each core's port bridge turns `>sys n` into an APB write and `sys> n` into an APB read at address 4n. Ports 0 to 15 belong to the VM itself and never reach the bridge.
 A port that returns `PSLVERR` becomes an ior, which LiteForth already treats like a failed memory access.
 
-## The hard AES block
+## The Ascon core
 
-All AES work in the FPGA runs in the family's hard AES block (on the Logos2, protected against power analysis), shared by three users with a fixed priority:
+Every key-dependent symmetric operation in the FPGA runs in one Ascon permutation core of our own, implementing Ascon-AEAD128 (NIST SP 800-232), shared by three users with a fixed priority:
 
 | User | Priority | Work |
 |---|---|---|
-| XIP engine | 1 | Keystream and tag for every cache fill, both ports |
-| Recording engine | 2 | AES-256-GCM over the sample stream, in 4 KB blocks |
-| Install port | 3 | GCM on lines being written, records, session frames, package decryption; AES-256-CMAC derivations |
+| XIP engine | 1 | Decrypting and checking every cache line, both ports |
+| Recording engine | 2 | Ascon-AEAD128 over the sample stream, in 4 KB blocks |
+| Install port | 3 | Encrypting and tagging lines being written; records, session frames, package payloads |
 
 Keys come from the key registers over private wires; the key select is driven by the requesting port in hardware, so software never chooses which key a job uses.
-If the block cannot compute GHASH, the engines use AES-CCM so that no key-dependent step leaves the block (open question F4). The ECP5 fallback has no hard block and uses soft AES-256 cores,
-unprotected (R33).
+
+**Why Ascon, and why our own core.** No candidate family offers a power-analysis-hardened cipher block usable from the fabric (the Logos2's "DPA protection" is authentication before decryption of the
+bitstream, not a hardened engine), so the symmetric cipher is soft logic on every family and on the ASIC alike, and must carry its own countermeasures. Ascon was designed for that: its S-box has algebraic
+degree 2, so a first-order threshold implementation (three shares) costs a few times the unprotected area rather than the order of magnitude a masked AES costs, and the permutation is small to begin with.
+A round-based core runs one round per cycle: a 16-byte block costs 8 cycles, initialization and finalization 12 each, so a 64-byte XIP line is checked about 20 cycles after its last byte arrives and the
+recording engine can process about 2 bytes per cycle, far above the 0.6 MB/s it needs. The same RTL goes into the ASIC.
+
+**Masking randomness.** A masked core consumes fresh random bits every round. The TRNG seeds a conditioned PRNG whose output feeds the masks; the PRNG's rate is a design parameter (F4), and a TRNG
+health failure stops the core along with the boot chain.
+
+**Key size.** Ascon-AEAD128 takes a 128-bit key, a 128-bit nonce and produces a 128-bit tag (truncated to 64 bits for XIP lines). AEAD keys are derived from 256-bit roots with the HMAC-SHA256 KDF; the
+pairing, identity and HSM-derived keys stay 256 bits (`doc/arch.md`, Key sizes).
 
 ## Shared XIP engine
 
 | Shared (one copy) | Per port (one for each core) |
 |---|---|
 | QSPI controller and the address mapper (line plus tag stride) | A cache: the loader's 2 KB, the application's 4 KB |
-| Keystream and tag path through the hard AES block | A request port into the fill engine |
+| Decrypt and tag path through the Ascon core | A request port into the fill engine |
 | Tag comparator and fill state machine | A flash window (base and limit) and an image key register |
 | Busy interlock for flash writes | |
 | **Install port** (port 2, loader only, through APB) | |
@@ -134,8 +144,8 @@ unprotected (R33).
 - **Separate caches.** The application can never hit on a loader line.
 - **Loader priority.** Port 0 wins arbitration, so the application cannot starve the loader by forcing misses.
 - **Write-once configuration.** The boot ROM sets port 0's window and key at reset; the loader sets port 1's. Each port's configuration locks until the next reset.
-- **Install port.** The loader reaches the AES path through a third port, which never fills a cache: encrypting and tagging lines under the install key for an inactive slot, decrypting and checking
-  lines on read-back, and AES-GCM on user data records, session frames and package payloads.
+- **Install port.** The loader reaches the Ascon core through a third port, which never fills a cache: encrypting and tagging lines under the install key for an inactive slot, decrypting and checking
+  lines on read-back, and Ascon-AEAD128 on user data records, session frames and package payloads.
 - **Accepted leak.** The application can time its own misses and infer when the loader is fetching. That reveals the loader's activity, not secrets.
 
 ## Mailbox
@@ -177,7 +187,7 @@ The mailbox is the only path from the application to the loader, so it is the fi
 | Loader XIP cache | AXI4-Lite (read-only) | Block RAM + distributed RAM | SRAM macro + flip-flops | 2 KB; the loader runs from flash through it |
 | Loader SRAM | AXI4-Lite | Block RAM | SRAM macro | Buffers, stacks, variables; never keys |
 | SHA-256 core + LMS chain sequencer | APB | RTL | RTL | Private key input (pairing key, unwrapped keys) and private keyed-digest output; the one key-dependent soft block (R33, open question H4) |
-| Install port | APB | RTL | RTL | The loader's AES-GCM and CMAC work through the hard AES block |
+| Install port | APB | RTL | RTL | The loader's Ascon-AEAD128 work through the Ascon core |
 | Key registers and key gate | Private | RTL | RTL | Loaded only from the SHA unwrap or derive path, with pass tokens; never readable |
 | Security block | APB | RTL | RTL | Comparators, flow counter, key gate tokens, glitch and clock detectors, lockdown, fault status, secret-clear fan-out; drives the LCD overlay's developer-mode and alarm inputs |
 | Key source | Private to SHA | Block RAM patched per device | PUF + helper data + characterization | See The key-source interface |
@@ -187,10 +197,10 @@ The mailbox is the only path from the application to the loader, so it is the fi
 | Host UART | APB | RTL | RTL | Status, host protocol, the application's forwarded terminal |
 | Sensor link | APB | RTL | RTL | UART or the sensor's own physical layer (`doc/sensor.md`), with a capture timer for reading age |
 | Ethernet transport | APB (control, address registers), FIFOs (datagrams) | RTL | RTL | See Ethernet transport below. The PHY's reset is driven from the network policy, so a disabled port cannot be enabled by software |
-| TRNG + health tests | APB | Ring oscillators | Ring oscillators | Conditioned with AES-256-CMAC; mixed with the secure element's Random; also feeds the application's random numbers |
+| TRNG + health tests + mask PRNG | APB | Ring oscillators | Ring oscillators | Conditioned in the SHA-256 core; mixed with the secure element's Random; seeds the Ascon core's mask PRNG; also feeds the application's random numbers |
 | Timers + watchdogs | APB | RTL | RTL | One watchdog per core; the sensor age timer; the loader resets the application core on its timeout |
 | Application core control | APB | RTL | RTL | Holds the application core in reset until boot checks pass; lockdown holds it in reset |
-| Recording engine | APB (control), private FIFO (data) | RTL | RTL | AES-256-GCM blocks over the sample stream in the hard AES block; segment key register cleared at segment end; output goes to the stream buffer |
+| Recording engine | APB (control), private FIFO (data) | RTL | RTL | Ascon-AEAD128 blocks over the sample stream in the Ascon core; segment key register cleared at segment end; output goes to the stream buffer |
 | Stream buffer | APB (control, levels), private paths (data) | RTL + external PSRAM | RTL + external PSRAM | A ring buffer of encrypted recording blocks in an 8 MB QSPI PSRAM (ESP-PSRAM64H), written by the recording engine and drained to the SD controller or the Ethernet transport under the loader's direction. Ciphertext only; its own QSPI pins, separate from the flash's. See `doc/acquisition.md`, Stream buffer |
 
 ### Application core domain
@@ -212,7 +222,7 @@ The mailbox is the only path from the application to the loader, so it is the fi
 | Module | Connection | Notes |
 |---|---|---|
 | XIP engine | Private to both caches and the key registers | Two ports plus the install port |
-| Hard AES block | Private | One instance shared as above; a second instance if the family offers it and throughput needs it (F4) |
+| Ascon core | Private | One masked instance shared as above; a second if throughput ever needs it (F4) |
 | Mailbox | AXI4-Lite + APB on both sides | Message RAM, doorbells, terminal FIFOs, sample FIFO |
 | Clock and reset | Private | One core clock domain; the oscillator also feeds the clock checker |
 | Test only: fault controller, trigger pin, debug bridge | Test builds only | Absent from production builds (`doc/test.md`) |
@@ -358,8 +368,7 @@ the flash, the card and the sensor as models. LiteForth's `unit_tests/stage1sim`
 
 ## FPGA and ASIC
 
-Every module above is the same RTL on both, except the memories and the clock primitive, which sit behind thin wrappers, the hard AES block (a vendor primitive on the FPGA, a masked core on the ASIC),
-and the key source, behind its fixed interface. Test-only modules are compiled in only for test builds, on the FPGA, and never reach the ASIC.
+Every module above is the same RTL on both, except the memories and the clock primitive, which sit behind thin wrappers, and the key source, behind its fixed interface. The Ascon and SHA-256 cores are the same masked RTL on both. Test-only modules are compiled in only for test builds, on the FPGA, and never reach the ASIC.
 
 ## Resource estimate
 
@@ -369,7 +378,8 @@ Rough figures in 4-input-LUT equivalents, to be replaced by synthesis results:
 |---|---|---|
 | Two LiteForth cores | 3K to 6K | Stacks, data RAM |
 | Boot ROM | — | 8 to 16 KB |
-| XIP engine: two caches, fill controller, install port, flash bridge; GHASH if the hard block lacks it | 1.5K to 3K | 2 KB + 4 KB caches |
+| XIP engine: two caches, fill controller, install port, flash bridge | 1K to 2K | 2 KB + 4 KB caches |
+| Ascon core, first-order masked, round-based, with mask PRNG | 4K to 7K (1.5K to 2K unprotected) | — |
 | SHA-256 core and LMS sequencer | 1K to 2K (more if masked) | — |
 | Security block, key registers, key gate | 0.5K to 1K | — |
 | Recording engine, sample FIFO | 0.5K to 1K | Block buffer |
@@ -378,9 +388,9 @@ Rough figures in 4-input-LUT equivalents, to be replaced by synthesis results:
 | Stream buffer: QSPI PSRAM controller, ring pointers, drain paths | 0.3K to 0.6K | Small staging FIFOs |
 | TRNG | Under 0.2K | — |
 | Two I2S masters, CODEC I2C, LCD controller with overlay | 1K to 2K | Line buffer |
-| **Total** | **About 9K to 17K, plus the hard AES block** | |
+| **Total** | **About 13K to 24K with the masked Ascon core** | |
 
-The PG2L50H leaves ample room for the application. On the ECP5 fallback, soft AES-256 and GHASH add about 6K LUTs, leaving little of the LFE5U-25F's 24K for the application (`fpga/ecp5/`).
+The PG2L50H leaves room for the application. The LFE5U-25F does not: the ECP5 fallback needs the LFE5U-45F, or an unmasked Ascon core with the loss recorded in R33 (`fpga/ecp5/`).
 
 ## Open questions
 

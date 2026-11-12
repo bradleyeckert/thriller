@@ -12,9 +12,9 @@ against Lattice's *Advanced Configuration Security User Guide for Nexus Platform
 | 3 | Readback disabled, key not readable | To confirm; OTP key storage expected |
 | 4 | Master SPI self-configuration with multi-boot | Master SPI and dual-boot are Nexus features; addresses and golden-image rules to confirm. ECDSA authentication disables Early I/O Release |
 | 5 | Per-device constants from a script | Unknown: whether Radiant can update block RAM contents in a routed design from a script |
-| 6 | Hard AES block | **None** known to be usable from the fabric. Soft AES, unprotected (R33) |
+| 6 | Room for a masked Ascon core | No vendor cipher block for the fabric, as on every candidate (R33); the question is only size |
 | 7 | Ring-oscillator TRNG | To confirm |
-| 8 | Enough logic | LIFCL-17 is a 17K-logic-cell part: too tight for two cores plus soft AES. The LIFCL-40 is the realistic choice |
+| 8 | Enough logic | LIFCL-17 is a 17K-logic-cell part: too tight for two cores plus the masked cores. The LIFCL-40 is the realistic choice |
 | 9 | QSPI and peripheral pins | General I/O |
 
 ## Toolchain
@@ -25,5 +25,5 @@ Lattice Radiant; its free Base licence covers the LIFCL-17 (confirm that it cove
 
 1. Encryption key storage, and the settings that force encrypted and authenticated configuration on every port.
 2. Per-device block RAM contents in a routed Radiant design, from a script.
-3. Fit on the LIFCL-40 with soft AES.
+3. Fit on the LIFCL-40 with the masked Ascon and SHA-256 cores.
 4. Master SPI dual-boot layout.

@@ -16,7 +16,7 @@ flowchart LR
     ROM["Boot ROM"]
     LDR["Loader core domain<br/>keys, checks, sessions, installs"]
     APP["Application core domain<br/>LiteForth application"]
-    AES["Hard AES block"]
+    ASC["Ascon core (masked)"]
     KEYS["Key source<br/>pairing keys"]
     XIP["Shared XIP engine"]
     REC["Recording engine"]
@@ -37,7 +37,7 @@ flowchart LR
   LDR --> APP
   XIP <--> FL
   XIP --> LDR & APP
-  AES --> XIP & REC & LDR
+  ASC --> XIP & REC & LDR
   APP --> REC
   APP <--> ACQ <--> COD
   REC -->|ciphertext| LDR
@@ -61,17 +61,17 @@ Per-device bitstreams need a tool that rewrites block RAM contents in a routed d
 Diamond's ECO editor for the ECP5); Pango's PDS, as far as its Tcl guide goes, does not (F1). The cleaner solution, where the family allows it, is to **keep one bitstream for the whole fleet
 and wrap the pairing keys under a key the FPGA alone holds:**
 
-- The configuration engine's eFuse key (or a key the hard AES block derives from it) is per device and never leaves the silicon. If the fabric can ask the hard AES block to decrypt with that key
-  without seeing it, then the pairing keys can be stored in flash as ciphertext under it, and the key-source module becomes "read the wrapped keys from flash, unwrap them in the hard AES block,
-  present them to the SHA-256 core." The fixed key-source interface in `doc/hw.md` does not change.
+- The configuration engine's eFuse key is per device and never leaves the silicon. If the family gives the fabric a way to decrypt under that key, or under a PUF-protected key, without seeing it
+  (PolarFire's sNVM does; the Logos2, as far as is known, does not: F5), then the pairing keys can be stored in flash as ciphertext under it, and the key-source module becomes "read the wrapped keys
+  from flash, unwrap them in the vendor's engine, present them to the SHA-256 core." The fixed key-source interface in `doc/hw.md` does not change.
 - The bitstream then carries no secret. It is still encrypted (confidentiality of the design) and authenticated (integrity), but it is the same file for every device, built and signed once per release.
 - The ratchet still works: a platform package carries the next pairing key wrapped the same way, and the loader writes it into the records region before the reboot. The pairing key version in clear stays.
 - The bitstream build service shrinks to a release build and one signature, which removes R42 from the FPGA side and the per-device step from manufacturing: enrollment writes the wrapped keys into flash
   like any other record.
-- The wrapping key must be bound to the FPGA, not derivable by anyone else: a key derived from the eFuse key through the hard AES block qualifies; a key the fabric computes from the device DNA alone does not,
+- The wrapping key must be bound to the FPGA, not derivable by anyone else: a key derived from the eFuse key inside vendor silicon qualifies; a key the fabric computes from the device DNA alone does not,
   since the DNA is readable.
 
-This is open question F5, now the primary plan for the Logos2; per-device bitstreams (F1) are the fallback. On the ASIC the same role is played by the PUF (`doc/ics55.md`), so the two designs converge:
+This is open question F5. On the Logos2 no such engine is known, so per-device bitstreams (F1) are the plan there; on PolarFire the wrapped-key route is the natural one. On the ASIC the same role is played by the PUF (`doc/ics55.md`), so the two designs converge:
 on both, the bitstream or mask is common and the device's secret comes from the silicon.
 
 ## Configuration
@@ -94,16 +94,17 @@ secure element released).
 | Image keys, install keys | XIP engine and install port registers, derived in hardware | XIP engine, install port | No one |
 | Session, sensor and segment keys | Key registers | Install port, recording engine | No one (the segment key's one wrapped exposure to the loader's ML-KEM code is noted in `doc/hw.md`) |
 
-Neither core has a read path to any of them, or to the hard AES block. Key registers are cleared on reset, on reconfiguration, and on any tag or protocol failure. No CPU debug port is built into production bitstreams.
+Neither core has a read path to any of them, or to the Ascon core. Key registers are cleared on reset, on reconfiguration, and on any tag or protocol failure. No CPU debug port is built into production bitstreams.
 
 ## TRNG
 
-A ring-oscillator TRNG with continuous health tests (repetition count and adaptive proportion, as in NIST SP 800-90B), conditioned with AES-256-CMAC in the hard AES block, and mixed with the
-secure element's certified random output, so every nonce has a certified source behind it even if the ring oscillators degrade. It supplies every nonce, segment key and install salt. A health-test failure stops the boot chain before any key is unwrapped.
+A ring-oscillator TRNG with continuous health tests (repetition count and adaptive proportion, as in NIST SP 800-90B), conditioned in the SHA-256 core, and mixed with the
+secure element's certified random output, so every nonce has a certified source behind it even if the ring oscillators degrade. It supplies every nonce, segment key and install salt, and seeds the PRNG that
+feeds the masked Ascon and SHA-256 cores with fresh shares, whose consumption sets the TRNG's required rate (F4). A health-test failure stops the boot chain before any key is unwrapped.
 
 ## Resource estimate
 
-See `doc/hw.md`, Resource estimate: about 8K to 16K LUT4 equivalents for the two cores and the security blocks, plus the hard AES block, plus the application.
+See `doc/hw.md`, Resource estimate: about 8K to 16K LUT4 equivalents for the two cores and the security blocks, including the masked Ascon core, plus the application.
 
 ## Open questions
 

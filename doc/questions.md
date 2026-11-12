@@ -12,11 +12,11 @@ Every open question in one place. Earlier architectures are kept in git history 
 | ID | Question | Where | How to close | Priority |
 |---|---|---|---|:-:|
 | **FPGA** | | | | |
-| F1 | Per-device bitstream encryption on the Logos2. Key changes do not invalidate PnR and `gen_bit_stream` reruns in about a minute, so per-device encryption is cheap. To settle: the `.nky` format (HSM-derived keys in, or escrow PDS-generated ones); keeping the RSA signing key fixed as a named file; whether the `.pds` key path can be edited by script; whether a DRM INIT change forces re-synthesis (only matters if F5 fails) | [logos2](../fpga/logos2/README.md#per-device-keys-what-the-tcl-guide-says) | Try in PDS; Pango support | 2 |
+| F1 | **Per-device bitstreams on the Logos2, the plan now that F5 is closed.** Key changes do not invalidate PnR and `gen_bit_stream` reruns in about a minute, so per-device encryption is cheap. To settle first: **whether a DRM INIT change forces re-synthesis** (if it does, the pairing keys need another per-device carrier, or per-device PnR); then the `.nky` format (HSM-derived keys in, or escrow PDS-generated ones), keeping the RSA signing key fixed as a named file, and scripting the `.pds` key path | [logos2](../fpga/logos2/README.md#per-device-keys-what-the-tcl-guide-says) | Try in PDS; Pango support | 1 |
 | F2 | Confirm on a fused sample that a plaintext bitstream, and one encrypted under another key, are refused; record which enable bits (locked by DECLOCK, AUTLOCK, KEYENLOCK) the `.nky` sets. The configuration guide says only the corresponding encrypted bitstream loads after keying, with one ambiguous sentence about eFuse keys | [logos2](../fpga/logos2/README.md#f2-does-the-efuse-key-force-encryption) | Bench, during station bring-up; Pango support in parallel | 1 |
 | F3 | Multi-boot on the PG2L50H: stream format and generation are known (`cfg_gen_multi_file`, 8 KB headers, sector-aligned starts, watchdog fallback, status bit 22). Open: whether the golden image is fixed at the base address or the boot address can be redirected by the fabric or the loader; master SPI mode pins | [logos2](../fpga/logos2/README.md#flash-and-multi-boot), [flash.md](flash.md#regions) | Pango documentation; bench | 1 |
-| F4 | The hard AES block: AES-256 support, whether it computes GHASH (GCM) or only the block cipher (then CCM), throughput shared by three users, number of instances, and how keys are loaded into it | [hw.md](hw.md#the-hard-aes-block) | Pango documentation | 1 |
-| F5 | **Primary plan for per-device keys:** can the hard AES block use the eFuse configuration key, or a key derived from it, without exposing it to the fabric? Then the pairing keys live in flash wrapped under that key, the bitstream is common to the fleet, and F1 and R42 disappear (`doc/fpga.md`, Wrapped pairing keys) | [logos2](../fpga/logos2/README.md), [fpga.md](fpga.md#wrapped-pairing-keys) | Pango documentation and support; bench | 1 |
+| F4 | The masked Ascon core: masking order (first-order TI as the baseline), round unrolling, mask-randomness consumption and the TRNG-seeded PRNG rate behind it, sharing among three users, and TVLA results | [hw.md](hw.md#the-ascon-core) | RTL design; TVLA on hardware (`doc/test.md`) | 2 |
+| F5 | Wrapped pairing keys need a vendor engine the fabric can drive under the eFuse or a PUF-protected key. **Closed for the Logos2** (no such engine; its DPA protection is authenticate-before-decrypt); open as the natural route on PolarFire. Reopen only if Pango shows otherwise | [fpga.md](fpga.md#wrapped-pairing-keys), [polarfire](../fpga/polarfire/README.md) | Pango support, low priority | 3 |
 | F6 | XIP line and cache sizes, loader and application slot sizes | [xip.md](xip.md#caches) | Measure on real LiteForth code | 2 |
 | F7 | Ring-oscillator TRNG design and health-test thresholds on the FPGA | [fpga.md](fpga.md#trng) | Characterize on hardware | 2 |
 | F8 | The LCD overlay band for developer mode and alarms that the application cannot draw over | [hw.md](hw.md#application-core-domain) | RTL design | 3 |
@@ -27,7 +27,7 @@ Every open question in one place. Earlier architectures are kept in git history 
 | H1 | AXI4-Lite latency: whether the decoder and slaves answer in the cycles LiteForth's memory state machine expects, or whether ROM and SRAM need a tightly coupled path | [hw.md](hw.md#bus-choice) | RTL and simulation | 2 |
 | H2 | Mailbox message set, formats and message RAM size | [hw.md](hw.md#mailbox) | Specification | 2 |
 | H3 | Port numbering agreed with LiteForth's `iomap.h` before any RTL fixes them | [hw.md](hw.md#modules) | Agree | 2 |
-| H4 | Side-channel resistance of the SHA-256 core, which carries the pairing key; whether it must be masked | [arch.md](arch.md#algorithm-bill-of-materials) | TVLA on hardware (`doc/test.md`) | 2 |
+| H4 | Side-channel resistance of the SHA-256 core, which carries the pairing key and runs the KDF; first-order masking as the baseline, confirmed by TVLA | [arch.md](arch.md#algorithm-bill-of-materials) | TVLA on hardware (`doc/test.md`) | 2 |
 | H5 | Speed of LMS verification, ML-KEM-768 encapsulation and ML-DSA-44 verification as Forth on the loader core with the SHA-256 core | [arch.md](arch.md#algorithm-bill-of-materials) | Build and measure in `vm.c`, then on hardware | 2 |
 | H6 | Whether the segment key's wrap for ML-KEM encapsulation moves from masked Forth into hardware | [hw.md](hw.md#two-output-modes) | Decide after H5 | 3 |
 | H7 | Flash part, its behavior on power loss during erase and program, and whether 32 MB is right | [flash.md](flash.md#assumptions) | Part selection | 2 |
@@ -72,10 +72,10 @@ Every open question in one place. Earlier architectures are kept in git history 
 Closed:
 - **From the C5 architecture:** every C5 question (C1 to C14): there is no microcontroller. The link protocol and its message set (A8 in that architecture) are replaced by the mailbox (H2).
 - **FPGA:** a PUF built in fabric (set aside: the FPGA's pairing keys are constants in its encrypted bitstream, and the ASIC uses a hardened PUF behind the same interface); Pango's answers on DPA coverage
-  (configuration and the hard AES block), JTAG (permanently disabled when locked) and command-line PDS; the Pango Logos PGL25G (no bitstream encryption; not usable).
+  (authenticate-before-decrypt only; no hardened engine for the fabric), JTAG (permanently disabled when locked) and command-line PDS; the Pango Logos PGL25G (no bitstream encryption; not usable).
 - **Secure element:** the earlier questions on whether to use one (yes), on the MAC-oracle risk (ReqRandom on slot 0), and on how to protect host sessions (session key from the secure element's KDF).
 - **Other:** D1 (developer signing: a per-device developer key, no signing service), E1 (server path: Ethernet when enabled, otherwise the host), E2 (pairing keys derived in the HSM on the FPGA;
-  exported once from the PUF on the ASIC), the watermark (removed), Q6 (safety alarms need no path independent of the application beyond the overlay), S1 (sensor frames use AES-256-GCM).
+  exported once from the PUF on the ASIC), the watermark (removed), Q6 (safety alarms need no path independent of the application beyond the overlay), S1 (sensor frames use Ascon-AEAD128).
 
 ## Decisions taken
 
@@ -95,12 +95,12 @@ Closed:
 ### By default (change any of these)
 
 - **Two LiteForth cores:** a loader core that owns every key path, and an application core that reaches it only through the mailbox.
-- **The boot ROM is in the bitstream** and mirrors the ASIC's mask ROM; the loader and the application are in flash under per-line AES-256-GCM.
+- **The boot ROM is in the bitstream** and mirrors the ASIC's mask ROM; the loader and the application are in flash under per-line Ascon-AEAD128.
 - **Keys live in the secure element**, released only to the holder of the pairing key, into hardware key registers; the bitstream carries only the pairing keys.
 - **Bitstream rollback by the pairing-key ratchet;** loader and application rollback by the two counters. Equal versions are accepted so a damaged slot can be repaired.
 - **Attestation two ways:** a MAC under a symmetric identity key for the server (quantum-safe), an ECDSA P-256 signature under a certified key for hosts.
 - **The host authenticates to the secure element** (CheckMac), which releases the data key and derives the session key.
-- **AES-256-GCM in the hard AES block** for lines, recordings, sessions and records; an AES-256-CMAC KDF; AES-CCM instead if the block cannot compute GHASH (F4). A ring-oscillator TRNG mixed with the secure element's.
+- **Ascon-AEAD128 in a masked core of our own** for lines, recordings, sessions and records; an HMAC-SHA256 KDF in the SHA-256 core; no AES and no vendor cipher block anywhere (F4). A ring-oscillator TRNG mixed with the secure element's, also seeding the mask PRNG.
 - **LMS on every package,** one signature per release over a manifest; ML-DSA certificates and ML-KEM pairing for the sensor; ML-KEM segment-key encapsulation to the host.
 - **Developer builds as applications** with a per-device developer key and an epoch from counter 1; offline, no signing service.
 - **The network is a second transport for the session protocol,** with no stack on any core; the PHY is held in reset by the network policy; **UART status is read-only.**

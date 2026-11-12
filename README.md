@@ -24,7 +24,7 @@ To support DSP applications, audio CODECs are planned for.
 | `doc/flash.md` | Flash map: bitstream slots and multi-boot, loader and application slots, boot record, install order, staging |
 | `doc/fpga.md` | The FPGA, family-neutral: configuration from flash, per-device bitstreams, fallback, TRNG, resources |
 | `fpga/` | Everything family-specific, one folder per FPGA family, and the wish list a family must meet |
-| `doc/xip.md` | Execute in place: per-line AES-256-GCM for the loader and the application |
+| `doc/xip.md` | Execute in place: per-line Ascon-AEAD128 for the loader and the application |
 | `doc/acquisition.md` | CODECs, data path, recording encryption, LCD, speaker and alarms |
 | `doc/sensor.md` | Replaceable temperature sensor: certificates, offline pairing, authenticated sessions, fail-safe behavior |
 | `doc/enrollment.md` | Device and sensor enrollment, secure element provisioning, the bitstream build service, detecting unknown identities, updates |
@@ -37,8 +37,8 @@ To support DSP applications, audio CODECs are planned for.
 
 ## Chipset
 
-- **FPGA with an encrypted and authenticated bitstream.** Current choice: **Pango Logos2 PG2L50H-6IFBG484** (50K-class), whose hard AES block is protected against power analysis
-  (`fpga/logos2/`). It configures itself from the flash at power-up in master SPI mode, with the vendor's multi-boot fallback to a second bitstream. Fallback family: **Lattice ECP5 LFE5U-25F**
+- **FPGA with an encrypted and authenticated bitstream.** Current choice: **Pango Logos2 PG2L50H-6IFBG484** (50K-class), which authenticates bitstreams before decrypting them
+  (`fpga/logos2/`). No family offers a hardened cipher usable from the fabric, so all symmetric cryptography runs in a masked Ascon core of our own (`doc/hw.md`). It configures itself from the flash at power-up in master SPI mode, with the vendor's multi-boot fallback to a second bitstream. Fallback family: **Lattice ECP5 LFE5U-25F**
   (`fpga/ecp5/`), which encrypts but does not authenticate bitstreams; it is for a limited number of units, and its weaknesses are stated in `doc/arch.md`. Candidates: Microchip PolarFire,
   Lattice CrossLink-NX, Efinix Titanium. The requirements a family must meet are in `fpga/README.md`.
 - **QSPI NOR flash**, 32 MB proposed: bitstream slots, loader images (A/B), application images (A/B), the boot record and a recovery staging area (`doc/flash.md`). Nothing in it is trusted.
@@ -109,7 +109,7 @@ replacing the pairing key in the secure element with its next key, after which t
 ## Recordings
 
 The loader draws a fresh key for each segment, encapsulates it with ML-KEM to the host's public key, and loads it into the recording engine, which encrypts the stream in the FPGA's
-hard AES block and writes ciphertext to the card. The segment key is then erased, so the device cannot read its own past recordings, and neither can a thief (`doc/acquisition.md`).
+masked Ascon core and writes ciphertext to the card. The segment key is then erased, so the device cannot read its own past recordings, and neither can a thief (`doc/acquisition.md`).
 
 ## Sensor
 

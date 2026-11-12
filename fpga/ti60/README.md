@@ -11,9 +11,9 @@
 | 3 | Readback disabled, key not readable | eFuse; to confirm. Efinix offers a permanent JTAG disable that leaves only device-information instructions (removes R43) |
 | 4 | Master SPI self-configuration with multi-boot | Active SPI configuration from flash and multi-image support are Titanium features; addresses and fallback rules to confirm |
 | 5 | Per-device constants from a script | Unknown: whether Efinity can update block RAM contents in a routed design from a script |
-| 6 | Hard AES block | **None** known to be usable from the fabric. Soft AES, unprotected (R33) |
+| 6 | Room for a masked Ascon core | Yes; no vendor cipher block is usable from the fabric, as on every candidate (R33) |
 | 7 | Ring-oscillator TRNG | To confirm |
-| 8 | Enough logic | Ti60 is a 60K-logic-element class part; ample even with soft AES |
+| 8 | Enough logic | Ti60 is a 60K-logic-element class part; ample for the masked cores and the application |
 | 9 | QSPI and peripheral pins | General I/O. Security is unavailable with compressed bitstreams and on W64 packages |
 
 ## How it would be used

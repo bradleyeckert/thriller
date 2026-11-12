@@ -18,7 +18,7 @@ The sensor contains a small microcontroller with:
 
 - a true random number generator;
 - storage for its private key and pairing key that its debug port cannot read;
-- ML-KEM-768 decapsulation (FIPS 203), and an AES accelerator, ideally with power-analysis countermeasures, for AES-256-GCM frames and the AES-256-CMAC KDF;
+- ML-KEM-768 decapsulation (FIPS 203), Ascon-AEAD128 for frames (small enough for constant-time software; masked if the threat model requires), and SHA-256 for the HMAC KDF and certificate hashes;
 - a unique serial number.
 
 ML-KEM decapsulation needs on the order of a few hundred thousand cycles on a Cortex-M4 class part, and runs only when pairing.
@@ -51,7 +51,7 @@ Pairing runs when the loader sees a sensor whose serial does not match its store
 | 5 | Derive the same keys, check the sensor's MAC, send the device's confirmation MAC | Check the device's MAC; store the pairing key, replacing any earlier one |
 | 6 | Store the pairing record in the flash records region under the application key: serial, certificate hash, pairing key, time, state *unconfirmed*. Log it | |
 
-> pairing key = KDF(*ss*, "pair" ‖ *Nd* ‖ *Ns* ‖ device ID ‖ serial ‖ SHA-256(certificate) ‖ SHA-256(*ct*)), 256 bits, with the AES-256-CMAC counter-mode KDF
+> pairing key = KDF(*ss*, "pair" ‖ *Nd* ‖ *Ns* ‖ device ID ‖ serial ‖ SHA-256(certificate) ‖ SHA-256(*ct*)), 256 bits, with the SP 800-108 KDF in HMAC-SHA256 mode
 
 The confirmation MACs cover the whole transcript, with "sensor" and "device" labels so neither can be reflected. Only a sensor that holds the
 certified private key can recover *ss*: with any other key, ML-KEM's implicit rejection yields an unrelated secret, and the sensor's MAC fails.
@@ -83,7 +83,7 @@ A session starts at power-up, after a link fault, and periodically (for example 
 
 1. The loader sends a fresh nonce *Nd'*; the sensor answers with *Ns'* and a MAC.
 2. Each side derives a key per direction: KDF(pairing key, "session" ‖ direction ‖ *Nd'* ‖ *Ns'*).
-3. Every frame carries a type, a 32-bit counter, the payload and a 128-bit AES-256-GCM tag, with the payload as associated data (GMAC: readings need authentication, not encryption). The counter must strictly increase per direction within a session.
+3. Every frame carries a type, a 32-bit counter, the payload and a 128-bit Ascon-AEAD128 tag, with the payload as associated data (readings need authentication, not encryption). The counter must strictly increase per direction within a session.
 
 A CRC may protect the physical layer against noise, but it is not a security control.
 

@@ -2,7 +2,7 @@
 
 **Part:** LFE5U-25F-6BG256C: 24K LUTs, 1,008 Kbit (126 KB) of block RAM in 56 EBRs, 28 multipliers, speed grade 6, 256-ball BGA.
 This is the **fallback, for a limited number of units**; the current choice is the Pango Logos2 PG2L50H (`fpga/logos2/`). The ECP5 fails wish-list item 1: it encrypts bitstreams (AES-128, key in eFuse)
-but does not authenticate them, so its configuration engine is a confidentiality anchor only. It also has no hard AES block, so its AES-256 cores and GHASH are soft logic, unprotected against power analysis.
+but does not authenticate them, so its configuration engine is a confidentiality anchor only. Like every candidate it has no cipher block the fabric can use; the design's masked Ascon core is soft logic on it as on the others, and the LFE5U-25F is tight for it.
 
 ## What "encrypted but unauthenticated" means here
 
@@ -19,9 +19,9 @@ cannot refuse an old bitstream, the pairing-key ratchet is what makes a supersed
 | 3 | Readback disabled, key not readable | Readback disable is a bitstream preference setting; eFuse key storage (what JTAG can do to it afterwards is open question F10) |
 | 4 | Master SPI self-configuration with multi-boot | Master SPI and dual-boot are supported (sysCONFIG); the golden-image rule and addresses are to be confirmed and the flash map adjusted (F10) |
 | 5 | Per-device constants from a script | Lattice Diamond's ECO editor, from a headless Tcl script, writes the key EBRs' `INIT_00` to `INIT_3F` properties in the routed design |
-| 6 | Hard AES block | **None.** Soft AES-256 cores and GHASH, unprotected (R33) |
+| 6 | Room for a masked Ascon core | Tight on the LFE5U-25F (below); the LFE5U-45F is comfortable |
 | 7 | Ring-oscillator TRNG | To confirm with Diamond's timing and DRC settings |
-| 8 | Enough logic | About 14K to 22K LUTs for both cores and the security blocks with soft AES leaves little of 24K for the application; the LFE5U-45F may be needed |
+| 8 | Enough logic | About 13K to 24K LUTs for both cores, the masked Ascon and SHA-256 cores and the security blocks leaves little or nothing of 24K for the application; plan on the LFE5U-45F, or an unmasked Ascon core with the loss noted in R33 |
 | 9 | QSPI and peripheral pins | General I/O |
 
 JTAG boundary scan stays available after the security settings (R43).
@@ -59,7 +59,7 @@ About 0.6 to 0.7 MB, well within the flash's bitstream slots.
 ## Risks specific to the ECP5
 
 - **R32:** no bitstream authentication; blind edits limited by the configuration CRC and the pairing key check.
-- **R5, R33:** neither the configuration decryptor nor the soft AES and SHA-256 cores are hardened against power analysis; a break exposes one device.
+- **R5:** the configuration decryptor is not hardened and accepts chosen ciphertexts (no authentication), so it is the weakest of the candidates against power analysis; a break exposes one device. R33 is the same as on every family: our masked cores.
 - **R43:** boundary scan after locking.
 
 Units built on the ECP5 should be counted and tracked in the enrollment database, so the fleet's exposure to these risks is known.

@@ -28,7 +28,7 @@ Terms are defined in the README and `doc/arch.md`. Risk IDs (R1–R46) refer to 
 |---|---|---|
 | FPGA configuration engine | Vendor silicon (Pango Logos2). Checks the RSA-2048 signature and decrypts and authenticates the bitstream with its per-device AES-256-GCM eFuse key; refuses anything else; multi-boot fallback | Trusted, fixed; DPA-protected (R25) |
 | Boot ROM | Block RAM in the bitstream. Pairs with the secure element, checks the loader image, UART recovery | Trusted; part of the signed bitstream |
-| Loader core domain | LiteForth loader core and the security hardware: key registers, SHA-256 core, hard AES block, XIP engine, recording engine, I2C to the secure element, card, UART, sensor link, Ethernet transport | Trusted; holds every key path and security decision |
+| Loader core domain | LiteForth loader core and the security hardware: key registers, SHA-256 core, masked Ascon core, XIP engine, recording engine, I2C to the secure element, card, UART, sensor link, Ethernet transport | Trusted; holds every key path and security decision |
 | Application core domain | LiteForth application core, I2S acquisition, LCD; runs from its flash slot | Signed by the application owner, or a device-bound developer build; no path to any key |
 | ATECC608C secure element | Keys, counters, identity, host CheckMac, attestation signatures | Trusted; certified tamper-resistant; counters unauthenticated (R36) |
 | QSPI flash | Bitstreams, loader and application images, boot record, records | Untrusted storage; everything authenticated |
@@ -95,13 +95,13 @@ flowchart LR
 | Interface | Between | What crosses it | Protection |
 |---|---|---|---|
 | QSPI (configuration) | Flash → configuration engine | The device's bitstream | Encrypted and authenticated under the FPGA's per-device eFuse key, RSA-signed; nothing else accepted; a bitstream without the current pairing key gets nothing from the secure element (R17, R31, R32, R44) |
-| QSPI (XIP) | Flash ↔ both cores | Loader and application lines, headers, boot record, records | Per-line AES-256-GCM under per-install keys; HMAC under the application key on headers and records (R2, R6, R34, R35) |
+| QSPI (XIP) | Flash ↔ both cores | Loader and application lines, headers, boot record, records | Per-line Ascon-AEAD128 under per-install keys; HMAC under the application key on headers and records (R2, R6, R34, R35) |
 | I2C (secure element) | Loader domain ↔ ATECC608C | Nonces, MACs, encrypted key reads, counter reads, CheckMac, KDF output, signatures | Every read MAC'd or encrypted under the pairing key over a fresh nonce; counters unauthenticated; bus inside the seal (R36) |
 | Mailbox and sample FIFO | Application domain → loader domain | Service requests, terminal bytes, samples | Fixed message set, fuzzed parser, one-way sample path (R45) |
 | I2S, LCD | Application domain ↔ CODECs and LCD | Samples, waveforms | Inside the sealed enclosure only (R38, R40) |
 | MicroSD | Loader domain ↔ card | Recordings, user data, logs, packages | All encrypted and authenticated (R1, R10, R26, R41) |
 | QSPI (PSRAM) | Recording engine → PSRAM → card and network | Authenticated recording ciphertext in transit | Holds nothing else; damage is detected at the host (R48) |
-| UART | Host ↔ loader domain | Status; sessions, packages, CLI | Status read-only (R30); sessions authenticated through the secure element, AES-256-GCM frames (R9) |
+| UART | Host ↔ loader domain | Status; sessions, packages, CLI | Status read-only (R30); sessions authenticated through the secure element, Ascon-AEAD128 frames (R9) |
 | Ethernet (RMII) | Loader domain ↔ PHY ↔ site network | UDP datagrams carrying session frames: packages, recording ciphertext, server exchanges, DHCP | Hardware transport that drops everything but ARP, ICMP echo and UDP to one port; every payload is an authenticated, encrypted session frame; PHY reset driven by the network policy (R23, R28, R29, R39) |
 | Sensor link | Sensor ↔ loader domain | Pairing, readings, commands | Certificates, ML-KEM pairing, per-frame MACs, maximum reading age (R11–R14) |
 | JTAG | Factory ↔ FPGA | Key programming, boundary scan | Permanently disabled at enrollment on the Logos2 (R7, R43) |
@@ -202,7 +202,7 @@ The server marks the device retired and the loader writes the retired state into
 |---|---|---|
 | Authentication | Vendor bitstream authentication; LMS on every package; per-line tags on both images; the secure element releases keys only to the holder of the pairing key; the host authenticates to the secure element; sensor certificates and per-frame MACs; device identity proven to the server and attested to hosts | No device certificate for the sensor to check |
 | Authorization | Loader services only, through the mailbox; keys with no CPU read path; user data only with the host's secret; developer builds bound to one device and epoch; network policy set by the application owner and enforced on the PHY's reset | Session timeouts to be set |
-| Cryptography | NIST algorithms: AES-256-GCM and an AES-256-CMAC KDF in the DPA-protected hard AES block; SHA-256 and HMAC in the fabric; LMS, ML-KEM, ML-DSA on the loader core; ECDSA only in the secure element; per-device keys | The SHA-256 core's side-channel resistance to be tested (R33); vendor bitstream signature not quantum-safe (R24) |
+| Cryptography | NIST algorithms: Ascon-AEAD128 (SP 800-232) in a first-order masked core; SHA-256, HMAC and the SP 800-108 KDF in a masked SHA-256 core; LMS, ML-KEM, ML-DSA on the loader core; ECDSA only in the secure element; per-device keys | The SHA-256 core's side-channel resistance to be tested (R33); vendor bitstream signature not quantum-safe (R24) |
 | Code, data and execution integrity | Bitstream authentication every power-up; headers and versions against secure element counters; per-line authentication on every fetch; two-core isolation; the ratchet | — |
 | Confidentiality | Recordings encrypted to the host inside the FPGA; bitstream, flash, card, sessions encrypted | Plaintext on I2S and the LCD inside the sealed enclosure (R38) |
 | Event detection and logging | HMAC-chained event log under the log key, written to the card, read by the host and uploaded to the server; lockdown records in the boot record | Event list to be completed |

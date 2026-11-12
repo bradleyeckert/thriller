@@ -28,9 +28,9 @@ a vendor with ECDSA or RSA bitstream authentication would list it in the datashe
 | 3 | Readback disabled, key not readable | Security bit disables readback; key in eFuse; JTAG lock not mentioned, so boundary scan presumably remains (R43) |
 | 4 | MSPI self-configuration with multi-boot | **Yes.** Multi-boot with an eFuse-settable golden-image address, which fits the ratchet-and-fallback scheme in `doc/flash.md` |
 | 5 | Per-device constants from a script | Gowin EDA has a Tcl interface; whether it can rewrite BSRAM initialization in a routed design and re-encrypt is unknown. Try it |
-| 6 | Hard AES block, DPA-protected | **None.** Soft AES-256 and GHASH, unprotected (R33) |
+| 6 | Room for a masked Ascon core | Tight, as on the LFE5U-25F; the GW5A-60 would be comfortable (R33) |
 | 7 | Ring-oscillator TRNG | Probably; confirm the DRC and timing tools tolerate the loop |
-| 8 | Enough logic | Nearly identical to the LFE5U-25F, so the same tightness with soft AES (`doc/hw.md`, Resource estimate); the GW5A-60 (59,904 LUT4) would be the comfortable size |
+| 8 | Enough logic | Nearly identical to the LFE5U-25F, so the same tightness with the masked cores (`doc/hw.md`, Resource estimate); the GW5A-60 (59,904 LUT4) would be the comfortable size |
 | 9 | Pins | Up to 239 I/O; the QFP packages suit a low-cost board |
 
 ## Compared with the ECP5
@@ -49,12 +49,12 @@ a vendor with ECDSA or RSA bitstream authentication would list it in the datashe
 | Origin | Lattice (US), fab in Asia | Gowin (Guangdong, China) |
 
 Same security tier; cheaper and more modern silicon; less certain tooling. On origin it sits in Pango's column, and in that column the Logos2 is the stronger part by a wide margin
-(authentication, hardened AES block), so the GW5A makes sense only where its price or its QFP package decides.
+(authentication before decryption, 50K logic), so the GW5A makes sense only where its price or its QFP package decides.
 
 ## If it were used
 
 Everything in `fpga/ecp5/README.md` applies: the ratchet is what makes a superseded bitstream useless since the configuration engine cannot refuse it; blind edits are limited by the CRC
-and the pairing-key check; soft AES and SHA-256 are unhardened; units should be counted in the enrollment database. Add to F10's list: what UG714E says about forcing encrypted configuration,
+and the pairing-key check; the masked Ascon and SHA-256 cores carry the fabric's side-channel defense as on every family; units should be counted in the enrollment database. Add to F10's list: what UG714E says about forcing encrypted configuration,
 JTAG after the security bit, the golden-image eFuse and how the fabric redirects multi-boot, and whether Gowin EDA can patch BSRAM contents in a routed design.
 
 ## Sources

@@ -27,22 +27,20 @@ the network policy (applications), and an HMAC-SHA256 under the application key 
 
 An attacker who writes back a whole older image fails the version check; one who writes a header with a forged version fails the HMAC.
 
-## Per-line GCM
+## Per-line Ascon-AEAD128
 
 For each install, the loader draws a fresh install salt *R* and derives the install key:
 
-> install key = KDF(application key, label ‖ *R*), label "loader" or "application", with the SP 800-108 counter-mode KDF using AES-256-CMAC
+> install key = KDF(application key, label ‖ *R*), label "loader" or "application", with the SP 800-108 KDF in HMAC-SHA256 mode, truncated to 128 bits
 
 For line *i* of the image in slot *s*:
 
-- **Nonce (96 bits)** = *s* (8 bits) ‖ *i* (24 bits) ‖ 0 (64 bits).
-- **Ciphertext** = plaintext XOR AES-256-CTR keystream from that nonce.
-- **Tag** = GCM tag over the ciphertext, truncated to 64 bits, stored right after the line.
+- **Nonce (128 bits)** = *s* (8 bits) ‖ *i* (24 bits) ‖ image kind and format version (32 bits) ‖ 0 (64 bits).
+- **Ciphertext** = Ascon-AEAD128 encryption of the 64-byte line under the install key and that nonce, with no associated data.
+- **Tag** = the Ascon tag truncated to 64 bits, stored right after the line.
 
-Lines are 64 bytes; each line and its tag (72 bytes) are fetched in one burst, so the flash overhead is 12.5%. All the AES work for a line depends only on its address, so the hard AES block
-runs it during the flash read, and GHASH processes the data as it arrives: GCM adds only a few cycles to a miss.
-
-**If the hard AES block cannot compute GHASH,** the line format switches to AES-CCM (CTR encryption plus a CBC-MAC tag), which uses nothing but the block (open question F4).
+Lines are 64 bytes; each line and its tag (72 bytes) are fetched in one burst, so the flash overhead is 12.5%. The core initializes on the nonce while the flash read starts, absorbs each 16-byte
+chunk in 8 cycles as it arrives (the flash delivers one in about 0.4 µs), and finalizes in 12 cycles after the last, so the tag is known about 20 cycles after the line lands.
 
 | Attack on the flash | Result |
 |---|---|
@@ -85,9 +83,8 @@ The loader runs install code from its cache while the flash is busy; the install
 
 ## Timing
 
-With a QSPI flash at 80 MHz, a 64-byte line and its tag take about 2 µs to read; the hard AES block produces the keystream and the tag mask during that time. A miss costs about 2 µs with GCM,
-a little more with CCM; hits cost nothing extra.
+With a QSPI flash at 80 MHz, a 64-byte line and its tag take about 2 µs to read; the Ascon core keeps pace with the data as it arrives. A miss costs about 2 µs plus 20 cycles; hits cost nothing extra.
 
 ## Open questions
 
-See `doc/questions.md`: F6 (line, cache and slot sizes), F4 (GCM or CCM and hard-block throughput).
+See `doc/questions.md`: F6 (line, cache and slot sizes), F4 (Ascon core masking and throughput).

@@ -32,7 +32,7 @@ A leaked developer key exposes only its own device, so no revocation is needed.
 
 A developer package carries:
 
-- the application image, encrypted with AES-256-GCM under a package key derived from the working key;
+- the application image, encrypted with Ascon-AEAD128 under a package key derived from the working key;
 - a header naming the target device's serial number and the epoch, marked as a developer build, with the developer's chosen network policy;
 - a MAC over the whole package under a MAC key derived from the working key.
 
