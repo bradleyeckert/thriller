@@ -22,7 +22,7 @@ From the *Logos2 Family FPGAs Device Datasheet*:
 | 2 | No fallback | **Assumed:** both encryption and signing are supported in hardware, so both are enforced (to confirm, F2) |
 | 3 | Readback disabled, key not readable | Yes (claimed); eFuse; JTAG permanently disabled when locked |
 | 4 | Master SPI self-configuration with multi-boot | Master SPI is a standard mode on the family; the multi-boot or golden-image mechanism, its addresses and how the fabric points at the other slot are **to confirm (F3)** |
-| 5 | Per-device constants from a script | PDS runs from the command line. **Still the deciding question:** whether it can change block RAM initialization in a routed design from a script, then encrypt and sign (F1) |
+| 5 | Per-device constants from a script | **Not in the Tcl guide** (see Per-device keys below). The primary plan is now wrapped pairing keys under the eFuse key through the hard AES block (F5), which needs no per-device bitstream |
 | 6 | Hard AES block, DPA-protected, usable from the fabric | Yes (claimed). Open (F4): AES-256 support, GHASH, throughput for three users, instances, key-loading interface |
 | 7 | Ring-oscillator TRNG | To confirm |
 | 8 | Enough logic | A 50K-class part: ample room for both cores, the security blocks and the application. LUT size and block RAM to confirm |
@@ -68,7 +68,7 @@ The bitstream slots in `doc/flash.md` are sized at 4 MB pending F9.
 ## Toolchain
 
 Pango Design Suite (PDS), proprietary, runs from the command line. There is no open-source place-and-route for Logos2, so the development flow is PDS too.
-Scripted block RAM updates with encryption and signing (F1) are open.
+Scripted block RAM updates with encryption and signing (F1) are open; see Per-device keys below.
 License is free, but getting set up is not obvious. The steps are:
 
 1. Create an account at https://www.pangomicro.com/en/
@@ -79,6 +79,29 @@ License is free, but getting set up is not obvious. The steps are:
 1. Download the PDS license file from https://www.pangomicro.com/en/member/license/
 1. Create a new environmental variable PANGO_LICENSE_FILE that points to it.
 1. Launch PDS.
+
+## Per-device keys: what the Tcl guide says
+
+Read against the *Tcl Command User Guide* v2.0 (October 2023, 119 pages), the only version in hand:
+
+**Present.** `pds_shell -file script.tcl` and `pds_shell -project design.pds -run gen_bit_stream` run headless. `gen_bit_stream` accepts `-input_db_file`, so a bitstream can be generated from a saved
+place-and-route database without re-running PnR. That is the half of F1 that works.
+
+**Absent.**
+1. Any command that sets bitstream options. `gen_bit_stream` takes only `-of_flow`, `-force_to_run` and `-input_db_file`; there is no `set_property` or equivalent for encryption, key files, signing or
+   security bits among the guide's commands. Those are project settings made in the GUI and stored in the `.pds` file; `import_project_settings -gen_bit_stream` copies them between projects, and
+   `export_project_tcl` and `open_config` (the Configuration component) are marked "only supported in the GUI interface."
+2. Any command that changes memory initialization in a routed design. The Design Editor commands (`move_cell`, `manual_route`, `new_net`, `copy_inst`, `save_adif`) edit placement and routing;
+   `define_attribute` handles only `PAP_REGION` and `PAP_LOC`. There is no equivalent of Xilinx `updatemem`, Efinix's BRAM Initial Content Updater, or Diamond's ECO INIT edit.
+
+**Consequences, in order of preference:**
+1. **Wrapped pairing keys (F5), the primary plan.** If the hard AES block can decrypt under the eFuse key or a derivative, the bitstream is common to the fleet and no per-device build is needed
+   (`doc/fpga.md`, Wrapped pairing keys).
+2. **Ask Pango support** for what the Tcl guide omits: a DRM memory-update tool for a routed DB or a bitstream; a standalone encrypt-and-sign step on a plaintext bitstream file; whether a key file referenced
+   by path in the `.pds` project can be swapped per device and `gen_bit_stream -input_db_file` rerun to re-encrypt without PnR.
+3. **Patch the bitstream.** Generate an unencrypted bitstream from the DB, locate the key DRM frames by diffing two builds with different placeholder constants, patch per device, then encrypt and sign.
+   Workable only if step 2 yields a standalone encrypt-and-sign step; reimplementing Pango's AES-256-GCM-plus-RSA bitstream format is not realistic.
+4. **Per-device synthesis and PnR** with the keys as Verilog parameters: minutes per device and different routing per unit. Not acceptable at fleet scale.
 
 ## Other considerations
 
@@ -95,6 +118,6 @@ License is free, but getting set up is not obvious. The steps are:
 | JTAG access to the eFuse key before JTAG is disabled | Unknown; a locked device has JTAG permanently disabled |
 | DPA protection | Covers configuration and the hard AES block in the fabric |
 | PDS from the command line | Yes |
-| Block RAM contents in a routed design, from a script, then encrypt and sign | **Open (F1)** |
+| Block RAM contents in a routed design, from a script, then encrypt and sign | **Not in the Tcl guide v2.0;** three questions for Pango support (F1, now the fallback) |
 | Hard AES block: AES-256, GHASH, throughput, instances, key loading | **Open (F4)** |
-| Hard AES block using the eFuse key | Open (F5) |
+| Hard AES block using the eFuse key | **Open (F5), now the primary plan** for per-device keys |

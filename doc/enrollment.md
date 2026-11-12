@@ -62,7 +62,8 @@ Each device has its own bitstream, because its pairing keys are inside it (`doc/
    signs it with the vendor flow where the family authenticates, and erases the keys.
 4. The platform package for the device (bitstream, loader image, version, inherited and own key versions) gets its inclusion proof in the release manifest, which the HSM signs once with the platform LMS key.
 
-For the Logos2 this is Pango Design Suite from the command line; how it writes per-device block RAM contents into a routed design is open question F1. For the ECP5 fallback it is Lattice Diamond's
+On the Logos2 the primary plan is instead a **common bitstream with wrapped pairing keys** (`doc/fpga.md`, Wrapped pairing keys): the HSM wraps each device's keys under a key only that FPGA holds, the station
+writes them into the flash records region, and steps 2 and 3 above collapse to one release build and one signature. Per-device bitstreams are the fallback, and whether PDS can produce them is open question F1. For the ECP5 fallback it is Lattice Diamond's
 ECO editor from a headless Tcl script (`fpga/ecp5/`). The service handles per-device keys in plaintext, so it is isolated, audited, dual-controlled, and gets keys only per job (R42).
 
 Because a device's bitstream must carry the pairing key the device currently holds, the server builds a device's platform package from the key version the device last reported, and

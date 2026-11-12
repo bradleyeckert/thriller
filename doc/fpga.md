@@ -45,7 +45,7 @@ flowchart LR
 
 ## Bitstream
 
-- **Per device.** Each device's bitstream carries its two pairing keys and their version as constants in the key-source block RAM, written into one common routed design per device by the
+- **Per device, or common with wrapped keys.** In the per-device form, each device's bitstream carries its two pairing keys and their version as constants in the key-source block RAM, written into one common routed design per device by the
   family's build flow (`doc/enrollment.md`, Bitstream build service). Both keys are derived in the HSM: KDF(pairing master, serial number, version).
 - **Encrypted by the FPGA's own key.** The bitstream is encrypted under the FPGA's per-device configuration key, held in its eFuses, so it stays encrypted in flash and on the configuration bus.
   The pairing keys exist in plaintext only inside the FPGA and the HSM (R31).
@@ -54,6 +54,25 @@ flowchart LR
   encrypted bitstream (R32). The ECP5 fallback does not, so it relies on the configuration CRC and on the secure element refusing a damaged pairing key.
 - **Superseded bitstreams are dead, not refused.** The configuration engine will load any correctly encrypted and signed bitstream of this device, old or new; the pairing-key ratchet in the secure
   element makes an old one useless (`doc/se.md`).
+
+## Wrapped pairing keys: the alternative to per-device bitstreams
+
+Per-device bitstreams need a tool that rewrites block RAM contents in a routed design and then encrypts and signs the result. Some families have one (Efinix's BRAM Initial Content Updater,
+Diamond's ECO editor for the ECP5); Pango's PDS, as far as its Tcl guide goes, does not (F1). The cleaner solution, where the family allows it, is to **keep one bitstream for the whole fleet
+and wrap the pairing keys under a key the FPGA alone holds:**
+
+- The configuration engine's eFuse key (or a key the hard AES block derives from it) is per device and never leaves the silicon. If the fabric can ask the hard AES block to decrypt with that key
+  without seeing it, then the pairing keys can be stored in flash as ciphertext under it, and the key-source module becomes "read the wrapped keys from flash, unwrap them in the hard AES block,
+  present them to the SHA-256 core." The fixed key-source interface in `doc/hw.md` does not change.
+- The bitstream then carries no secret. It is still encrypted (confidentiality of the design) and authenticated (integrity), but it is the same file for every device, built and signed once per release.
+- The ratchet still works: a platform package carries the next pairing key wrapped the same way, and the loader writes it into the records region before the reboot. The pairing key version in clear stays.
+- The bitstream build service shrinks to a release build and one signature, which removes R42 from the FPGA side and the per-device step from manufacturing: enrollment writes the wrapped keys into flash
+  like any other record.
+- The wrapping key must be bound to the FPGA, not derivable by anyone else: a key derived from the eFuse key through the hard AES block qualifies; a key the fabric computes from the device DNA alone does not,
+  since the DNA is readable.
+
+This is open question F5, now the primary plan for the Logos2; per-device bitstreams (F1) are the fallback. On the ASIC the same role is played by the PUF (`doc/ics55.md`), so the two designs converge:
+on both, the bitstream or mask is common and the device's secret comes from the silicon.
 
 ## Configuration
 
