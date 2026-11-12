@@ -9,9 +9,6 @@ and is also the ASIC design. Each family folder holds its notes, its build and k
 | Pango Logos2 (PG2L50H-6IFBG484) | [`logos2/`](logos2/README.md) | **Known good: target.** Items 1 to 4 met; item 5 pending the DRM INIT test (F1) |
 | Microchip PolarFire | [`polarfire/`](polarfire/README.md) | Candidate |
 | Lattice CrossLink-NX (LIFCL) | [`lifcl/`](lifcl/README.md) | Candidate |
-| Lattice ECP5 (LFE5U-25F) | [`ecp5/`](ecp5/README.md) | Dropped: no bitstream authentication. Kept for the record |
-| Gowin Arora V (GW5A-LV25) | [`gw5a/`](gw5a/README.md) | Dropped: no bitstream authentication. Kept for the record |
-| Pango Logos (PGL25G) | [`logos/`](logos/README.md) | Not usable: no bitstream encryption |
 
 ## The wish list
 
