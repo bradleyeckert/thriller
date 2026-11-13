@@ -19,11 +19,11 @@ enters a cache. The loader installs images; the hardware checks them.
 Each slot starts with a header: image kind (loader or application), version, mode (production, or developer with the device's serial number and epoch), length, the 128-bit **install salt** *R*,
 the network policy (applications), and an HMAC-SHA256 under the application key over all of it. The header is the only thing the boot chain reads before deciding to trust a slot:
 
-| Check | Loader image (boot ROM) | Application image (loader) |
-|---|---|---|
-| HMAC | Under the application key, unsealed by the TPM | Same |
-| Version | Not older than counter 0 | Not older than counter 1 (production); developer builds: serial matches, epoch = counter 1 ÷ 1024 |
-| Result | Pass token: derive the image key into XIP port 0 | Pass token: derive the image key into XIP port 1 |
+| Check | Loader image (boot ROM) | Supervisor image (loader) | Application image (loader) |
+|---|---|---|---|
+| HMAC | Under the application key, unsealed by the TPM | Same | Same |
+| Version | Not older than counter 0 | Not older than counter 2 | Not older than counter 1 (production); developer builds: serial matches, epoch = counter 1 ÷ 1024 |
+| Result | Pass token: derive the image key into XIP port 0 | Pass token: derive the image key into XIP port 2 | Pass token: derive the image key into XIP port 1 |
 
 An attacker who writes back a whole older image fails the version check; one who writes a header with a forged version fails the HMAC.
 
@@ -60,7 +60,7 @@ chunk in 8 cycles as it arrives (the flash delivers one in about 0.4 µs), and f
 4. It reads the slot back through the install port, checking every tag, then writes the header.
 5. Counter and boot record, in the order in `doc/flash.md`. A cut at any point before leaves the old slot active.
 
-The application core is held in reset during an application install; the loader keeps running from its own slot. The LCD overlay shows progress.
+The application core is held in reset during an application install, and the supervisor core during a supervisor install; the loader keeps running from its own slot. The LCD overlay shows progress.
 
 ## Tag failure
 

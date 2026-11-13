@@ -23,6 +23,7 @@ Every open question in one place. Earlier architectures are kept in git history 
 | F9 | PG2L50H bitstream size, for the flash's bitstream slots | [flash.md](flash.md#regions) | Build | 2 |
 | F10 | Ti60 fallback: headless Efinity flow, active SPI multi-image layout, readback and key protection, R5 assessment; the items in its folder | [ti60](../fpga/ti60/README.md) | Only if the fallback is used | 3 |
 | F11 | PolarFire and CrossLink-NX as alternatives: the open items in their folders, and the country-of-origin requirements of the target markets | [fpga/](../fpga/README.md) | Vendor documentation; business decision | 3 |
+| F12 | A partition or incremental flow in PDS (and Efinity) that keeps the module's part of the netlist placed and routed identically across bitstream releases that change only supervisor or application hardware, with evidence a laboratory accepts | [fips.md](fips.md#designing-for-few-filings) | PDS documentation; trial builds; laboratory | 2 |
 | **Hardware** | | | | |
 | H1 | AXI4-Lite latency: whether the decoder and slaves answer in the cycles LiteForth's memory state machine expects, or whether ROM and SRAM need a tightly coupled path | [hw.md](hw.md#bus-choice) | RTL and simulation | 2 |
 | H2 | Mailbox message set, formats and message RAM size | [hw.md](hw.md#mailbox) | Specification | 2 |
@@ -31,6 +32,8 @@ Every open question in one place. Earlier architectures are kept in git history 
 | H5 | Speed of LMS verification, ML-KEM-768 encapsulation and ML-DSA-44 verification as Forth on the loader core with the SHA-256 core | [arch.md](arch.md#algorithm-bill-of-materials) | Build and measure in `vm.c`, then on hardware | 2 |
 | H6 | Whether the segment key's wrap for ML-KEM encapsulation moves from masked Forth into hardware | [hw.md](hw.md#two-output-modes) | Decide after H5 | 3 |
 | H7 | Flash part, its behavior on power loss during erase and program, and whether 32 MB is right | [flash.md](flash.md#assumptions) | Part selection | 2 |
+| H8 | The supervisor as a third core, or as a manufacturer-supplied layer inside the application image on the application core (saves a core, a cache and an image, at the cost of mixing manufacturer and application-owner code and losing the separate update path); matters most if the Ti60 fallback is used | [hw.md](hw.md#principles) | Decide after the first synthesis fit on the PG2L50H | 2 |
+| H9 | The module's service API: the exact message set and formats, since it is frozen at validation; which parameters travel as data in signed headers (session port, host slots, log capacity, reading age) | [hw.md](hw.md#mailboxes-and-the-modules-service-api) | Write the API document before the loader is coded | 1 |
 | **TPM** | | | | |
 | E5 | Confirm the NV layout, policies and sessions on real parts before provisioning: the Name-binding of the pairing and host indices, the NV_ChangeAuth policies the ratchet and host enrollment depend on, the two-PolicySecret data-key policy, bound sessions with AES-128-CFB parameter encryption, the NV budget and persistent-object limits | [tpm.md](tpm.md#decisions-to-freeze-before-locking) | The TPM reference simulator, then an ST33KTPM2X evaluation board with tpm2-tools | 1 |
 | E6 | Order code against the CMVP certificate's hardware and firmware list: DKG9 (firmware 9.257) is on #4737; DKJ1 (9.512, optional Level 2 mode, minimum order quantity) and CKE3 (9.256) need checking before any substitution | [tpm.md](tpm.md#part) | CMVP certificate detail page; ST | 2 |
@@ -99,8 +102,8 @@ Closed:
 
 ### By default (change any of these)
 
-- **Two LiteForth cores:** a loader core that owns every key path, and an application core that reaches it only through the mailbox.
-- **The boot ROM is in the bitstream** and mirrors the ASIC's mask ROM; the loader and the application are in flash under per-line Ascon-AEAD128.
+- **Three LiteForth cores:** a loader core that owns every key path and is the FIPS module, a supervisor core for the manufacturer's transports, scheduling and CLI outside the module, and an application core; both reach the loader only through mailboxes (H8 for the two-core variant).
+- **The boot ROM is in the bitstream** and mirrors the ASIC's mask ROM; the loader, the supervisor and the application are in flash under per-line Ascon-AEAD128.
 - **Keys live in the TPM** as sealed objects, released only under policies that name the pairing key, into hardware key registers; the bitstream carries only the pairing keys.
 - **Bitstream rollback by the pairing-key ratchet;** loader and application rollback by the two counters. Equal versions are accepted so a damaged slot can be repaired.
 - **Attestation two ways:** a MAC under a symmetric identity key for the server (quantum-safe), a TPM quote under a certified attestation key for hosts.
@@ -111,3 +114,4 @@ Closed:
 - **The network is a second transport for the session protocol,** with no stack on any core; the PHY is held in reset by the network policy; **UART status is read-only.**
 - **Per-device platform packages** built by the bitstream build service from each device's reported key version.
 - **FIPS 140-3 module boundary B:** the loader domain is the module (sub-chip, IG 2.3.B) and the TPM a separately validated one; keys cross between them by AES-128-CFB with HMAC-SHA256. Boundary A stays available with the same hardware if a laboratory objects (E12).
+- **Minimize CMVP filings:** the module is a frozen crypto kernel with a fixed service API; everything that changes from release to release lives in the supervisor and application images, outside the module; bitstream releases are rare and preserve the module's partition (`doc/fips.md`, Designing for few filings).

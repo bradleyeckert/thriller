@@ -13,7 +13,7 @@ so the ASIC gets them from a PUF behind the key-source interface that the FPGA d
 ### What stays the same
 
 - The TPM, its NV layout, its objects and the ratchet. Counters, identity and the host's proof to the TPM do not move. If the TPM die is co-packaged with the ASIC, the two FIPS modules share one physical envelope (`doc/fips.md`).
-- The flash map, the boot record, the loader and application chains, the XIP engine, the mailbox, the recording engine, the sensor and host protocols: the same RTL and the same Forth.
+- The flash map, the boot record, the loader, supervisor and application chains, the XIP engine, the mailboxes, the recording engine, the sensor and host protocols: the same RTL and the same Forth.
 - The attestation report: the "bitstream release" field becomes the silicon revision, and the pairing key version keeps its meaning.
 
 ### What gets simpler
@@ -54,7 +54,7 @@ On the FPGA the same port exists as a stub that returns fixed values, so the loa
 
 ### Memory budget
 
-At 2 to 3 mm² per Mb, SRAM is expensive: 64 KB (0.5 Mb) takes about 1 to 1.5 mm². The two XIP caches (6 KB), both cores' stacks and data RAM, the mailbox, the recording buffer and the PUF block
+At 2 to 3 mm² per Mb, SRAM is expensive: 64 KB (0.5 Mb) takes about 1 to 1.5 mm². The three XIP caches (10 KB), the cores' stacks and data RAM, the mailboxes, the recording buffer and the PUF block
 are the main users; the application's code stays in flash.
 
 ### Things only silicon can answer

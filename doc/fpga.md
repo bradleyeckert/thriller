@@ -3,7 +3,7 @@
 This document is family-neutral. What a family must provide, and how each candidate provides it, is in `fpga/` at the top of the repository:
 `fpga/README.md` (the requirements), and one folder per family. The current choice is the **Pango Logos2 PG2L50H-6IFBG484** (`fpga/logos2/`), with the **Efinix Titanium Ti60** as fallback (`fpga/ti60/`).
 
-The FPGA is the root of trust and runs the application. Its configuration engine is the immutable anchor; its bitstream carries the boot ROM, the two cores and the pairing keys;
+The FPGA is the root of trust and runs the application. Its configuration engine is the immutable anchor; its bitstream carries the boot ROM, the three cores and the pairing keys;
 everything else it needs (keys, counters, identity) is in the TPM, and everything it executes is in the flash, authenticated line by line (`doc/hw.md`, `doc/tpm.md`, `doc/xip.md`).
 
 ## Block diagram
@@ -93,7 +93,7 @@ TPM released).
 | Image keys, install keys | XIP engine and install port registers, derived in hardware | XIP engine, install port | No one |
 | Session, sensor and segment keys | Key registers | Install port, recording engine | No one (the segment key's one wrapped exposure to the loader's ML-KEM code is noted in `doc/hw.md`) |
 
-Neither core has a read path to any of them, or to the Ascon core. Key registers are cleared on reset, on reconfiguration, and on any tag or protocol failure. No CPU debug port is built into production bitstreams.
+No core has a read path to any of them, or to the Ascon core. Key registers are cleared on reset, on reconfiguration, and on any tag or protocol failure. No CPU debug port is built into production bitstreams.
 
 ## TRNG
 
@@ -107,7 +107,7 @@ low ratio. The raw-sample logging path exists only in test builds and is reached
 
 ## Resource estimate
 
-See `doc/hw.md`, Resource estimate: about 8K to 16K LUT4 equivalents for the two cores and the security blocks, including the masked Ascon core, plus the application.
+See `doc/hw.md`, Resource estimate: about 17K to 30K LUT4 equivalents for the three cores and the security blocks, including the masked Ascon core, plus the application.
 
 ## Open questions
 

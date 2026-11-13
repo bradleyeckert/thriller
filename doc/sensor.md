@@ -1,6 +1,6 @@
 # Temperature Sensor
 
-The temperature sensor sits outside the box, at the end of a two-way link to the FPGA's loader core. It is replaceable, and a new sensor must pair
+The temperature sensor sits outside the box, at the end of a two-way link to the FPGA: the supervisor core moves the bytes, the loader core (the FIPS module) checks every frame. It is replaceable, and a new sensor must pair
 **without a network**. Readings need authentication, not encryption.
 
 ## Requirements
@@ -92,9 +92,9 @@ A CRC may protect the physical layer against noise, but it is not a security con
 A MAC proves who sent a reading, not when. So:
 
 - **The device asks.** Each reading request carries the request counter, and the sensor's answer is bound to it, along with the sample's age as the sensor reports it.
-- **The loader times the exchange** with the sensor age timer in its own domain (`doc/hw.md`): from issuing the request to receiving the answer. Age of the reading = that round-trip time + the sample age the sensor reports.
-  Nothing outside the loader domain touches the frames, so nothing can make a reading look newer.
-- **The loader rejects a reading older than the maximum reading age,** a clinical parameter.
+- **The loader times the exchange** with a timer in its own domain (`doc/hw.md`): from issuing the nonce to verifying the answer. Age of the reading = that round-trip time + the sample age the sensor reports.
+  The supervisor relays the frames but cannot alter them, and holding one only adds to the measured round trip, so nothing outside the loader domain can make a reading look newer.
+- **The loader rejects a reading older than the maximum reading age,** a clinical parameter carried as data in the signed application header, not as module code.
 
 Anyone on the link can delay frames but not forge them, so the worst they can do is make readings late, and late readings are rejected.
 
@@ -113,7 +113,7 @@ and must not act on a reading the loader has not passed. The time a reading wait
 
 ## Physical layer
 
-The link is driven by the sensor-link module in the loader core domain: a UART for a byte-oriented link, or a small custom serializer with a capture timer where the sensor's
+The link is driven by the sensor-link module in the supervisor core domain (`doc/hw.md`), which passes whole frames to the module: a UART for a byte-oriented link, or a small custom serializer with a capture timer where the sensor's
 protocol needs precise timing. The choice depends on the sensor's existing interface and the cable (open question S2). The protocol above does not depend on it.
 
 The sensor link is wired, and nothing in it depends on the network: pairing completes offline, and the network only makes the server's confirmation arrive sooner.

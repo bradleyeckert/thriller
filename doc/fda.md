@@ -28,10 +28,11 @@ Terms are defined in the README and `doc/arch.md`. Risk IDs (R1–R46) refer to 
 |---|---|---|
 | FPGA configuration engine | Vendor silicon (Pango Logos2). Checks the RSA-2048 signature and decrypts and authenticates the bitstream with its per-device AES-256-GCM eFuse key; refuses anything else; multi-boot fallback | Trusted, fixed; DPA-protected (R25) |
 | Boot ROM | Block RAM in the bitstream. Starts the TPM and pairs with it, checks the loader image, UART recovery | Trusted; part of the signed bitstream |
-| Loader core domain | LiteForth loader core and the security hardware: key registers, SHA-256 core, masked Ascon core, XIP engine, recording engine, SPI to the TPM with its session cipher, card, UART, sensor link, Ethernet transport | Trusted; holds every key path and security decision |
+| Loader core domain (the FIPS 140-3 module) | LiteForth loader core and the security hardware: key registers, SHA-256 core, masked Ascon core, XIP engine, recording engine, SPI to the TPM with its session cipher, host UART | Trusted; holds every key path and security decision; a fixed service API, changed only by a CMVP-filed platform release |
+| Supervisor core domain | LiteForth supervisor core: Ethernet transport, sensor link, card, stream buffer, RTC, scheduling, CLI; runs from its flash slot | Manufacturer-signed, version-counted, outside the module; moves bytes, holds no key (R50) |
 | Application core domain | LiteForth application core, I2S acquisition, LCD; runs from its flash slot | Signed by the application owner, or a device-bound developer build; no path to any key |
 | ST33KTPM2X TPM 2.0 | Keys, counters, identity, host authentication, quotes | Trusted; FIPS 140-3 validated (CMVP #4737, physical Level 3); counters authenticated and authorized (R36) |
-| QSPI flash | Bitstreams, loader and application images, boot record, records | Untrusted storage; everything authenticated |
+| QSPI flash | Bitstreams, loader, supervisor and application images, boot record, records | Untrusted storage; everything authenticated |
 | CODECs, LCD, speaker | Acquisition, display, alarms; plaintext inside the sealed enclosure | Physically protected only (R38) |
 | MicroSD card | Recordings (encrypted to the host), user data, logs, offline packages | Untrusted storage |
 | PSRAM stream buffer | Ring buffer of encrypted recording blocks between the recording engine and the card or network | Untrusted; ciphertext only (R48) |
@@ -64,7 +65,8 @@ flowchart LR
   subgraph DEV["Device (sealed enclosure)"]
     subgraph FPGA["FPGA"]
       CFG["Config engine"]
-      LDR["Loader domain<br/>keys, checks, sessions"]
+      LDR["Loader domain (FIPS module)<br/>keys, checks, sessions"]
+      SUP["Supervisor domain<br/>transports, scheduling, CLI"]
       APP["Application domain<br/>LiteForth application"]
     end
     SE["TPM 2.0"]
@@ -76,18 +78,20 @@ flowchart LR
   HSM --> BLD --> SRV
   HSM --> SRV
   HSM --> MFG
-  SRV <-->|"TLS 443"| PRX <-->|"UDP, ciphertext"| NET <--> PHY <-->|"RMII"| LDR
-  HOST <-->|"UART or LAN, authenticated + encrypted"| LDR
-  SENS <-->|"sensor link, MAC per frame"| LDR
+  SRV <-->|"TLS 443"| PRX <-->|"UDP, ciphertext"| NET <--> PHY <-->|"RMII"| SUP
+  HOST <-->|"UART or LAN, authenticated + encrypted"| SUP
+  SENS <-->|"sensor link, MAC per frame"| SUP
+  SUP <-->|"frames, bytes (mailbox)"| LDR
   MFG -.->|"factory only"| SE
   MFG -.->|"JTAG, factory only"| CFG
-  FL -->|"encrypted, signed bitstream"| CFG --> LDR --> APP
+  FL -->|"encrypted, signed bitstream"| CFG --> LDR --> SUP & APP
   LDR <-->|"SPI, HMAC'd and encrypted sessions"| SE
-  LDR <-->|"per-line GCM"| FL
-  APP <-->|"per-line GCM"| FL
+  LDR <-->|"per-line Ascon"| FL
+  SUP <-->|"per-line Ascon"| FL
+  APP <-->|"per-line Ascon"| FL
   APP <-->|"I2S, LCD (plaintext)"| COD
   APP -->|"samples"| LDR
-  LDR <-->|"ciphertext"| SD
+  SUP <-->|"ciphertext"| SD
 ```
 
 ### Interfaces
@@ -95,15 +99,15 @@ flowchart LR
 | Interface | Between | What crosses it | Protection |
 |---|---|---|---|
 | QSPI (configuration) | Flash → configuration engine | The device's bitstream | Encrypted and authenticated under the FPGA's per-device eFuse key, RSA-signed; nothing else accepted; a bitstream without the current pairing key gets nothing from the TPM (R17, R31, R32, R44) |
-| QSPI (XIP) | Flash ↔ both cores | Loader and application lines, headers, boot record, records | Per-line Ascon-AEAD128 under per-install keys; HMAC under the application key on headers and records (R2, R6, R34, R35) |
+| QSPI (XIP) | Flash ↔ the three cores | Loader, supervisor and application lines, headers, boot record, records | Per-line Ascon-AEAD128 under per-install keys; HMAC under the application key on headers and records (R2, R6, R34, R35) |
 | SPI (TPM) | Loader domain ↔ TPM | TPM 2.0 commands and responses: nonces, HMACs, encrypted sealed data, counter reads and increments, policy commands, quotes | Every exchange in a session keyed from the pairing key with fresh nonces from both sides; sealed data AES-CFB encrypted and HMAC'd; counters need the pairing policy; bus inside the seal (R36) |
-| Mailbox and sample FIFO | Application domain → loader domain | Service requests, terminal bytes, samples | Fixed message set, fuzzed parser, one-way sample path (R45) |
+| Mailboxes and sample FIFO | Supervisor and application domains → loader domain | Service requests, session frames, package bytes, samples | Fixed message set (the module's service API), fuzzed parser, one-way sample path (R45) |
 | I2S, LCD | Application domain ↔ CODECs and LCD | Samples, waveforms | Inside the sealed enclosure only (R38, R40) |
-| MicroSD | Loader domain ↔ card | Recordings, user data, logs, packages | All encrypted and authenticated (R1, R10, R26, R41) |
+| MicroSD | Supervisor domain ↔ card | Recordings, user data, logs, packages | All encrypted and authenticated (R1, R10, R26, R41) |
 | QSPI (PSRAM) | Recording engine → PSRAM → card and network | Authenticated recording ciphertext in transit | Holds nothing else; damage is detected at the host (R48) |
-| UART | Host ↔ loader domain | Status; sessions, packages, CLI | Status read-only (R30); sessions authenticated through the TPM, Ascon-AEAD128 frames (R9) |
-| Ethernet (RMII) | Loader domain ↔ PHY ↔ site network | UDP datagrams carrying session frames: packages, recording ciphertext, server exchanges, DHCP | Hardware transport that drops everything but ARP, ICMP echo and UDP to one port; every payload is an authenticated, encrypted session frame; PHY reset driven by the network policy (R23, R28, R29, R39) |
-| Sensor link | Sensor ↔ loader domain | Pairing, readings, commands | Certificates, ML-KEM pairing, per-frame MACs, maximum reading age (R11–R14) |
+| UART | Host ↔ loader domain (bytes passed to the supervisor outside recovery) | Status; sessions, packages, CLI | Status read-only (R30); sessions authenticated through the TPM, Ascon-AEAD128 frames (R9) |
+| Ethernet (RMII) | Supervisor domain ↔ PHY ↔ site network | UDP datagrams carrying session frames: packages, recording ciphertext, server exchanges, DHCP | Hardware transport that drops everything but ARP, ICMP echo and UDP to one port; every payload is an authenticated, encrypted session frame; PHY reset driven by the network policy (R23, R28, R29, R39) |
+| Sensor link | Sensor ↔ supervisor domain ↔ loader domain | Pairing, readings, commands | Certificates, ML-KEM pairing, per-frame MACs, maximum reading age (R11–R14) |
 | JTAG | Factory ↔ FPGA | Key programming, boundary scan | Permanently disabled at enrollment on the Logos2 (R7, R43) |
 
 **Integrator adds:** the host software and its environment, recording storage and review systems, the clinical interfaces and safe states, the edge proxy deployment, and any additional data flows.

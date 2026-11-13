@@ -14,7 +14,7 @@ against Lattice's *Advanced Configuration Security User Guide for Nexus Platform
 | 5 | Per-device constants from a script | Unknown: whether Radiant can update block RAM contents in a routed design from a script |
 | 6 | Room for a masked Ascon core | No vendor cipher block for the fabric, as on every candidate (R33); the question is only size |
 | 7 | Ring-oscillator TRNG | To confirm |
-| 8 | Enough logic | LIFCL-17 is a 17K-logic-cell part: too tight for two cores plus the masked cores. The LIFCL-40 is the realistic choice |
+| 8 | Enough logic | LIFCL-17 is a 17K-logic-cell part: too tight for three cores plus the masked cores. The LIFCL-40 is the realistic choice |
 | 9 | QSPI and peripheral pins | General I/O |
 
 ## Toolchain

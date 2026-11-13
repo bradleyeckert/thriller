@@ -25,7 +25,7 @@ From the *Logos2 Family FPGAs Device Datasheet*:
 | 5 | Per-device constants from a script | **Not in the Tcl guide** (see Per-device keys below). Per-device re-encryption is cheap; whether a DRM INIT change forces re-synthesis is the open item (F1) |
 | 6 | Room for a masked Ascon core | Yes; a 50K-class part. No vendor cipher block is usable from the fabric, so the core is ours (F4) |
 | 7 | Ring-oscillator TRNG | To confirm |
-| 8 | Enough logic | A 50K-class part: ample room for both cores, the security blocks and the application. LUT size and block RAM to confirm |
+| 8 | Enough logic | A 50K-class part: ample room for the three cores, the security blocks and the application. LUT size and block RAM to confirm |
 | 9 | QSPI and peripheral pins | General I/O; 484 balls |
 
 ## Against the Ti60 fallback

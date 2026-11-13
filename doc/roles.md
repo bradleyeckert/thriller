@@ -16,7 +16,8 @@ A person can hold several roles. A developer is usually also the user of their o
 
 ## What a developer can change
 
-Only the **application**: the LiteForth code that runs on the application core from its flash slot. The bitstream, the boot ROM and the loader are platform, signed by the manufacturer.
+Only the **application**: the LiteForth code that runs on the application core from its flash slot. The bitstream, the boot ROM and the loader (together the FIPS 140-3 module) and the
+supervisor image are platform, signed by the manufacturer; the supervisor can be updated without a CMVP filing, the module cannot (`doc/fips.md`, Designing for few filings).
 Because applications are verified by the loader, not by the configuration engine, a developer needs no bitstream signature and no signing service: a symmetric key bound to one device is enough,
 and it works offline.
 

@@ -17,8 +17,9 @@ and no foothold from which to move to anything else on the network. The worst a 
    because the device's code is in authenticated flash that is checked line by line as it runs, and no processor has a write path into it from the network or from anywhere else.
 3. **The payload goes to one parser, behind authentication.** A UDP datagram that passes the hardware filter becomes an encrypted, authenticated session frame checked by the loader against a
    per-device key held in a TPM. An unauthenticated sender gets no further than the session handshake, which has attempt limits and is logged.
-4. **The processor that owns security has no other network exposure.** The application processor, which runs the device's function, has no connection to the network at all; the loader
-   processor, which does, runs no network software. The boundary between them is enforced by wiring in the chip, not by an operating system.
+4. **The processor that owns security has no network exposure.** The application processor, which runs the device's function, has no connection to the network at all; the supervisor
+   processor, which moves datagrams between the hardware transport and the cryptographic module, runs no network stack, only framing; and the loader processor, which owns every key, sees only
+   authenticated frames. The boundaries between them are enforced by wiring in the chip, not by an operating system.
 5. **Outbound only.** The device opens flows to its server (or to a local relay); it listens for nothing but the replies, and the port can be disabled entirely by the application owner,
    leaving an air-gapped device that works from its MicroSD card and USB connection.
 
@@ -54,7 +55,7 @@ other network service.
 
 This statement supports the Global System View and the Security Use Case Views in `doc/fda.md`. The evidence behind it is:
 
-- the netlist connectivity check showing the application processor has no path to the network and the loader processor has no network software (`doc/test.md`, Key isolation);
+- the netlist connectivity check showing the application processor has no path to the network and the loader processor none to the network transport (`doc/test.md`, Key isolation);
 - RTL fuzzing of the Ethernet transport and protocol fuzzing from the network with boofuzz, in simulation and on hardware (`doc/test.md`, Network policy and transport);
 - the per-line code authentication that makes any change to executing code impossible from any source (`doc/xip.md`);
 - the risk rows R23, R28, R29 and R39 in `doc/arch.md`, each rated with its residual risk (denial of service) stated.

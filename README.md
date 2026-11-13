@@ -4,12 +4,14 @@ one QSPI NOR flash, and a TPM 2.0 (ST33KTPM2X). The FPGA is a model of the ASIC 
 at volume (`doc/ics55.md`), so everything the FPGA does is generic RTL and firmware, and everything that depends on the FPGA family lives in `fpga/<family>/`.
 
 - **The FPGA is the root of trust and the application.** Its configuration engine authenticates and decrypts the bitstream with the device's own eFuse key;
-  the bitstream holds a boot ROM, a loader core that owns every key path and security decision, and an application core that runs the LiteForth application
-  and can reach nothing secret. Both cores execute in place from the flash through a decrypting, authenticating cache (`doc/xip.md`).
+  the bitstream holds a boot ROM, a loader core that owns every key path and security decision and is, with its hardware, the FIPS 140-3 cryptographic module; a supervisor core that
+  runs the manufacturer's transports, scheduling and CLI outside the module, so that those change without a CMVP filing; and an application core that runs the LiteForth application and can reach
+  nothing secret. All three execute in place from the flash through a decrypting, authenticating cache (`doc/xip.md`).
 - **The TPM holds what must survive the bitstream:** the device's keys, its identity, and the two monotonic counters that stop rollback.
   It releases a key only to a bitstream that holds the current pairing key, and the data key only after the host has proved itself to the TPM directly (`doc/tpm.md`).
   It is a FIPS 140-3 validated module in its own right, which is what lets the device's own module boundary stop at the loader domain (`doc/fips.md`).
-- **The flash is untrusted storage** for the bitstream, the loader and the application, every line of code authenticated as it is fetched (`doc/flash.md`).
+- **The flash is untrusted storage** for the bitstream, the loader, the supervisor and the application, every line of code authenticated as it is fetched (`doc/flash.md`).
+- **The module is frozen.** Every change to the bitstream or the loader is a filing with the CMVP, so the loader is a crypto kernel with a fixed service API and all product logic lives in the supervisor and application images (`doc/fips.md`, Designing for few filings).
 
 The platform will encrypt files, so the TPM is provisioned accordingly.
 To support DSP applications, audio CODECs are planned for.
@@ -20,12 +22,12 @@ To support DSP applications, audio CODECs are planned for.
 |---|---|
 | This README | Overview: chipset, keys, boot, updates, recordings, sensor, host sessions, the network and the CLI |
 | `doc/arch.md` | Trust boundary, threat model, risk assessment, algorithm bill of materials |
-| `doc/hw.md` | Hardware modules: the two cores, the mailbox, the shared XIP engine, key paths, boot and lockdown, the key-source interface |
+| `doc/hw.md` | Hardware modules: the three cores, the mailboxes and the module's service API, the shared XIP engine, key paths, boot and lockdown, the key-source interface |
 | `doc/tpm.md` | TPM: NV indices, sealed objects and PCRs, sessions over SPI, host authentication, the pairing-key ratchet, counters, attestation, provisioning |
-| `doc/flash.md` | Flash map: bitstream slots and multi-boot, loader and application slots, boot record, install order, staging |
+| `doc/flash.md` | Flash map: bitstream slots and multi-boot, loader, supervisor and application slots, boot record, install order, staging |
 | `doc/fpga.md` | The FPGA, family-neutral: configuration from flash, per-device bitstreams, fallback, TRNG, resources |
 | `fpga/` | Everything family-specific, one folder per FPGA family, and the wish list a family must meet |
-| `doc/xip.md` | Execute in place: per-line Ascon-AEAD128 for the loader and the application |
+| `doc/xip.md` | Execute in place: per-line Ascon-AEAD128 for the loader, the supervisor and the application |
 | `doc/acquisition.md` | CODECs, data path, recording encryption, LCD, speaker and alarms |
 | `doc/sensor.md` | Replaceable temperature sensor: certificates, offline pairing, authenticated sessions, fail-safe behavior |
 | `doc/enrollment.md` | Device and sensor enrollment, TPM provisioning, the bitstream build service, detecting unknown identities, updates |
@@ -33,7 +35,7 @@ To support DSP applications, audio CODECs are planned for.
 | `doc/test.md` | Test plan and fault-injection campaigns |
 | `doc/fda.md` | FDA security architecture views |
 | `doc/network.md` | Network security posture: why the device cannot be a network attack vector, for IT departments and the FDA |
-| `doc/fips.md` | FIPS 140-3 as the long-term target: module boundary, approved algorithms, DRBG, self-tests, roles, zeroization, and what it changes now |
+| `doc/fips.md` | FIPS 140-3 as the long-term target: designing for few filings, module boundary, approved algorithms, DRBG, self-tests, roles, zeroization, and what it changes now |
 | `doc/ics55.md` | ASIC migration to the ICS55 55 nm process: the PUF behind the key-source interface |
 | `doc/questions.md` | Every open question in one matrix, and the decisions taken |
 
@@ -42,7 +44,7 @@ To support DSP applications, audio CODECs are planned for.
 - **FPGA with an encrypted and authenticated bitstream.** Current choice: **Pango Logos2 PG2L50H-6IFBG484** (50K-class), which authenticates bitstreams before decrypting them
   (`fpga/logos2/`). No family offers a hardened cipher usable from the fabric, so all symmetric cryptography runs in a masked Ascon core of our own (`doc/hw.md`). It configures itself from the flash at power-up in master SPI mode, with the vendor's multi-boot fallback to a second bitstream. Fallback: **Efinix Titanium Ti60** (`fpga/ti60/`), which meets the same hard requirements with RSA-4096 authentication
   and a scripted BRAM content updater. Candidates: Microchip PolarFire, Lattice CrossLink-NX. The ECP5 and Gowin GW5A were evaluated and dropped for lacking bitstream authentication. The requirements a family must meet are in `fpga/README.md`.
-- **QSPI NOR flash**, 32 MB proposed: bitstream slots, loader images (A/B), application images (A/B), the boot record and a recovery staging area (`doc/flash.md`). Nothing in it is trusted.
+- **QSPI NOR flash**, 32 MB proposed: bitstream slots, loader, supervisor and application images (A/B each), the boot record and a recovery staging area (`doc/flash.md`). Nothing in it is trusted.
 - **ST33KTPM2X32DKG9** TPM 2.0 (STMicroelectronics), on an SPI bus that never leaves the sealed enclosure, powered with the FPGA. Chosen over the ATECC608C when FIPS 140-3 became the target:
   it is on CMVP certificate #4737 (FIPS 140-3, physical security Level 3), ships with ST-certified endorsement keys, and its sessions give an approved key transport, so the device's own module can be the
   loader domain alone (`doc/fips.md`). Keys are sealed objects released only under a policy that names the pairing key; counters are its NV counters, authenticated and authorized (`doc/tpm.md`).
@@ -52,13 +54,13 @@ To support DSP applications, audio CODECs are planned for.
 - **MicroSD card socket**, driven by the FPGA: encrypted recordings and user data, the event log, offline update packages.
 - **ESP-PSRAM64H** (8 MB QSPI PSRAM): a ring buffer for the encrypted recording stream between the recording engine and the card or the network, riding out card write latency and network stalls.
   It holds ciphertext only, about ten seconds of it at the full rate, and is outside the trust boundary like the card (`doc/acquisition.md`, Stream buffer).
-- **Sensor connector**: a wired, two-way link to a replaceable temperature sensor, driven by the loader core (`doc/sensor.md`).
+- **Sensor connector**: a wired, two-way link to a replaceable temperature sensor; the supervisor moves the bytes, the module checks every frame (`doc/sensor.md`).
 - **UART** (USB-UART bridge): status reports, and the wired path for host sessions, updates and the CLI.
 - **Ethernet**, 10/100 over RMII to a PHY such as the LAN8742A: the path to the server for attestation, updates, uploads and sensor-pairing confirmation. The FPGA speaks only UDP on one port,
   implemented in hardware; there is no network stack anywhere in the device (see Network). An untrusted edge proxy on site relays the datagrams to the server over TLS where IT requires port 443.
 - **YXC YSN8130E real-time clock** (3225 module with built-in crystal, 0.9 µA, open-drain /INT that survives a VDD cycle), backed by two SR44 cells; A10 for the remaining checks. Its time is untrusted and never stands in for the server's time beacons (`doc/acquisition.md`); its job is
   scheduling and local display, and **its alarm output wakes the device from deep sleep** (the regulators' enables on the FPGA board, RST_N on the ASIC), so every scheduled wake is a cold start through the
-  entire trust chain; the alarm is also an input pin, so the loader sees it as an interrupt when awake. It also automates NIST SP 800-90B restart testing of the TRNG: a thousand wakes, each logging its first raw samples (`doc/hw.md`, Real-time clock).
+  entire trust chain; the alarm is also an input pin, so the supervisor sees it as an interrupt when awake. It also automates NIST SP 800-90B restart testing of the TRNG: a thousand wakes, each logging its first raw samples (`doc/hw.md`, Real-time clock).
 - Oscillator, voltage regulators, and test connectors not populated in production. The FPGA's JTAG is permanently disabled at enrollment where the family allows it.
 
 ## Keys and what unlocks them
@@ -68,7 +70,7 @@ To support DSP applications, audio CODECs are planned for.
 | Bitstream configuration key | FPGA eFuse; HSM | Yes | The FPGA alone | The bitstream at rest in flash and on the configuration bus |
 | Bitstream signing key | Manufacturer HSM; public key data in FPGA eFuse | No | — | Only manufacturer bitstreams configure the FPGA (where the family authenticates) |
 | **Pairing key** | The bitstream (key source) and the TPM's pairing index, as its authorization value | Yes, and per bitstream release | The bitstream itself | Every TPM session: the session key, every HMAC, every policy. Rotated with each bitstream release, which is what kills old bitstreams (`doc/tpm.md`, Ratchet) |
-| Application key | TPM, sealed | Yes | Pairing key | Headers and per-line keys of the loader and application images in flash; the boot record |
+| Application key | TPM, sealed | Yes | Pairing key | Headers and per-line keys of the loader, supervisor and application images in flash; the boot record |
 | **Data key** | TPM, sealed, one per host | Yes | Pairing key **and** the host's proof to the TPM (a relayed HMAC session) | User data on the MicroSD card |
 | Host authorization key | TPM (an NV index's authorization value, never readable) and the host | Yes, per host | Never leaves either | Proving the host is present; the host session secret sealed with the data key derives the session key |
 | Device identity key (symmetric) | TPM (keyed-hash object, never readable); HSM | Yes | Pairing key; used in place | Authenticating the device to the enrollment server, quantum-safe |
@@ -82,20 +84,20 @@ To support DSP applications, audio CODECs are planned for.
 | Segment key | Loader domain and the recording engine, for one segment, then erased | Per segment | — | One segment of a recording |
 | Sensor pairing key | Flash (under the application key) and the sensor | Per pairing | — | Sessions with one paired sensor |
 
-The HSM derives every per-device key from a master key and the TPM's identifier (`doc/enrollment.md`). No key ever reaches software on either core: keys move from the
+The HSM derives every per-device key from a master key and the TPM's identifier (`doc/enrollment.md`). No key ever reaches software on any core: keys move from the
 TPM or the key source into hardware key registers (`doc/hw.md`, Key paths).
 
 ## Boot
 
 1. The FPGA's configuration engine loads the active bitstream from flash, checks its signature and decrypts it with the device's eFuse key; anything else is refused. On failure it falls back to the other
    bitstream slot (the family's multi-boot).
-2. The **boot ROM** (block RAM in the bitstream) starts on the loader core with the application core in reset. It starts the TPM, opens a session under the pairing key, reads counter 0,
+2. The **boot ROM** (block RAM in the bitstream) starts on the loader core with the other two cores in reset. It starts the TPM, opens a session under the pairing key, reads counter 0,
    has the TPM unseal the application key, checks the loader image's header and version, derives the loader's image key into the XIP engine, and jumps to the loader in flash.
    If the TPM refuses the pairing key, this bitstream has been superseded: the boot ROM stops in recovery.
-3. The **loader** reads counter 1, checks the application image's header and version (or, for a developer build, device and epoch), derives its image key, and releases the application core.
-   Every cache line of either image is authenticated as it is fetched.
-4. The loader opens the sensor session and, if the network policy allows, releases the Ethernet PHY from reset and brings up its address.
-5. The application runs. It reaches user data, recordings, the host, the sensor and the log only through the loader's mailbox services.
+3. The **loader** reads counters 1 and 2, checks the supervisor image's header and version, then the application's (or, for a developer build, device and epoch), derives their image keys,
+   applies the network policy to the PHY's reset, and releases the supervisor core, then the application core. Every cache line of every image is authenticated as it is fetched.
+4. The **supervisor** brings up the card, the clock, the schedule and, if the policy allows, the network address, and has the module open the sensor session.
+5. The application runs. It reaches user data, recordings, the host, the sensor and the log only through the module's services; the supervisor moves the bytes.
 
 Any check that fails falls back to the other slot of that image, or stops in the safe state with a record in the boot record (`doc/hw.md`, Boot and lockdown).
 
@@ -106,11 +108,12 @@ Two signed chains, sharing nothing but the TPM:
 | Package | Contents | Scope | Signed by | Counter |
 |---|---|---|---|---|
 | Platform | This device's encrypted bitstream with its next pairing key, and a loader image | Per device, built by the bitstream build service | LMS (manufacturer), one signature per release over a manifest | 0 |
+| Supervisor | The manufacturer's supervisor image: transports, scheduling, CLI | Fleet | LMS (manufacturer) | 2 |
 | Application | The LiteForth application, and its network policy | Fleet; encrypted under the distribution key | LMS (application owner); developer builds: a MAC under the device's developer key | 1 |
 
-Packages arrive on the MicroSD card, over the UART from the host, or over the network. The loader checks the signature and the version before decrypting anything, writes into the
+Packages arrive on the MicroSD card, over the UART from the host, or over the network, and the supervisor streams them to the module. The module checks the signature and the version before decrypting anything, writes into the
 inactive slot, reads it back, advances the counter and switches the boot record (`doc/flash.md`, Install order). A bitstream update ends with the new bitstream, once it has booted,
-replacing the pairing key in the TPM with its next key, after which the old bitstream can no longer open the TPM.
+replacing the pairing key in the TPM with its next key, after which the old bitstream can no longer open the TPM. Platform packages are the rare ones: each is a change to the FIPS module and a CMVP filing; supervisor and application packages are not (`doc/fips.md`).
 
 ## Recordings
 
@@ -140,14 +143,14 @@ The TPM signs only for a bitstream that holds the current pairing key, so a repo
 ## Network and the CLI
 
 There are no radios. The device has one wired Ethernet port, and the FPGA implements the whole of its network side in hardware (`doc/hw.md`, Ethernet transport): an RMII MAC, an ARP
-responder for its own address, IPv4 without fragments or options, ICMP echo, and a UDP demultiplexer that delivers datagrams on one port into the loader domain and drops everything else.
-The payload is the same authenticated, encrypted session frame the loader already parses from the UART, so the network is a second transport for one protocol, with no TCP, DNS, TLS or HTTP
+responder for its own address, IPv4 without fragments or options, ICMP echo, and a UDP demultiplexer that delivers datagrams on one port to the supervisor core and drops everything else.
+The payload is the same authenticated, encrypted session frame the module already checks from the UART, so the network is a second transport for one protocol, with no TCP, DNS, TLS or HTTP
 anywhere in the device. Flows are outbound only, with keepalives; the ack-and-window layer that makes updates and uploads reliable over a lossy path is part of the session protocol.
 
 Where a site's IT policy only allows TCP on port 443, a small **edge proxy** (software on a PC or a gateway appliance on the same LAN) relays the device's datagrams to the server over TLS.
 It is outside the trust boundary and sees only ciphertext: it can drop, delay or replay, and every one of those is already handled by the session protocol.
 
-**The application owner decides** whether the port is enabled, through a network policy in the signed application package; the loader holds the PHY in reset when it is disabled.
+**The application owner decides** whether the port is enabled, through a network policy in the signed application package; the module holds the PHY in reset when it is disabled, and the supervisor cannot override it.
 Addressing is by DHCP, with static addresses settable in a host session; the server (or proxy) address is set the same way.
 
 - **The UART** gives read-only status to anyone with a cable, and authenticated sessions.
@@ -163,5 +166,5 @@ The PHY choice, PoE and the edge proxy are open items (`doc/questions.md`, A6 to
 
 ## ASIC conversion
 
-The ASIC keeps the boot ROM (now mask ROM), the loader, the application chain, the TPM and the flash, and loses the bitstream. The one thing the bitstream carried,
+The ASIC keeps the boot ROM (now mask ROM), the loader, the supervisor and application chains, the TPM and the flash, and loses the bitstream. The one thing the bitstream carried,
 the pairing key, comes instead from a PUF behind the same key-source interface the FPGA build already uses, with the hardware to characterize it on silicon (`doc/ics55.md`).

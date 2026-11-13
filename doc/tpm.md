@@ -1,6 +1,6 @@
 # Trusted Platform Module
 
-The TPM holds what the FPGA cannot keep for itself: per-device keys, the device's identity, and the two monotonic counters. This document lays out its NV indices and objects,
+The TPM holds what the FPGA cannot keep for itself: per-device keys, the device's identity, and the monotonic counters. This document lays out its NV indices and objects,
 the sessions between the loader domain and the TPM, the pairing-key ratchet that kills superseded bitstreams, host authentication, attestation, and provisioning. It replaces the
 ATECC608C design: the TPM was chosen when FIPS 140-3 became the target, because it is itself a validated module (CMVP certificate #4737), which lets the device's own module boundary shrink
 to the loader domain (`doc/fips.md`, boundary B). Every detail below is a proposal to be checked against the TPM 2.0 Library specification and tested on real parts before a configuration is
@@ -24,7 +24,7 @@ frozen (`doc/questions.md`, E5).
 - **Power:** on the FPGA's 3.3 V domain, not the always-on rail. All TPM state is non-volatile, so nothing is lost by powering it down with the FPGA, and the 66 mW maximum would be
   wasted on the always-on budget. `PIRQ` is left unconnected (polling), `GPIO_PP` (physical presence) is left at its internal pull-down, and the exposed pad is soldered to ground.
 - **Who talks to it.** Only the loader core domain. The boot ROM runs the startup, the pairing session, the counter 0 read and the application key's unseal; the loader runs everything else.
-  Neither core ever sees a key: session keys and HMACs are computed in the SHA-256 core with the pairing key taken straight from the key source, and keys the TPM releases are decrypted by the
+  No core ever sees a key: session keys and HMACs are computed in the SHA-256 core with the pairing key taken straight from the key source, and keys the TPM releases are decrypted by the
   session cipher straight into key registers (`doc/hw.md`, Key paths).
 - **Sourcing.** A high-volume part: Mouser holds tens of thousands in stock with more scheduled; DigiKey, RS and Future list it too. LCSC does not, so JLCPCB builds take it as a consigned part (E8).
 
@@ -44,6 +44,7 @@ hierarchy, nothing at run time can define, undefine or relock them. Sizes are in
 | **Host** *h* (eight, for up to eight enrolled hosts) | Ordinary | 8 | **Host authorization key** H*h*, per device and host; random until a host is enrolled | Auth | Written once (the host slot number), then write-locked | The host proves knowledge of H*h* to the TPM through a relayed HMAC session; data key *h*'s policy refers to this index. Policy: PolicySecret(pairing), PolicyCommandCode(`TPM2_NV_ChangeAuth`), so the loader can set H*h* when a host is enrolled over a server session, replace it for a replacement host, or randomize it to cut a compromised host off (R20). Dictionary-attack protected (R28) |
 | **Counter 0** | Counter | 8 | None | Policy | Policy: PolicySecret(pairing) | Platform version: the bitstream and the loader under one version. Increment only; 64 bits |
 | **Counter 1** | Counter | 8 | None | Policy | Policy: PolicySecret(pairing) | Application version and the developer key epoch (epoch = counter 1 ÷ 1024, `doc/roles.md`) |
+| **Counter 2** | Counter | 8 | None | Policy | Policy: PolicySecret(pairing) | Supervisor image version (`doc/flash.md`) |
 | **Freshness** | Ordinary | 32 | None | Policy | Policy: PolicySecret(pairing) | A digest of the latest user data state, to detect an old copy of the card being restored (R10) |
 | **Lifecycle** | Bit field | 8 | None | Policy | Set-only bits, policy: PolicySecret(pairing) | Enrollment complete, retired, wiped; on the ASIC also the PUF enrollment state (`doc/ics55.md`). Bits can be set and never cleared |
 | **Application LMS public key**, main | Ordinary | 56 | None | Auth, empty | Written at provisioning, then write-locked for good | Checking the public key carried in each production application package |
@@ -96,8 +97,9 @@ The loader domain measures what it has checked into the SHA-256 bank:
 |---|---|---|
 | 0 | Boot ROM | Report format version; bitstream release and pairing key version (from the key source); boot cause |
 | 1 | Boot ROM | The loader image header: version, digest |
+| 1 | Loader | The supervisor image header: version, digest |
 | 2 | Loader | The application image header: version, mode (production, or developer with its epoch), digest |
-| 3 | Loader | Network policy; counter 0 and counter 1 as read; lockdown count and last cause from the boot record; lifecycle bits |
+| 3 | Loader | Network policy; counters 0, 1 and 2 as read; lockdown count and last cause from the boot record; lifecycle bits |
 | 4 | Loader | Each ratchet step, install, and enrollment event as it happens |
 
 A PCR can only be extended, never set, and all are zero after `TPM2_Startup`. What they hold is a measurement by the authenticated bitstream of what it checked; a compromised application cannot
@@ -202,7 +204,7 @@ So the design makes old bitstreams useless instead of unloadable: **each bitstre
   device, and the device reports its key version in every attestation and session, so the server builds the package from the version the device has. Offline packages are prepared the same way.
 - **No eFuse budget.** Unlike version fuses, the ratchet has no limit on the number of releases.
 
-Rollback of the loader alone (without a new bitstream) is caught by counter 0; of the application, by counter 1.
+Rollback of the loader alone (without a new bitstream) is caught by counter 0; of the application, by counter 1; of the supervisor, by counter 2.
 
 ## Counters
 
@@ -210,6 +212,7 @@ Rollback of the loader alone (without a new bitstream) is caught by counter 0; o
 |---|---|---|
 | 0 | Platform version: the bitstream and the loader under one version | Every platform package carries a loader image, restamped if unchanged, so the loader's version always matches counter 0. Bitstream rollback is also blocked by the ratchet |
 | 1 | Application version, and the developer key epoch (epoch = counter 1 ÷ 1024, `doc/roles.md`) | Developer installs never touch it |
+| 2 | Supervisor image version | The supervisor is manufacturer firmware outside the FIPS module, updated without a filing, so it has its own counter rather than sharing the platform's |
 
 **Version rule:** a package is accepted if its version is **not older** than the counter. Equal is allowed, so a device can reinstall its current release, for example to repair a corrupted slot.
 This is safe because each install uses a fresh install salt, so no nonce repeats (`doc/xip.md`).
