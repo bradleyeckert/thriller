@@ -3,7 +3,7 @@
 Every open question in one place. Earlier architectures are kept in git history (commits `cecf901`, `8c54b84` and `eb63f10`); questions from them that still apply are carried over here.
 
 **Priority:**
-- **1:** blocks something irreversible (eFuse burning, secure element locking, enrollment) or the board design.
+- **1:** blocks something irreversible (eFuse burning, TPM provisioning, enrollment) or the board design.
 - **2:** needed before implementation of that part.
 - **3:** needed before a submission.
 
@@ -31,13 +31,14 @@ Every open question in one place. Earlier architectures are kept in git history 
 | H5 | Speed of LMS verification, ML-KEM-768 encapsulation and ML-DSA-44 verification as Forth on the loader core with the SHA-256 core | [arch.md](arch.md#algorithm-bill-of-materials) | Build and measure in `vm.c`, then on hardware | 2 |
 | H6 | Whether the segment key's wrap for ML-KEM encapsulation moves from masked Forth into hardware | [hw.md](hw.md#two-output-modes) | Decide after H5 | 3 |
 | H7 | Flash part, its behavior on power loss during erase and program, and whether 32 MB is right | [flash.md](flash.md#assumptions) | Part selection | 2 |
-| **Secure element** | | | | |
-| E5 | Confirm the slot configuration on real parts before locking: ReqRandom on slot 0, ReqAuth on slots 3 and 7, the encrypted write on slot 0 that the ratchet needs, the KDF command with slot 1 as source and encrypted output | [se.md](se.md#decisions-to-freeze-before-locking) | cryptoauthlib on a development kit | 1 |
-| E6 | A second-source part, qualified against the slot map | [se.md](se.md#part) | Qualification | 3 |
-| E7 | Slot 11 write endurance against the session rate | [se.md](se.md#user-data-freshness) | Datasheet and the expected session rate | 2 |
-| E9 | Secure element under FIPS: can the ATECC608C's SHA-256 and ECDSA be CAVP-tested through its command interface, and is its key transport acceptable as internal handling inside boundary A; or move to a validated secure element with approved key wrapping (Microchip TA101 class), which would also allow the sub-chip boundary B | [fips.md](fips.md#module-boundary) | Laboratory consultation; part evaluation | 2 |
-| E10 | Level 3 identity-based authentication would need a key per host rather than one host authorization key per device; decide whether to design for it now | [fips.md](fips.md#roles-services-authentication) | Decide | 3 |
-| E8 | TrustCUSTOM parts from Microchip, or blank parts provisioned at the station | [enrollment.md](enrollment.md#device-enrollment) | Business decision; volume | 1 |
+| **TPM** | | | | |
+| E5 | Confirm the NV layout, policies and sessions on real parts before provisioning: the Name-binding of the pairing and host indices, the NV_ChangeAuth policies the ratchet and host enrollment depend on, the two-PolicySecret data-key policy, bound sessions with AES-128-CFB parameter encryption, the NV budget and persistent-object limits | [tpm.md](tpm.md#decisions-to-freeze-before-locking) | The TPM reference simulator, then an ST33KTPM2X evaluation board with tpm2-tools | 1 |
+| E6 | Order code against the CMVP certificate's hardware and firmware list: DKG9 (firmware 9.257) is on #4737; DKJ1 (9.512, optional Level 2 mode, minimum order quantity) and CKE3 (9.256) need checking before any substitution | [tpm.md](tpm.md#part) | CMVP certificate detail page; ST | 2 |
+| E7 | Freshness index write endurance against the session rate | [tpm.md](tpm.md#user-data-freshness) | ST datasheet NV endurance figure and the expected session rate | 2 |
+| E12 | Boundary B with a laboratory: the loader domain as a sub-chip subsystem (IG 2.3.B) consuming a separately validated TPM, with AES-128-CFB plus HMAC-SHA256 as the key transport (IG D.G); whether the unmasked, per-session-keyed AES core needs any side-channel evidence; what the TPM's own Security Policy requires of how it is operated | [fips.md](fips.md#module-boundary) | Laboratory consultation | 2 |
+| E13 | Host-relay protocol details: the exact byte layout the host needs to compute the `TPM2_PolicySecret` command HMAC, its timeout against the TPM session's lifetime, and the host-side library | [tpm.md](tpm.md#host-authentication) | Reference model, then `vm.c` | 2 |
+| E14 | TPM boot-time budget: `TPM2_Startup`, self-test, the pairing session, counter read, blob load and unseal on the ST33KTPM2X, against the boot-time target | [tpm.md](tpm.md#commands-the-loader-domain-uses) | Measure on the evaluation board | 2 |
+| E8 | Sourcing: the ST33KTPM2X is not stocked at LCSC, so prototypes take it as a consigned part at JLCPCB; confirm the route and lead time (37 weeks is quoted by distributors) before the board order | [tpm.md](tpm.md#part) | Distributor stock; JLCPCB consignment | 1 |
 | **Acquisition and recordings** | | | | |
 | Q3 | Sample rate per channel and segment length | [acquisition.md](acquisition.md#hardware) | Device design | 2 |
 | Q4 | Recording recipients: the host only, or also a clinic server; how the host backs up its recording private key | [acquisition.md](acquisition.md#recording-encryption) | Decide | 2 |
@@ -77,7 +78,7 @@ Closed:
 - **From the C5 architecture:** every C5 question (C1 to C14): there is no microcontroller. The link protocol and its message set (A8 in that architecture) are replaced by the mailbox (H2).
 - **FPGA:** a PUF built in fabric (set aside: the FPGA's pairing keys are constants in its encrypted bitstream, and the ASIC uses a hardened PUF behind the same interface); Pango's answers on DPA coverage
   (authenticate-before-decrypt only; no hardened engine for the fabric), JTAG (permanently disabled when locked) and command-line PDS; the Pango Logos PGL25G (no bitstream encryption; not usable).
-- **Secure element:** the earlier questions on whether to use one (yes), on the MAC-oracle risk (ReqRandom on slot 0), and on how to protect host sessions (session key from the secure element's KDF).
+- **Secure element:** the earlier questions on whether to use one (yes), on the MAC-oracle risk and on how to protect host sessions, all of which belonged to the ATECC608C; E9 (a validated secure element with approved key wrapping) closed by the move to the ST33KTPM2X TPM, and E10 (per-host keys for Level 3) closed by its per-host indices (`doc/tpm.md`).
 - **Other:** D1 (developer signing: a per-device developer key, no signing service), E1 (server path: Ethernet when enabled, otherwise the host), E2 (pairing keys derived in the HSM on the FPGA;
   exported once from the PUF on the ASIC), the watermark (removed), Q6 (safety alarms need no path independent of the application beyond the overlay), S1 (sensor frames use Ascon-AEAD128).
 
@@ -85,7 +86,7 @@ Closed:
 
 ### By you
 
-- **Chipset: an FPGA with an authenticated bitstream, one QSPI flash, and an ATECC608C.** No external microcontroller. The FPGA models the ASIC; family specifics live in `fpga/<family>/`.
+- **Chipset: an FPGA with an authenticated bitstream, one QSPI flash, and an ST33KTPM2X TPM** (replacing the ATECC608C when FIPS 140-3 became the target). No external microcontroller. The FPGA models the ASIC; family specifics live in `fpga/<family>/`.
 - **The application runs on the FPGA,** in LiteForth, executing in place from the flash.
 - **FPGA family:** the Pango Logos2 PG2L50H-6IFBG484 is the target; the Efinix Ti60 is the fallback. The ECP5 and the Gowin GW5A were dropped for lacking bitstream authentication.
 - **Private keys travel in the bitstream rather than coming from a PUF in fabric.** The ASIC implements a hardened PUF with characterization hardware behind the same interface.
@@ -100,12 +101,13 @@ Closed:
 
 - **Two LiteForth cores:** a loader core that owns every key path, and an application core that reaches it only through the mailbox.
 - **The boot ROM is in the bitstream** and mirrors the ASIC's mask ROM; the loader and the application are in flash under per-line Ascon-AEAD128.
-- **Keys live in the secure element**, released only to the holder of the pairing key, into hardware key registers; the bitstream carries only the pairing keys.
+- **Keys live in the TPM** as sealed objects, released only under policies that name the pairing key, into hardware key registers; the bitstream carries only the pairing keys.
 - **Bitstream rollback by the pairing-key ratchet;** loader and application rollback by the two counters. Equal versions are accepted so a damaged slot can be repaired.
-- **Attestation two ways:** a MAC under a symmetric identity key for the server (quantum-safe), an ECDSA P-256 signature under a certified key for hosts.
-- **The host authenticates to the secure element** (CheckMac), which releases the data key and derives the session key.
-- **Ascon-AEAD128 in a masked core of our own** for lines, recordings, sessions and records; an HMAC-SHA256 KDF in the SHA-256 core; no AES and no vendor cipher block anywhere (F4). A ring-oscillator TRNG mixed with the secure element's, also seeding the mask PRNG.
+- **Attestation two ways:** a MAC under a symmetric identity key for the server (quantum-safe), a TPM quote under a certified attestation key for hosts.
+- **The host authenticates to the TPM** through a relayed HMAC session, and the TPM unseals the data key and the host session secret only then.
+- **Ascon-AEAD128 in a masked core of our own** for lines, recordings, sessions and records; an HMAC-SHA256 KDF in the SHA-256 core; no vendor cipher block anywhere, and AES only as the TPM session cipher, because TPM 2.0 parameter encryption offers nothing else approved (F4, E12). A ring-oscillator TRNG with the TPM's as additional input, also seeding the mask PRNG.
 - **LMS on every package,** one signature per release over a manifest; ML-DSA certificates and ML-KEM pairing for the sensor; ML-KEM segment-key encapsulation to the host.
 - **Developer builds as applications** with a per-device developer key and an epoch from counter 1; offline, no signing service.
 - **The network is a second transport for the session protocol,** with no stack on any core; the PHY is held in reset by the network policy; **UART status is read-only.**
 - **Per-device platform packages** built by the bitstream build service from each device's reported key version.
+- **FIPS 140-3 module boundary B:** the loader domain is the module (sub-chip, IG 2.3.B) and the TPM a separately validated one; keys cross between them by AES-128-CFB with HMAC-SHA256. Boundary A stays available with the same hardware if a laboratory objects (E12).

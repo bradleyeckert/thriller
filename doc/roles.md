@@ -24,7 +24,7 @@ and it works offline.
 
 > working key = KDF(developer key, "developer" ‖ epoch), with epoch = counter 1 ÷ 1024
 
-The developer key is a secure element slot the loader unwraps into hardware; the working key for the current epoch is derived from it in the derive path (`doc/hw.md`).
+The developer key is a sealed object the TPM releases into hardware; the working key for the current epoch is derived from it in the derive path (`doc/hw.md`).
 The HSM derives the same values when it issues a key to a developer who has shown they own the device. How ownership is shown is a business process.
 A leaked developer key exposes only its own device, so no revocation is needed.
 
@@ -43,7 +43,7 @@ Symmetric keys keep the tools simple and stateless, and they are quantum-safe.
 
 | Step | Production package | Developer package |
 |---|---|---|
-| Authenticate | LMS signature from the application owner, public key hash in secure element slot 9 or 10 | MAC under this device's working key for the current epoch |
+| Authenticate | LMS signature from the application owner, public key in one of the TPM's two write-locked key indices | MAC under this device's working key for the current epoch |
 | Decrypt | Distribution key | Package key derived from the working key |
 | Version check | Not older than counter 1 | None; the counter is not touched |
 | Install | Re-encrypted per line under a fresh install salt into the inactive slot (`doc/xip.md`) | Same |
@@ -62,7 +62,7 @@ Each production application release says whether it **starts a new epoch**: its 
 - developer-mode user data from the old epoch is unreadable, because the developer data key includes the epoch;
 - developers must ask for new keys.
 
-The epoch lives in the secure element's counter, so a flash restore cannot revive an old one (R22).
+The epoch lives in the TPM's counter, so a flash restore cannot revive an old one (R22).
 
 ## Running a developer build
 

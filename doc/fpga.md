@@ -4,7 +4,7 @@ This document is family-neutral. What a family must provide, and how each candid
 `fpga/README.md` (the requirements), and one folder per family. The current choice is the **Pango Logos2 PG2L50H-6IFBG484** (`fpga/logos2/`), with the **Efinix Titanium Ti60** as fallback (`fpga/ti60/`).
 
 The FPGA is the root of trust and runs the application. Its configuration engine is the immutable anchor; its bitstream carries the boot ROM, the two cores and the pairing keys;
-everything else it needs (keys, counters, identity) is in the secure element, and everything it executes is in the flash, authenticated line by line (`doc/hw.md`, `doc/se.md`, `doc/xip.md`).
+everything else it needs (keys, counters, identity) is in the TPM, and everything it executes is in the flash, authenticated line by line (`doc/hw.md`, `doc/tpm.md`, `doc/xip.md`).
 
 ## Block diagram
 
@@ -22,7 +22,7 @@ flowchart LR
     ACQ["2 x I2S, LCD"]
   end
   FL[("QSPI flash<br/>bitstreams, loader, application")]
-  SE["ATECC608C"]
+  SE["TPM 2.0<br/>ST33KTPM2X"]
   SD["MicroSD"]
   SNS["Sensor"]
   HOST["Host UART"]
@@ -48,11 +48,11 @@ flowchart LR
   family's build flow (`doc/enrollment.md`, Bitstream build service). Both keys are derived in the HSM: KDF(pairing master, serial number, version).
 - **Encrypted by the FPGA's own key.** The bitstream is encrypted under the FPGA's per-device configuration key, held in its eFuses, so it stays encrypted in flash and on the configuration bus.
   The pairing keys exist in plaintext only inside the FPGA and the HSM (R31).
-- **No fallback.** The FPGA must be set to refuse any unencrypted or unsigned configuration. A bitstream without the current pairing key gets nothing from the secure element anyway (R17).
+- **No fallback.** The FPGA must be set to refuse any unencrypted or unsigned configuration. A bitstream without the current pairing key gets nothing from the TPM anyway (R17).
 - **Authentication is required.** The Logos2 authenticates every bitstream twice (AES-256-GCM under the device's key, RSA-2048 over SHA-3) and the Ti60 with RSA-4096, which closes blind modification
   of an encrypted bitstream (R32). Families that only encrypt (ECP5, GW5A) were dropped for this reason.
-- **Superseded bitstreams are dead, not refused.** The configuration engine will load any correctly encrypted and signed bitstream of this device, old or new; the pairing-key ratchet in the secure
-  element makes an old one useless (`doc/se.md`).
+- **Superseded bitstreams are dead, not refused.** The configuration engine will load any correctly encrypted and signed bitstream of this device, old or new; the pairing-key ratchet in the TPM
+  makes an old one useless (`doc/tpm.md`).
 
 ## Wrapped pairing keys: the alternative to per-device bitstreams
 
@@ -77,19 +77,19 @@ on both, the bitstream or mask is common and the device's secret comes from the 
 
 1. At power-up the configuration engine reads the active bitstream from the flash in master SPI mode, checks it and decrypts it inside the FPGA. If it fails, the family's multi-boot
    loads the other bitstream slot (`doc/flash.md`).
-2. The boot ROM pairs with the secure element and starts the boot chain (`doc/hw.md`, Boot and lockdown). Which bitstream is running is known from the pairing key that worked and the version in the key source.
+2. The boot ROM starts the TPM, pairs with it and starts the boot chain (`doc/hw.md`, Boot and lockdown). Which bitstream is running is known from the pairing key that worked and the version in the key source.
 3. A reconfiguration while running (a glitch, a pulse on the program pin) restarts the chain from the configuration engine; all key registers are in the fabric and are lost with it.
    The boot record's lockdown count records that the device restarted without a clean shutdown.
 
-The FPGA keeps no state across power cycles except its eFuses. Everything else it needs at boot it reads from the secure element (authenticated) or the flash (authenticated under keys the
-secure element released).
+The FPGA keeps no state across power cycles except its eFuses. Everything else it needs at boot it reads from the TPM (authenticated) or the flash (authenticated under keys the
+TPM released).
 
 ## Key isolation in the fabric
 
 | Key | Where it lives | Who can use it | Who can read it |
 |---|---|---|---|
 | Pairing keys | Key-source block RAM in the bitstream | SHA-256 core | No one |
-| Application, data, distribution, developer, log keys | Key registers, unwrapped from the secure element | Their engines | No one |
+| Application, data, distribution, developer, log keys | Key registers, unsealed by the TPM and decrypted by the session cipher | Their engines | No one |
 | Image keys, install keys | XIP engine and install port registers, derived in hardware | XIP engine, install port | No one |
 | Session, sensor and segment keys | Key registers | Install port, recording engine | No one (the segment key's one wrapped exposure to the loader's ML-KEM code is noted in `doc/hw.md`) |
 
@@ -98,7 +98,7 @@ Neither core has a read path to any of them, or to the Ascon core. Key registers
 ## TRNG
 
 A ring-oscillator TRNG with continuous health tests (repetition count and adaptive proportion, as in NIST SP 800-90B), conditioned in the SHA-256 core (a vetted conditioning function), feeding an SP 800-90A HMAC_DRBG on the same core with the
-secure element's certified random output as additional input, so every nonce has a certified source behind it even if the ring oscillators degrade. The DRBG supplies every key, nonce, segment key and install salt, and seeds the PRNG that
+TPM's random output (its SP 800-90B source and Hash_DRBG are on its CMVP certificate) as additional input, so every nonce has a validated source behind it even if the ring oscillators degrade. The DRBG supplies every key, nonce, segment key and install salt, and seeds the PRNG that
 feeds the masked Ascon and SHA-256 cores with fresh shares, whose consumption sets the TRNG's required rate (F4). A health-test failure stops the boot chain before any key is unwrapped.
 
 The conditioning component is sized from measurement, not assumption: the RTC-driven restart campaign in `doc/test.md` (TRNG characterization) logs raw noise-source samples at a thousand cold starts,

@@ -16,7 +16,7 @@ and no foothold from which to move to anything else on the network. The worst a 
 2. **A hardware parser cannot be made to run code.** A malformed packet can at most confuse the logic block, which the firmware detects and resets. It cannot alter what the device executes,
    because the device's code is in authenticated flash that is checked line by line as it runs, and no processor has a write path into it from the network or from anywhere else.
 3. **The payload goes to one parser, behind authentication.** A UDP datagram that passes the hardware filter becomes an encrypted, authenticated session frame checked by the loader against a
-   per-device key held in a secure element. An unauthenticated sender gets no further than the session handshake, which has attempt limits and is logged.
+   per-device key held in a TPM. An unauthenticated sender gets no further than the session handshake, which has attempt limits and is logged.
 4. **The processor that owns security has no other network exposure.** The application processor, which runs the device's function, has no connection to the network at all; the loader
    processor, which does, runs no network software. The boundary between them is enforced by wiring in the chip, not by an operating system.
 5. **Outbound only.** The device opens flows to its server (or to a local relay); it listens for nothing but the replies, and the port can be disabled entirely by the application owner,
@@ -44,7 +44,7 @@ other network service.
 | Open ports | None listening for connections. One UDP port receives replies to the device's own outbound traffic, plus ICMP echo for commissioning (can be disabled) |
 | Protocols | ARP, IPv4, ICMP echo, UDP, DHCP client. No TCP |
 | Firewall rules needed | Outbound UDP to the server or relay address; or nothing beyond LAN access if a relay is used |
-| Credentials on the device | Per-device keys in a certified secure element; none usable on any other device or system |
+| Credentials on the device | Per-device keys in a FIPS 140-3 validated TPM; none usable on any other device or system |
 | Remote management interfaces | None. Updates are signed packages verified on the device |
 | Can it spread malware | No: it contains no executable it did not boot with, and nothing on the network can change that |
 | Can it be ransomed | No: no network-reachable code, no mutable files reachable from the network, and recordings are already encrypted to their owner |

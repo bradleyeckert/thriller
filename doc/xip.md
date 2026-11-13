@@ -11,7 +11,7 @@ enters a cache. The loader installs images; the hardware checks them.
 | Authenticate every line when it is fetched, not only at boot | A check at boot leaves a gap: the flash can be swapped or emulated afterward (R6) |
 | Reject a line moved from another address or slot | Otherwise valid code could be rearranged |
 | Reject a line from another install, including an older version | Otherwise old, vulnerable code could be mixed in line by line |
-| Reject a whole older image | The counters in the secure element decide (R34, R35) |
+| Reject a whole older image | The counters in the TPM decide (R34, R35) |
 | Add little latency to a miss | The flash read is already the dominant cost |
 
 ## Image header
@@ -21,7 +21,7 @@ the network policy (applications), and an HMAC-SHA256 under the application key 
 
 | Check | Loader image (boot ROM) | Application image (loader) |
 |---|---|---|
-| HMAC | Under the application key, unwrapped from the secure element | Same |
+| HMAC | Under the application key, unsealed by the TPM | Same |
 | Version | Not older than counter 0 | Not older than counter 1 (production); developer builds: serial matches, epoch = counter 1 ÷ 1024 |
 | Result | Pass token: derive the image key into XIP port 0 | Pass token: derive the image key into XIP port 1 |
 
@@ -54,7 +54,7 @@ chunk in 8 cycles as it arrives (the flash delivers one in about 0.4 µs), and f
 ## Install
 
 1. The loader receives a package from the staging area: production (LMS-signed, encrypted under the distribution key) or developer (MAC under the device's developer key).
-2. It checks the signature or MAC, and the version against the counter (`doc/se.md`, Version rule). Nothing is decrypted before this passes.
+2. It checks the signature or MAC, and the version against the counter (`doc/tpm.md`, Version rule). Nothing is decrypted before this passes.
 3. It draws a new install salt, decrypts the package through the install port, and re-encrypts it per line under the new install key, streaming into the inactive slot through the flash bridge.
    The ciphertext is hashed as it is decrypted and must match the signed digest, so a package changed between verification and install cannot inject code.
 4. It reads the slot back through the install port, checking every tag, then writes the header.

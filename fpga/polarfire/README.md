@@ -33,7 +33,7 @@ for exactly the role `thriller` gives the FPGA:
 
 ## What would change in the design
 
-- **The key source** reads the pairing keys from PUF-protected sNVM instead of block RAM constants. The ratchet then writes the next pairing key into sNVM as well as into the secure element,
+- **The key source** reads the pairing keys from PUF-protected sNVM instead of block RAM constants. The ratchet then writes the next pairing key into sNVM as well as into the TPM,
   and a platform update no longer needs a per-device bitstream: the bitstream build service shrinks to a release build and a signature, which removes R42 from the FPGA side.
 - **The flash map** loses the bitstream slots on the FPGA side and gains the IAP golden and update images for the configuration itself.
 - **The boot ROM** gains a self-digest check through the system controller as a cheap extra integrity test.

@@ -1,6 +1,6 @@
 # FPGA Families
 
-Everything that depends on the FPGA family lives here, one folder per family. The rest of `thriller` (`doc/hw.md`, `doc/xip.md`, `doc/se.md`, the RTL and the Forth) is family-neutral,
+Everything that depends on the FPGA family lives here, one folder per family. The rest of `thriller` (`doc/hw.md`, `doc/xip.md`, `doc/tpm.md`, the RTL and the Forth) is family-neutral,
 and is also the ASIC design. Each family folder holds its notes, its build and key-insertion scripts, its constraints, and its primitive wrappers (block RAM, clocks, ring oscillator).
 
 | Family | Folder | Status |
@@ -23,8 +23,8 @@ What a family must provide, in order of how much the design depends on it. Items
 | 5 | **Per-device constants in a routed design, from a script**, then encryption and signing, without placing and routing again; **or** a vendor engine the fabric can drive under the eFuse or a PUF-protected key, so the pairing keys can be wrapped in flash and the bitstream kept common | The bitstream build service makes one bitstream per device (R42, `doc/enrollment.md`), unless wrapped keys remove the need (`doc/fpga.md`, Wrapped pairing keys). Efinix has a BRAM Initial Content Updater; Diamond has ECO INIT edits; PDS's Tcl guide has neither (F1) |
 | 6 | **Room and freedom for a masked Ascon core:** no vendor cipher block is assumed (none of the candidates offers one the fabric can use with power-analysis hardening), so the family must only not get in the way: ordinary LUT logic, no DRC objection to the share registers, and a TRNG rate sufficient for mask refresh | All of the FPGA's key-dependent symmetric work runs in our own masked core (R33, `doc/hw.md`) |
 | 7 | **Combinational loops allowed** for a ring-oscillator TRNG | The FPGA needs its own nonces (`doc/fpga.md`) |
-| 8 | **Enough logic:** about 13K to 24K 4-input-LUT equivalents for the two cores, the masked Ascon and SHA-256 cores and the security blocks, plus the application; block RAM for the boot ROM (8 to 16 KB), two caches, CPU memory and buffers | `doc/hw.md`, Resource estimate |
-| 9 | **A QSPI flash interface** shared between the configuration engine at power-up and the fabric afterwards, plus pins for the secure element's I2C, the card, three UARTs, two I2S buses, the CODEC I2C and the LCD | `doc/hw.md` |
+| 8 | **Enough logic:** about 15K to 26K 4-input-LUT equivalents for the two cores, the masked Ascon and SHA-256 cores, the TPM session cipher and the security blocks, plus the application; block RAM for the boot ROM (8 to 16 KB), two caches, CPU memory and buffers | `doc/hw.md`, Resource estimate |
+| 9 | **A QSPI flash interface** shared between the configuration engine at power-up and the fabric afterwards, plus pins for the TPM's SPI and reset, the RTC's I2C, the card, three UARTs, two I2S buses, the CODEC I2C and the LCD | `doc/hw.md` |
 
 **Desirable:** hardening of the configuration decryptor against power analysis and glitching (R5); on-die voltage and clock monitors; permanent JTAG disable (R43); revocation of the vendor signing key;
 a vendor-provided hardened PUF that wraps the configuration key or user keys (it costs nothing to use and models the ASIC); a licence that runs headless; a country of origin acceptable in the target markets (F11).

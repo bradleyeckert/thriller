@@ -60,7 +60,7 @@ An update never erases the active slot, so a power cut at any point leaves a boo
 2. Read both back: the loader's header HMAC and every line's tag; the bitstream's digest against the manifest.
 3. Advance counter 0.
 4. Write the new boot record selecting the new loader slot and the new bitstream slot, with the pending-ratchet flag set, and point the family's multi-boot at the new bitstream.
-5. Reboot. The new bitstream pairs with its inherited key, its loader confirms the install, writes the next pairing key into the secure element, and clears the pending-ratchet flag (`doc/se.md`, Ratchet).
+5. Reboot. The new bitstream pairs with its inherited key, its loader confirms the install, writes the next pairing key into the TPM, and clears the pending-ratchet flag (`doc/tpm.md`, Ratchet).
 
 A cut before step 3 leaves the old images active and the counter unchanged. A cut during step 3 leaves the counter partway; the new image's version is not older than it, so it still boots
 once step 4 completes, and the old image can no longer roll anything back. A cut before step 4 leaves the old record, but if the counter has passed the old image's version, the old image now

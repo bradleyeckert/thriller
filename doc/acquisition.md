@@ -65,11 +65,11 @@ The same ring can hold a staged update package on its way from the network to th
 
 ## When a recording was made
 
-The device has no trusted clock. The secure element has no real-time clock, the FPGA has none, and a battery-backed clock on the board is something a board prober can set, so a device
+The device has no trusted clock. The TPM's clock runs only while it is powered, the FPGA has none, and a battery-backed clock on the board is something a board prober can set, so a device
 timestamp proves only what the device believed. Instead, **time comes from the server, and the recording proves its position relative to it.**
 
-- **Time beacons.** Whenever the device is in contact with the server, the server sends a beacon: its time, a nonce, and a MAC under the device's symmetric identity key, which the secure element
-  verifies (CheckMac on slot 12, as for any server message). The loader keeps the latest verified beacon in the records region, together with the device's sample count at the moment it arrived.
+- **Time beacons.** Whenever the device is in contact with the server, the server sends a beacon: its time, a nonce, and a MAC under the device's symmetric identity key, which the loader
+  verifies through the TPM (`TPM2_HMAC` under the symmetric identity key, compared in the security block, as for any server message). The loader keeps the latest verified beacon in the records region, together with the device's sample count at the moment it arrived.
   Online, beacons arrive every few seconds; the loader also requests one at the start of every recording.
 - **In the header.** Every segment header carries the latest beacon and the number of samples the device has acquired since it, so the header says: *this segment started no earlier than
   the server time in the beacon, plus this many samples at the nominal rate.* The header is authenticated as associated data of the segment, so the claim cannot be altered without the segment failing.
