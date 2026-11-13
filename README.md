@@ -46,7 +46,7 @@ To support DSP applications, audio CODECs are planned for.
 - **ST33KTPM2X32DKG9** TPM 2.0 (STMicroelectronics), on an SPI bus that never leaves the sealed enclosure, powered with the FPGA. Chosen over the ATECC608C when FIPS 140-3 became the target:
   it is on CMVP certificate #4737 (FIPS 140-3, physical security Level 3), ships with ST-certified endorsement keys, and its sessions give an approved key transport, so the device's own module can be the
   loader domain alone (`doc/fips.md`). Keys are sealed objects released only under a policy that names the pairing key; counters are its NV counters, authenticated and authorized (`doc/tpm.md`).
-  Provisioned blank at enrollment. Not stocked at LCSC, so a consigned part for JLCPCB builds (E8).
+  Provisioned blank at enrollment. A high-volume part, in stock at Mouser in quantity; not at LCSC, so a consigned part for JLCPCB builds (E8).
 - **2 × NAU88C22** stereo CODECs: four acquisition channels, and the speaker driver (`doc/acquisition.md`).
 - **LCD panel and speaker** inside the enclosure, which carries a tamper-evident seal.
 - **MicroSD card socket**, driven by the FPGA: encrypted recordings and user data, the event log, offline update packages.

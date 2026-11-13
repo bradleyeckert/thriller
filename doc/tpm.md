@@ -26,7 +26,7 @@ frozen (`doc/questions.md`, E5).
 - **Who talks to it.** Only the loader core domain. The boot ROM runs the startup, the pairing session, the counter 0 read and the application key's unseal; the loader runs everything else.
   Neither core ever sees a key: session keys and HMACs are computed in the SHA-256 core with the pairing key taken straight from the key source, and keys the TPM releases are decrypted by the
   session cipher straight into key registers (`doc/hw.md`, Key paths).
-- **Sourcing.** Not stocked at LCSC at the time of writing; DigiKey, RS and Future list it, so JLCPCB builds take it as a consigned part (E8).
+- **Sourcing.** A high-volume part: Mouser holds tens of thousands in stock with more scheduled; DigiKey, RS and Future list it too. LCSC does not, so JLCPCB builds take it as a consigned part (E8).
 
 ## What lives where
 
