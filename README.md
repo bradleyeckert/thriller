@@ -22,7 +22,8 @@ To support DSP applications, audio CODECs are planned for.
 |---|---|
 | This README | Overview: chipset, keys, boot, updates, recordings, sensor, host sessions, the network and the CLI |
 | `doc/arch.md` | Trust boundary, threat model, risk assessment, algorithm bill of materials |
-| `doc/hw.md` | Hardware modules: the three cores, the mailboxes and the module's service API, the shared XIP engine, key paths, boot and lockdown, the key-source interface |
+| `doc/hw.md` | Hardware modules: the three cores, the mailboxes, the shared XIP engine, key paths, boot and lockdown, the key-source interface |
+| `doc/api.md` | The module's service API: mailbox messages, session messages the module consumes, events, status block, parameters carried as data |
 | `doc/tpm.md` | TPM: NV indices, sealed objects and PCRs, sessions over SPI, host authentication, the pairing-key ratchet, counters, attestation, provisioning |
 | `doc/flash.md` | Flash map: bitstream slots and multi-boot, loader, supervisor and application slots, boot record, install order, staging |
 | `doc/fpga.md` | The FPGA, family-neutral: configuration from flash, per-device bitstreams, fallback, TRNG, resources |

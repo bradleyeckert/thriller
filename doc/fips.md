@@ -18,7 +18,7 @@ service, an interface) means regression testing of the affected requirements, an
 
 **What the design does about it:**
 
-1. **The module is a crypto kernel with a fixed service API, and nothing else** (`doc/hw.md`, Mailboxes and the module's service API). The services are the ones the Security Policy will
+1. **The module is a crypto kernel with a fixed service API, and nothing else** (`doc/api.md`). The services are the ones the Security Policy will
    list: sessions, key release, user data records, recording segments, sensor frame checks, installs, attestation, log MACs, lifecycle, power-hold, random. The message formats are frozen with the module.
 2. **Product logic lives outside the module, on the supervisor core and the application core** (`doc/hw.md`, Principles). Transports, DHCP, the CLI command set, scheduling, sleep and wake,
    the LCD's contents, sensor policy, the user interface: all of it ships in the supervisor and application images, which are LMS-signed, version-counted and line-authenticated like everything
@@ -28,7 +28,7 @@ service, an interface) means regression testing of the affected requirements, an
 4. **Bitstream releases are rare, and the module's partition is preserved across them.** The whole bitstream is the module's firmware image as far as the configuration engine's integrity check
    is concerned, so every bitstream release is at least an affirmation. New peripherals for the supervisor or application are therefore designed in up front, and the build flow keeps the module's
    part of the netlist placed and routed identically across releases (an incremental or partition flow), so that a release which changes only non-module logic can be shown not to touch the
-   module (F12). Per-device key constants patched into the key source are CSPs in a fixed design, not a firmware change; the laboratory must agree (E12).
+   module (F12; PDS has no partition flow, so this is a locked region, fixed pins and scripted netlist locking, `fpga/logos2/README.md`). Per-device key constants patched into the key source are CSPs in a fixed design, not a firmware change; the laboratory must agree (E12).
 5. **Every algorithm the product will ever need is in the module from the first validation**: Ascon, SHA-256 and HMAC, the KBKDF, HMAC_DRBG, AES-128-CFB for the TPM, LMS, ML-KEM, ML-DSA.
    Adding an algorithm later is a revalidation; the post-quantum ones are there now so no transition forces one.
 6. **The module's version is its own.** The loader image and the bitstream carry a module version, independent of the product, supervisor and application versions, and the status report shows all four.
@@ -113,7 +113,7 @@ is the ESV data collection; its raw-sample logging exists only in the test build
 | Unauthenticated | The supervisor and application cores, and through them anyone on the UART or the network | None | Show status (versions, build mode, faults, pairing state); the session handshake; recording segments (encrypt-only, to keys the module holds); sensor frame checks; log entry MACs; random; power-hold release |
 
 The supervisor and application cores are operators of the module like any other caller: they reach it only through the mailboxes, and the services they can invoke without an authenticated
-session are the ones that release nothing (`doc/hw.md`, The module's services). The service table there is the Security Policy's service list.
+session are the ones that release nothing. `doc/api.md` is the Security Policy's service list, message by message.
 
 Level 2 asks for role-based authentication, which these keys give. Level 3 asks for identity-based authentication: each host has its own key and its own TPM index, so the design already meets it
 (E10 closed). Authentication strength: 256-bit keys, 32-byte HMACs; attempt limits in the loader and the TPM's dictionary-attack lockout make the one-minute false-acceptance bound trivial to meet.

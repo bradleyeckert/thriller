@@ -27,6 +27,7 @@ From the *Logos2 Family FPGAs Device Datasheet*:
 | 7 | Ring-oscillator TRNG | To confirm |
 | 8 | Enough logic | A 50K-class part: ample room for the three cores, the security blocks and the application. LUT size and block RAM to confirm |
 | 9 | QSPI and peripheral pins | General I/O; 484 balls |
+| 10 | Module placement held stable | **Partly:** hierarchy isolation, a locked region and fixed pins in the physical constraints editor; no partition flow, so netlist locking and the build-to-build comparison are scripts to write (Keeping the module's partition stable, below) |
 
 ## Against the Ti60 fallback
 
@@ -189,6 +190,25 @@ key is per device whether the pairing keys ride in the bitstream or in flash.
 - Documentation is mostly in Chinese; some details may only be available through Pango's support.
 - Supply chain, availability and **country of origin** for the target markets should be checked alongside the technical evaluation (F11). PolarFire is the candidate to compare against if origin matters.
 - It fits the ICS55 direction (`doc/ics55.md`): a domestic Chinese FPGA now, a domestic 55 nm ASIC later.
+
+## Keeping the module's partition stable (F12)
+
+The loader domain is the FIPS 140-3 module, and a bitstream release that changes only supervisor or application logic should be shown not to have touched it (`doc/fips.md`, Designing for
+few filings). What PDS offers, and what it does not:
+
+- **Hierarchy is preserved.** PDS parses the standard HDL hierarchy, so the whole loader domain is written as one hierarchy node (`thriller_module` in the RTL) and can be isolated as a unit.
+- **Placement is held by constraints, not by a partition flow.** To keep the module's layout stable across iterations, its logic is assigned to a locked rectangular region in the physical
+  constraints editor (the equivalent of a Pblock), and its pins (TPM SPI and reset, host UART, the QSPI, the overlay lines, the PHY reset, WAKE) are fixed by pin assignments. This keeps the
+  module's cells inside its region and the rest of the design outside; it does not by itself make the module's placement and routing identical from build to build.
+- **Bit-identical sub-region output needs scripting.** Guaranteeing that the module's region is strictly identical across unrelated top-level changes requires locking the module's placed
+  and routed netlist and preserving its pin assignments by script between builds, and checking the result. Routing that crosses the region (the mailboxes' signals, clocks, resets) will still
+  differ at the boundary, so the claim to make is "the module's cells and their internal routing are unchanged", with the mailbox interfaces as the declared boundary.
+- **Bitstream bytes are not the evidence.** Every device's bitstream is encrypted under its own key, so no two are byte-comparable anyway, and even one device's successive bitstreams differ
+  outside the region. The evidence is a digest of the module's post-place-and-route netlist (cells, their locations, their internal nets) extracted by script from each build and compared with
+  the validated one; the laboratory decides whether that digest, plus the locked region and pins, is enough to call a release non-security-relevant (E12).
+
+What this costs: the module's region is sized once with margin, and the design outside it works around a fixed rectangle. What remains: write the lock-and-compare scripts in PDS Tcl and prove
+on two consecutive builds, one with a supervisor-only RTL change, that the digest holds (F12).
 
 ## Answers so far, and what remains
 

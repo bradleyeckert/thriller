@@ -206,8 +206,8 @@ module**: it is what the Security Policy lists as services, and it is frozen wit
 | Power | Supervisor | Request power-down: granted only with no segment open and no install in progress; the module drops WAKE |
 | Random | Supervisor, application | DRBG output |
 
-Everything else, including the transports, DHCP, the CLI's command set, scheduling, the LCD's contents, the speaker, sensor policy (what to do with a late reading) and the user interface,
-is the supervisor's or the application's, and changes without touching the module.
+The message formats, status codes, events and the session messages the module consumes itself are specified in `doc/api.md`. Everything else, including the transports, DHCP, the CLI's
+command set, scheduling, the LCD's contents, the speaker, sensor policy (what to do with a late reading) and the user interface, is the supervisor's or the application's, and changes without touching the module.
 
 **Rules for the loader's message parser:**
 - Copy each request out of the shared RAM before checking it, so the requesting core cannot change it between check and use.

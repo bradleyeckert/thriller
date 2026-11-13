@@ -25,6 +25,7 @@ What a family must provide, in order of how much the design depends on it. Items
 | 7 | **Combinational loops allowed** for a ring-oscillator TRNG | The FPGA needs its own nonces (`doc/fpga.md`) |
 | 8 | **Enough logic:** about 17K to 30K 4-input-LUT equivalents for the three cores, the masked Ascon and SHA-256 cores, the TPM session cipher and the security blocks, plus the application; block RAM for the boot ROM (8 to 16 KB), two caches, CPU memory and buffers | `doc/hw.md`, Resource estimate |
 | 9 | **A QSPI flash interface** shared between the configuration engine at power-up and the fabric afterwards, plus pins for the TPM's SPI and reset, the RTC's I2C, the card, three UARTs, two I2S buses, the CODEC I2C and the LCD | `doc/hw.md` |
+| 10 | **A way to hold the module's placement stable** across builds: a lockable region with fixed pins, and a scriptable way to lock and compare the module's placed-and-routed netlist | A bitstream release that changes only supervisor or application logic must be shown not to have touched the FIPS module (F12, `doc/fips.md`) |
 
 **Desirable:** hardening of the configuration decryptor against power analysis and glitching (R5); on-die voltage and clock monitors; permanent JTAG disable (R43); revocation of the vendor signing key;
 a vendor-provided hardened PUF that wraps the configuration key or user keys (it costs nothing to use and models the ASIC); a licence that runs headless; a country of origin acceptable in the target markets (F11).
