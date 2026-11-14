@@ -1,4 +1,5 @@
-# It's all about the ROT
+# FPGA security stack with ROT
+
 Root of trust for an FPGA-based device platform, built from three parts: an FPGA with an encrypted and authenticated bitstream,
 one QSPI NOR flash, and a TPM 2.0 (ST33KTPM2X). The FPGA is a model of the ASIC that replaces it
 at volume (`doc/ics55.md`), so everything the FPGA does is generic RTL and firmware, and everything that depends on the FPGA family lives in `fpga/<family>/`.
