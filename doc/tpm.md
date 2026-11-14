@@ -2,17 +2,19 @@
 
 The TPM holds what the FPGA cannot keep for itself: per-device keys, the device's identity, and the monotonic counters. This document lays out its NV indices and objects,
 the sessions between the loader domain and the TPM, the pairing-key ratchet that kills superseded bitstreams, host authentication, attestation, and provisioning. It replaces the
-ATECC608C design: the TPM was chosen when FIPS 140-3 became the target, because it is itself a validated module (CMVP certificate #4737), which lets the device's own module boundary shrink
-to the loader domain (`doc/fips.md`, boundary B). Every detail below is a proposal to be checked against the TPM 2.0 Library specification and tested on real parts before a configuration is
+ATECC608C design: the TPM was chosen when FIPS 140-3 became the target, because it is itself a validated module (CMVP certificate #5570), so it sits inside the device's own module boundary
+as an embedded validated module rather than as a component to test (`doc/fips.md`, boundary B). Every detail below is a proposal to be checked against the TPM 2.0 Library specification and tested on real parts before a configuration is
 frozen (`doc/questions.md`, E5).
 
 ## Part
 
 - **ST33KTPM2X32DKG9** (STMicroelectronics), UFQFPN32 5 × 5 mm, 1.8 or 3.3 V, SPI to 66 MHz or I2C to 1 Mb/s on the same die (a pull-down on `GPI_I2C_Select` picks I2C at boot;
-  left open, the part is SPI). Firmware 9.257, which is firmware version [A] on **CMVP certificate #4737**: FIPS 140-3, overall Level 1, physical security Level 3, single-chip, validated
-  2024-07-25. The CAVP list behind the certificate covers AES (CBC, CFB128, CTR, ECB, OFB), ECDSA and KAS-ECC, Hash_DRBG, HMAC with SHA-2 and SHA-3, the SP 800-108 KDF, RSA including KTS-IFC,
-  and SHA-2 and SHA-3. The other order codes are **DKJ1** (firmware 9.512, adds an optional FIPS 140-3 Level 2 authentication mode; minimum order quantity applies) and **CKE3** (firmware 9.256,
-  the former ST33KTPM2XI2C line, same features, different production site). The order code must stay on the certificate's hardware and firmware list, so a change of code is a change to check (E6).
+  left open, the part is SPI). Firmware 9.257. The module family (ST33KTPM2XSPI / ST33KTPM2X / ST33KTPM2A / ST33KTPM2I) is on **CMVP certificate #5570**: FIPS 140-3, overall Level 1,
+  physical security Level 3, single-chip, initial validation 2026-11-09 by Penumbra Security, sunset 2029-07-24, approved mode only. It replaces certificate #4737 (2024-07-25, UL; hardware
+  ST33KTPM2XSPI [A, C], ST33KTPM2X [A]; firmware 9.257 [A], 10.257 [B], 9.258 [C]), which the CMVP now lists as historical. The CAVP entries behind #5570 (A2547 to A2555) cover Hash_DRBG, SHA-2
+  and SHA-3, the SP 800-108 KDF, HMAC, AES (CBC, CFB128, CTR, ECB, OFB), RSA with KTS-IFC, ECDSA and KAS-ECC. **Firmware 9.257 must be confirmed on #5570's own hardware and firmware list**, which
+  the certificate page does not reproduce (E6). The other order codes are **DKJ1** (firmware 9.512, adds an optional FIPS 140-3 Level 2 authentication mode; minimum order quantity applies) and **CKE3** (firmware 9.256,
+  the former ST33KTPM2XI2C line, same features, different production site). The order code must stay on the current certificate's hardware and firmware list, so a change of code, or of certificate, is a change to check (E6).
 - **Inside:** an SP 800-90B noise source, LMS-signed firmware updates, an active shield, environmental monitors, and fault-injection and side-channel countermeasures; Common Criteria EAL4+
   with AVA_VAN.5 targeted. Four endorsement keys with ST-issued certificates (RSA-2048, RSA-3072, ECC P-256, ECC P-384) are provisioned at ST's factory.
 - **Interface: SPI**, in the TCG PC Client Platform TPM Profile (PTP) FIFO protocol: a 4-byte header, wait states signalled by the TPM on the fourth header byte, locality 0 only, the
@@ -24,8 +26,8 @@ frozen (`doc/questions.md`, E5).
 - **Power:** on the FPGA's 3.3 V domain, not the always-on rail. All TPM state is non-volatile, so nothing is lost by powering it down with the FPGA, and the 66 mW maximum would be
   wasted on the always-on budget. `PIRQ` is left unconnected (polling), `GPIO_PP` (physical presence) is left at its internal pull-down, and the exposed pad is soldered to ground.
 - **Who talks to it.** Only the loader core domain. The boot ROM runs the startup, the pairing session, the counter 0 read and the application key's unseal; the loader runs everything else.
-  No core ever sees a key: session keys and HMACs are computed in the SHA-256 core with the pairing key taken straight from the key source, and keys the TPM releases are decrypted by the
-  session cipher straight into key registers (`doc/hw.md`, Key paths).
+  No core ever sees a key: session keys and HMACs are computed in the SHA-256 core with the pairing key taken straight from the key source, and keys the TPM releases are unmasked by the
+  derive path straight into key registers (`doc/hw.md`, Key paths).
 - **Sourcing.** A high-volume part: Mouser holds tens of thousands in stock with more scheduled; DigiKey, RS and Future list it too. LCSC does not, so JLCPCB builds take it as a consigned part (E8).
 
 ## What lives where
@@ -35,13 +37,15 @@ secrets, which the TPM wraps under its storage root key and hands back as blobs 
 
 ### NV indices
 
-All indices are created at provisioning under the platform hierarchy (`TPMA_NV_PLATFORMCREATE`), so a `TPM2_Clear` cannot remove them and, once the boot ROM has disabled the platform
-hierarchy, nothing at run time can define, undefine or relock them. Sizes are in bytes.
+All indices are created at provisioning under the platform hierarchy (`TPMA_NV_PLATFORMCREATE`), so a `TPM2_Clear` cannot remove them, and with **`TPMA_NV_POLICY_DELETE`**, so that not
+even the platform authorization can remove them: deletion needs `TPM2_NV_UndefineSpaceSpecial` under the index's own policy, and only one branch of each policy allows it, the HSM-held
+owner authorization (below). This matters because an index's Name does not include its authorization value: an attacker who could delete the pairing index and define it again with the same
+public area and a chosen authorization value would satisfy every `PolicySecret(pairing)` in the TPM. With `POLICY_DELETE` there is no deleting it. Sizes are in bytes.
 
 | Index | Type | Size | Auth value | Read | Write | Used for |
 |---|---|---|---|---|---|---|
-| **Pairing** | Ordinary | 32 | **Pairing key** K(*N*), per device and per bitstream release | Auth | Written once at provisioning (the provisioning record: configuration version, batch, date), then write-locked | The anchor of every session: proving the pairing key, deriving session keys, and the entity every key's policy refers to. `NO_DA`, so a lockout can never stop the device from booting. Policy: PolicyAuthValue, PolicyCommandCode(`TPM2_NV_ChangeAuth`), which is the ratchet |
-| **Host** *h* (eight, for up to eight enrolled hosts) | Ordinary | 8 | **Host authorization key** H*h*, per device and host; random until a host is enrolled | Auth | Written once (the host slot number), then write-locked | The host proves knowledge of H*h* to the TPM through a relayed HMAC session; data key *h*'s policy refers to this index. Policy: PolicySecret(pairing), PolicyCommandCode(`TPM2_NV_ChangeAuth`), so the loader can set H*h* when a host is enrolled over a server session, replace it for a replacement host, or randomize it to cut a compromised host off (R20). Dictionary-attack protected (R28) |
+| **Pairing** | Ordinary | 32 | **Pairing key** K(*N*), per device and per bitstream release | Auth | Written once at provisioning (the provisioning record: configuration version, batch, date), then write-locked | The anchor of every session: proving the pairing key, deriving session keys, and the entity every key's policy refers to. `NO_DA`, so a lockout can never stop the device from booting. Policy: PolicyOR of the ratchet branch (PolicyAuthValue, PolicyCommandCode(`TPM2_NV_ChangeAuth`)) and the station branch (PolicySecret(owner), PolicyCommandCode(`TPM2_NV_UndefineSpaceSpecial`)) |
+| **Host** *h* (eight, for up to eight enrolled hosts) | Ordinary | 8 | **Host authorization key** H*h*, per device and host; random until a host is enrolled | Auth | Written once (the host slot number), then write-locked | The host proves knowledge of H*h* to the TPM through a relayed HMAC session; data key *h*'s policy refers to this index. Policy: PolicyOR of (PolicySecret(pairing), PolicyCommandCode(`TPM2_NV_ChangeAuth`)), so the loader can set H*h* when a host is enrolled over a server session, replace it for a replacement host, or randomize it to cut a compromised host off (R20), and the station branch. Dictionary-attack protected (R28) |
 | **Counter 0** | Counter | 8 | None | Policy | Policy: PolicySecret(pairing) | Platform version: the bitstream and the loader under one version. Increment only; 64 bits |
 | **Counter 1** | Counter | 8 | None | Policy | Policy: PolicySecret(pairing) | Application version and the developer key epoch (epoch = counter 1 ÷ 1024, `doc/roles.md`) |
 | **Counter 2** | Counter | 8 | None | Policy | Policy: PolicySecret(pairing) | Supervisor image version (`doc/flash.md`) |
@@ -57,13 +61,16 @@ Notes:
   (the old R36) are gone: incrementing a counter now needs the pairing policy.
 - **The pairing index's Name is fixed after provisioning.** A policy that refers to an NV index binds to its Name, which covers the public area including the *written* attribute, so the index is
   written and locked before any policy that mentions it is computed. Its authorization value is not part of the Name, which is exactly what lets the ratchet change the pairing key without
-  touching any sealed object.
+  touching any sealed object, and exactly why the index must be undeletable (`POLICY_DELETE`, above): a recreated index with the same public area would have the same Name.
+- **The station branch.** Every index's policy has a second PolicyOR branch, PolicySecret(owner) with PolicyCommandCode(`TPM2_NV_UndefineSpaceSpecial`): the owner authorization is HSM-held
+  and never on the device, so only the enrollment station can remove an index, to rebuild a returned unit. Counters, freshness and lifecycle carry the same branch, so deleting one is never possible
+  from the bus (a recreated counter would start at the TPM's floor, but its policy would need the pairing proof anyway).
 - **LMS public keys are stored whole.** A 56-byte LMS public key fits an index, so the loader compares the package's key against the stored key directly, no hash needed.
 
 ### Objects
 
 Objects are created at provisioning under the **storage root key** (an ECC P-256 primary under the storage hierarchy, from the TCG standard template, made persistent) and the **attestation key**
-under the endorsement hierarchy. Their private parts come back from the TPM as blobs, encrypted and integrity-protected by the TPM, and are stored twice in the flash records region
+under the endorsement hierarchy. Their private parts come back from the TPM as blobs, encrypted and integrity-protected by the TPM, and are stored twice, in plaintext, in the flash's TPM blob area
 (`doc/flash.md`); the loader loads a blob with `TPM2_Load` when it needs the key. Sealed data objects release their contents with `TPM2_Unseal`; keyed-hash keys compute with `TPM2_HMAC`;
 the attestation key signs with `TPM2_Quote`.
 
@@ -82,10 +89,11 @@ Notes:
 
 - **Sealed keys are released only under a policy**, never by an authorization value, and every policy contains PolicySecret(pairing): the TPM demands proof of the current pairing key in the
   same policy session before it unseals. A bitstream without the current key gets nothing.
-- **Sealed data comes back encrypted and authenticated.** The unseal runs in a session with parameter encryption (AES-128-CFB under the session key) and a response HMAC, so a key altered on the
-  SPI bus is detected rather than silently unwrapped to a wrong value. The ATECC608C's key check values and "encrypted reads carry no MAC" workaround are gone.
-- **Blobs are not secrets.** A blob leaks nothing and cannot be used by another TPM; losing one costs a key, which is why they are stored twice and why the HSM can regenerate every per-device key
-  from the TPM's identifier and re-seal it over a server session.
+- **Sealed data comes back encrypted and authenticated.** The unseal runs in a session with parameter encryption (the TPM's XOR obfuscation under a KDFa stream from the session key and both
+  nonces) and a response HMAC, so a key altered on the SPI bus is detected rather than silently unwrapped to a wrong value. The ATECC608C's key check values and "encrypted reads carry no MAC"
+  workaround are gone.
+- **Blobs are not secrets.** A blob leaks nothing and cannot be used by another TPM or under another policy; losing one costs a key, which is why they are stored twice, in plaintext, in the
+  flash's TPM blob area (`doc/flash.md`), and why the HSM can regenerate every per-device key from the TPM's identifier and re-seal it over a server session.
 - **The private parts of the AK and EK never leave the TPM.** The symmetric identity key never leaves it either, which is one better than the ATECC608C's slot 12 gave: the TPM computes and the
   loader only compares.
 
@@ -115,24 +123,25 @@ Every exchange with the TPM runs inside a TPM 2.0 **HMAC session** or **policy s
 - **Unsalted.** A salt would add entropy independent of the pairing key, but encrypting one to a TPM key needs a public-key operation in the boot ROM (ECDH for an ECC key; RSA-2048
   OAEP with a pre-provisioned RSA key would be about seventeen modular multiplications in firmware, feasible if a laboratory asks for it). The pairing key is a 256-bit secret and both nonces
   are fresh, so the design does without; the station's sessions at provisioning are salted, because a fresh TPM shares no secret with it yet.
-- **Parameter encryption** with the session's symmetric algorithm, **AES-128-CFB**, on the first parameter of a command or response: the sealed data an unseal returns, and the next pairing key a
-  ratchet sends. Together with the response HMAC this is an approved key transport (AES plus HMAC, FIPS 140-3 IG D.G), which is what lets the loader domain be the FIPS module and the TPM a separate one
-  (`doc/fips.md`). The TPM also offers XOR obfuscation with no cipher, but that is not an approved method (E12).
+- **Parameter encryption** on the first parameter of a command or response: the sealed data an unseal returns, and the next pairing key a ratchet sends. The session's symmetric algorithm is
+  **TPM_ALG_XOR**: the parameter is XORed with a one-time stream from KDFa over the session key and both nonces, which the SHA-256 core produces, so there is no cipher core in the fabric (F4). The
+  TPM's SPI bus is inside the FIPS module boundary (`doc/fips.md`, boundary B), so this is defense in depth against a bus probe, not approved key transport; the TPM's AES-CFB alternative would
+  have been needed only if the bus crossed the boundary, and the method it would have formed (encryption plus a separate authenticator) is one IG D.G now recommends against.
 - **Nonces** from both sides in every round trip (`nonceTPM`, `nonceCaller`), so no exchange can be replayed.
 
-KDFa is SP 800-108 in counter mode with HMAC-SHA256: the SHA-256 core already does it, with the pairing key on its key port (`doc/hw.md`, Key paths). The session key and the AES key it yields go into
-key registers, never into software; the session cipher is a small unmasked AES-128 core in encrypt direction only (CFB decryption uses the forward cipher), keyed per session from the derive path,
-so no key sees more than one session's traffic (`doc/hw.md`, Resource estimate).
+KDFa is SP 800-108 in counter mode with HMAC-SHA256: the SHA-256 core already does it, with the pairing key on its key port (`doc/hw.md`, Key paths). The session key and the obfuscation
+stream stay on the private side: the stream is XORed into the parameter by the derive path, which writes the result straight into a key register, so neither the session key nor any unsealed
+key passes through software.
 
 ### Commands the loader domain uses
 
 | Need | Commands | Protection |
 |---|---|---|
 | Start-up | `TPM2_Startup(CLEAR)`; `TPM2_HierarchyControl(platform, disable)`; `TPM2_SelfTest` | Disabling the platform hierarchy first means that for the rest of the power cycle nobody can use the empty platform authorization the TPM boots with (below) |
-| Pairing exchange | `TPM2_StartAuthSession` (HMAC, bound to the pairing index, salted); `TPM2_NV_Read` of the pairing index | First with the bitstream's own key, then its inherited key (ratchet below). The response HMAC authenticates the provisioning record |
+| Pairing exchange | `TPM2_StartAuthSession` (HMAC, bound to the pairing index, unsalted); `TPM2_NV_Read` of the pairing index | First with the bitstream's own key, then its inherited key (ratchet below). The response HMAC authenticates the provisioning record |
 | Counter read | `TPM2_NV_Read` in the pairing session | Authenticated by the response HMAC (replaces the old authenticated counter read, and closes R36) |
 | Counter advance | Policy session; `TPM2_PolicySecret(pairing)`; `TPM2_NV_Increment` | Only the pairing-key holder can advance a counter |
-| Release a key (application, distribution, developer, log) | `TPM2_Load` of the blob; policy session with PolicySecret(pairing); `TPM2_Unseal` with response encryption | Confidential and authenticated; decrypted by the session cipher straight into a key register |
+| Release a key (application, distribution, developer, log) | `TPM2_Load` of the blob; policy session with PolicySecret(pairing); `TPM2_Unseal` with response encryption | Confidential and authenticated; unmasked by the derive path straight into a key register |
 | Release the data key for host *h* | As above, plus `TPM2_PolicySecret(host h)` authorized by the host's own HMAC (Host authentication, below) | The TPM itself decides; the loader only forwards bytes |
 | Session key for a host or CLI session | S*h* from the same unseal, into the SHA-256 key input; derive mode over both nonces | The host derives the same key from its own H*h* |
 | Attestation | `TPM2_PCR_Extend` as the chain runs; `TPM2_Load` of the AK blob; policy session with PolicySecret(pairing); `TPM2_Quote` over PCRs 0 to 4 with the verifier's nonce as qualifying data | Only a bitstream holding the pairing key can obtain a quote |
@@ -147,14 +156,17 @@ a table of formats rather than a TPM software stack; the Python reference model 
 ### The platform hierarchy and `TPM2_Clear`
 
 A TPM boots with an **empty platform authorization**: anyone who talks to it first after reset could use the platform hierarchy to clear the TPM (which changes the storage seed and so kills
-every sealed object) or redefine NV. Three things close that:
+every sealed object), define new NV indices, or, had the indices been deletable, delete and recreate the pairing index with a chosen authorization value and so unseal every key (the attack the
+`POLICY_DELETE` attribute above exists to stop). Four things close that:
 
 1. The TPM's `RST` is held low by a pull-down until the boot ROM drives it, so the TPM does not start until the authenticated bitstream is running.
 2. The boot ROM's second command, right after `TPM2_Startup`, is `TPM2_HierarchyControl` disabling the platform hierarchy for the rest of the power cycle; it can only be re-enabled by a TPM reset.
    The platform *NV* enable stays set, so our platform-created indices remain usable.
 3. `TPM2_ClearControl(disable)` is set at provisioning, so `TPM2_Clear` is refused even with the lockout authorization, until a provisioning station with the platform authorization re-enables it.
+4. Every index carries `TPMA_NV_POLICY_DELETE`, so the platform authorization cannot delete one; only the station branch of its policy can.
 
-A board prober who drives `RST` and talks to the TPM before the FPGA can still clear it. That is denial of service, equivalent to desoldering the part, and is accepted (R36).
+A board prober who drives `RST` and talks to the TPM before the FPGA can still clear it, evict the persistent storage root key, or disable the owner hierarchy for that power cycle. All of
+that is denial of service, equivalent to desoldering the part, and is accepted (R36); none of it releases a key.
 
 ## Host authentication
 
@@ -200,6 +212,11 @@ So the design makes old bitstreams useless instead of unloadable: **each bitstre
   if power fails around it, the new release tries K(*N*) first and K(*N*−1) second at its next boot, so it recovers either way.
 - **A release that fails to configure** (a bad write, a corrupt slot) leaves K(*N*−1) in place; the configuration engine falls back to release *N*−1, whose loader sees an unconfirmed
   install and marks the slot bad.
+- **A current bitstream slot that fails later** (flash wear, a stray write) makes the configuration engine fall back to the previous release, which holds a retired key and cannot pair. Its boot
+  ROM enters recovery, and recovery accepts a **bitstream repair package** over the UART: the current release's bitstream (or a newer one built for this device), LMS-signed by the manufacturer's
+  platform key, verified by the boot ROM against the platform public key it carries and written into the failed slot. No TPM exchange and no application key is needed to verify or write a bitstream,
+  because the configuration engine authenticates it with its own eFuse keys when it loads. The repaired slot boots, pairs with K(*N*), and the device is back (R44, `doc/flash.md`, Recovery).
+  A loader package cannot be installed from a superseded bitstream, since its headers need the application key; the bitstream is repaired first, then the loader if need be.
 - **Skipping releases.** A device at release *N* that updates straight to release *M* needs a bitstream carrying K(*N*) and K(*M*). The build service already builds a bitstream per
   device, and the device reports its key version in every attestation and session, so the server builds the package from the version the device has. Offline packages are prepared the same way.
 - **No eFuse budget.** Unlike version fuses, the ratchet has no limit on the number of releases.
@@ -267,16 +284,16 @@ clearing through the platform hierarchy on a TPM it holds in reset.
 
 ## Provisioning
 
-At the enrollment station (`doc/enrollment.md`), over an SPI fixture or the FPGA's factory bitstream, with every secret in an encrypted, salted session whose salt is encrypted to the EK or
-the storage root key (so only the genuine TPM whose certificate the station has just checked can read it):
+At the enrollment station (`doc/enrollment.md`), over an SPI fixture or the FPGA's factory bitstream, with every secret in an encrypted, salted session (AES-CFB on the station side is fine; the
+station is not the module) whose salt is encrypted to the EK or the storage root key (so only the genuine TPM whose certificate the station has just checked can read it):
 
 1. `TPM2_Startup`; read the EK certificates from NV and check the chain to ST's root; the EK certificate's identifier becomes the device's hardware serial number, from which the HSM derives every per-device key.
 2. `TPM2_Clear` to a known state; `TPM2_HierarchyChangeAuth` to set the owner, endorsement and lockout authorizations to HSM-derived values; `TPM2_DictionaryAttackParameters`.
 3. Create the storage root key (`TPM2_CreatePrimary`, standard ECC template) and make it persistent (`TPM2_EvictControl`).
-4. Define the NV indices in the table, platform-created; write the provisioning record into the pairing index with K(0) as its authorization value, the host indices for the hosts enrolled at
-   the factory (if any), the LMS public keys; write-lock what the table says is locked.
+4. Define the NV indices in the table, platform-created and `POLICY_DELETE`, each with its PolicyOR (the working branch and the station branch); write the provisioning record into the pairing
+   index with K(0) as its authorization value, the host indices for the hosts enrolled at the factory (if any), the LMS public keys; write-lock what the table says is locked.
 5. Create the sealed objects with HSM-derived contents and the policies in the table (each policy digest computed from the Names of the written indices), and the symmetric identity key;
-   store the blobs in the flash records region.
+   store the blobs, twice, in the flash's TPM blob area.
 6. Create the AK under the endorsement hierarchy, read its public part, prove it belongs to this TPM (`TPM2_MakeCredential` on the station, `TPM2_ActivateCredential` on the TPM), and obtain
    its certificate from the device CA; store the certificate with the blobs.
 7. `TPM2_ClearControl(disable)`; then the station's last act is to drop the platform hierarchy (`TPM2_HierarchyControl`), as the boot ROM will at every later boot.
@@ -288,7 +305,7 @@ The lifecycle bits start clear and the freshness index empty. Counters start at 
 The NV layout and the policies are fixed once the platform hierarchy is locked in the field, so these must be settled first, on real parts:
 
 1. The policy digests and the Name-binding of the pairing and host indices, including the NV_ChangeAuth policy the ratchet depends on and the two-PolicySecret policy of the data key (E5).
-2. That the ST33KTPM2X accepts the bound, encrypted session configuration above with AES-128-CFB, and the command set in the table, in the FIPS-approved configuration its Security Policy describes (E5, E12).
+2. That the ST33KTPM2X accepts the bound, XOR-encrypted session configuration above, `POLICY_DELETE` with the PolicyOR station branch, and the command set in the table, in the approved configuration its Security Policy describes (E5, E12). The delete-and-recreate attack is to be run on the simulator against an index *without* `POLICY_DELETE`, to show the test catches it.
 3. Freshness index write endurance against the session rate (E7).
 4. The order code against the certificate's hardware and firmware list, and the sourcing route (E6, E8).
 5. NV budget: eight host indices plus the rest is well under 2 KB, and the blobs are in flash; confirm against the part's NV capacity and persistent-object limits (E5).

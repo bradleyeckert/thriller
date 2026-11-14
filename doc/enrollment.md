@@ -41,7 +41,7 @@ At the end of the production line, inside the controlled area:
 2. **Provision the TPM** (`doc/tpm.md`, Provisioning): clear it, set its hierarchy authorizations and lockout parameters, create the storage root key, define the NV indices (the pairing index with
    pairing key version 0 as its authorization value, the host indices, the counters, freshness and lifecycle, the LMS public keys, write-locked), seal the derived keys and the distribution key into
    objects, create the symmetric identity key and the attestation key, bind the attestation key to the endorsement key and obtain its certificate from the device CA, disable clearing and the
-   platform hierarchy. The sealed-object blobs and the certificate go into the flash records region in step 5. Every secret crosses the fixture inside an encrypted session salted to the endorsement key.
+   platform hierarchy. The sealed-object blobs and the certificate go into the flash's TPM blob area in step 5. Every secret crosses the fixture inside an encrypted session salted to the endorsement key.
 3. **Program the FPGA** over JTAG: its configuration key (from the HSM) into eFuse, the bitstream signing public key data where the family authenticates, the settings that refuse unencrypted or unsigned
    bitstreams and disable readback (`fpga/<family>/`). The key crosses the JTAG link once.
 4. **Build the bitstream.** The bitstream build service makes this device's release-1 bitstream (below), with pairing key version 1 as its own key and version 0 as its inherited key.
@@ -106,7 +106,7 @@ Updates do not need a network, but they do need enrollment:
 - **Offline packages** (on the MicroSD card or from the host): application packages are encrypted under the distribution key, which only enrolled devices hold;
   platform packages are built for one device and work nowhere else. The loader checks the LMS signature and the version.
 - **Online updates** come from the update server after the device has authenticated. The server sends only to enrolled devices in good standing, and only current releases.
-  A fake access point or server can withhold updates but cannot get a forged or old package past the loader (R29).
+  A hostile network or server can withhold updates but cannot get a forged or old package past the loader (R29).
 - **Developer builds** carry a MAC under one device's developer key and install only there (`doc/roles.md`).
 - **Code Secrecy Profile:** application packages are wrapped to each device's own key instead (`doc/arch.md`).
 

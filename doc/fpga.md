@@ -13,7 +13,8 @@ flowchart LR
   subgraph FPGA["FPGA"]
     CFG["Config engine<br/>per-device key, signature check,<br/>multi-boot fallback"]
     ROM["Boot ROM"]
-    LDR["Loader core domain<br/>keys, checks, sessions, installs"]
+    LDR["Loader core domain (FIPS module)<br/>keys, checks, sessions, installs"]
+    SUP["Supervisor core domain<br/>transports, card, scheduling, CLI"]
     APP["Application core domain<br/>LiteForth application"]
     ASC["Ascon core (masked)"]
     KEYS["Key source<br/>pairing keys"]
@@ -21,7 +22,7 @@ flowchart LR
     REC["Recording engine"]
     ACQ["2 x I2S, LCD"]
   end
-  FL[("QSPI flash<br/>bitstreams, loader, application")]
+  FL[("QSPI flash<br/>bitstreams, loader, supervisor, application")]
   SE["TPM 2.0<br/>ST33KTPM2X"]
   SD["MicroSD"]
   SNS["Sensor"]
@@ -31,15 +32,17 @@ flowchart LR
   FL -->|"master SPI at power-up"| CFG
   CFG --> ROM --> LDR
   KEYS --> LDR
-  LDR <-->|I2C| SE
-  LDR <--> SD & SNS & HOST & ETH
-  LDR --> APP
+  LDR <-->|SPI| SE
+  LDR <-->|UART bytes| HOST
+  SUP <--> SD & SNS & ETH
+  SUP <-->|"mailbox: frames, bytes"| LDR
+  LDR --> SUP & APP
   XIP <--> FL
-  XIP --> LDR & APP
+  XIP --> LDR & SUP & APP
   ASC --> XIP & REC & LDR
   APP --> REC
   APP <--> ACQ <--> COD
-  REC -->|ciphertext| LDR
+  REC -->|ciphertext| SUP
 ```
 
 ## Bitstream
@@ -89,7 +92,7 @@ TPM released).
 | Key | Where it lives | Who can use it | Who can read it |
 |---|---|---|---|
 | Pairing keys | Key-source block RAM in the bitstream | SHA-256 core | No one |
-| Application, data, distribution, developer, log keys | Key registers, unsealed by the TPM and decrypted by the session cipher | Their engines | No one |
+| Application, data, distribution, developer, log keys | Key registers, unsealed by the TPM and unmasked by the derive path | Their engines | No one |
 | Image keys, install keys | XIP engine and install port registers, derived in hardware | XIP engine, install port | No one |
 | Session, sensor and segment keys | Key registers | Install port, recording engine | No one (the segment key's one wrapped exposure to the loader's ML-KEM code is noted in `doc/hw.md`) |
 
@@ -107,7 +110,7 @@ low ratio. The raw-sample logging path exists only in test builds and is reached
 
 ## Resource estimate
 
-See `doc/hw.md`, Resource estimate: about 17K to 30K LUT4 equivalents for the three cores and the security blocks, including the masked Ascon core, plus the application.
+See `doc/hw.md`, Resource estimate: about 16K to 29K LUT4 equivalents for the three cores and the security blocks, including the masked Ascon core, plus the application.
 
 ## Open questions
 

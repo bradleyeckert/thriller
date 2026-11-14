@@ -33,7 +33,7 @@ nothing in the design detects that (R40). An enclosure-crossing data link, when 
 Recordings are encrypted so that **the device can write them but not read them back.**
 
 1. **Recipient keys.** The host (and optionally a clinic server) gives the device its ML-KEM-768 public key during an authenticated host session. The loader stores it in the records region of the flash, under the application key.
-2. **Segments.** A recording is cut into segments, for example a few minutes each. For each segment the loader draws a fresh 256-bit segment key from the TRNG into the recording engine's key register.
+2. **Segments.** A recording is cut into segments, for example a few minutes each. For each segment the loader draws a fresh 128-bit segment key (Ascon-AEAD128's key size) from the DRBG into the recording engine's key register.
    For each recipient it runs ML-KEM encapsulation to the recipient's public key and wraps the segment key with Ascon-AEAD128 under a key derived from the shared secret (the one place the loader's code
    handles key material, masked; `doc/hw.md`). It then writes the segment header: device serial, recording ID, segment number, start sample index, build mode, the latest time beacon with the
    sample count since it (below), and the encapsulations with their wrapped keys.

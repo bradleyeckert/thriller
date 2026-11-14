@@ -1,6 +1,6 @@
 # Execute in Place
 
-Both cores run directly from the QSPI flash, through small caches, instead of from block RAM. Each cache line is decrypted and authenticated as it is fetched, and only checked plaintext
+All three cores run directly from the QSPI flash, through small caches, instead of from block RAM. Each cache line is decrypted and authenticated as it is fetched, and only checked plaintext
 enters a cache. The loader installs images; the hardware checks them.
 
 ## Requirements
@@ -78,7 +78,7 @@ A line whose tag fails never enters a cache. The XIP engine raises lockdown (`do
 
 ## Flash writes
 
-Flash is written only during installs and UART recovery, through QSPI direct mode, during which both caches stall rather than read a busy flash, which would fail a tag and look like tampering.
+Flash is written only during installs and UART recovery, through QSPI direct mode, during which all caches stall rather than read a busy flash, which would fail a tag and look like tampering.
 The loader runs install code from its cache while the flash is busy; the install routine is sized to stay resident, as LiteForth's stage 1 does.
 
 ## Timing

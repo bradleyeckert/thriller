@@ -5,8 +5,9 @@ FDA submission. The engineering is in `doc/hw.md` (Ethernet transport), the risk
 
 ## The claim
 
-**The device cannot be used as a network attack vector.** It has no network stack, so there is no code on it that a network packet can exploit, no shell to reach, no files to encrypt,
-and no foothold from which to move to anything else on the network. The worst a network attacker can do to it is stop it talking.
+**The device is a poor network attack vector.** It has no network stack: the packet parsing is hardware, and the only software a datagram reaches is the supervisor's framing and DHCP code,
+which holds no key and no security decision (R50) and is fuzzed like the hardware. There is no shell to reach, no files to encrypt, and no foothold from which to move to anything else on the
+network: the supervisor can send only session frames the module has encrypted and the DHCP exchange. The worst a network attacker can do to it is stop it talking.
 
 ## Why the claim holds
 

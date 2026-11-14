@@ -19,10 +19,11 @@ Sizes are proposals, to be confirmed against real bitstream, loader, supervisor 
 | `0x0800000` | 64 KB | Boot record | Two copies of the active-slot record (below); the rest reserved |
 | `0x0810000` | 512 KB | Loader A | Loader image in XIP layout (`doc/xip.md`): a header, then 64-byte lines with 8-byte tags |
 | `0x0890000` | 512 KB | Loader B | The other loader slot |
-| `0x0910000` | 512 KB | Recovery staging | Raw ciphertext of a loader package received by UART recovery, before it is verified |
+| `0x0910000` | 512 KB | Recovery staging | Raw ciphertext of a loader package received by UART recovery, before it is verified; a bitstream repair package is streamed straight into its slot (Recovery) |
 | `0x0990000` | 64 KB | Records | Hosts' recording public keys, sensor pairing records, the denylist, the network settings and MAC address, the latest time beacon, the event log head: each record encrypted and authenticated under the application key |
 | `0x09A0000` | 64 KB | ASIC key blob | On the ASIC: PUF helper data (`doc/ics55.md`). Reserved on the FPGA |
-| `0x09B0000` | 320 KB | Reserved | |
+| `0x09B0000` | 64 KB | TPM blob area | The sealed-object and key blobs the TPM wraps at provisioning, two copies, and the AK certificate: plaintext, since a blob is useless without the TPM and its policy (`doc/tpm.md`) |
+| `0x09C0000` | 256 KB | Reserved | |
 | `0x0A00000` | 1 MB | Supervisor A | Supervisor image in XIP layout: transports, scheduling, CLI; manufacturer-signed, outside the FIPS module |
 | `0x0B00000` | 1 MB | Supervisor B | The other supervisor slot |
 | `0x0C00000` | 10 MB | Application A | Application image in XIP layout |
@@ -82,6 +83,21 @@ Update packages are not staged in flash. Reading a staged package back from flas
 
 A device without a card can still be recovered. The boot ROM's UART recovery writes the raw ciphertext of a signed loader package into the recovery staging region as it arrives;
 nothing is decrypted or installed yet. It then verifies the package by reading it back, and installs it in a second pass that re-hashes the ciphertext and must reproduce the verified digest.
+
+## Recovery
+
+Recovery is the boot ROM alone, on the UART, with no TPM session: it is reached when the running bitstream cannot pair (it has been superseded, R17, R44) or when no loader slot checks.
+Which repair is possible depends on which:
+
+| State | Cause | Repair |
+|---|---|---|
+| The running bitstream cannot pair | The current bitstream slot failed (flash wear, a stray write, R44) and the configuration engine fell back to the previous release, which holds a retired pairing key | A **bitstream repair package**: the current release's bitstream, or a newer one, built for this device and LMS-signed by the manufacturer's platform key. The boot ROM verifies the signature against the platform public key it carries and writes the bitstream into the slot it is not running from, then points the multi-boot header at it. No application key is involved: a bitstream's integrity is the configuration engine's business when it loads it. After a reboot the current release pairs again |
+| The bitstream pairs, no loader slot checks | Both loader slots corrupted, or an install interrupted twice | A **loader package**, verified and installed from the staging region as above; the boot ROM has the application key from the TPM, so it can check the header and derive the image key |
+| Neither | A superseded bitstream and no good loader | Bitstream first, then loader |
+
+A bitstream repair package can only ever install a bitstream the configuration engine accepts (encrypted and signed for this device), and an older one would hold a retired key and be useless,
+so recovery adds no rollback path. The version check against counter 0 cannot run before pairing, which is why recovery writes bitstreams only into the slot it is not running from and never
+touches the boot record's loader slots; the current release's loader does that once it runs.
 
 ## Open questions
 

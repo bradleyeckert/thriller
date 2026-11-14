@@ -29,7 +29,7 @@ Each test names the risk it covers. The catalogue below is the traceability matr
 ## 2. Reference models
 
 - **Formats:** platform and application packages, manifests and inclusion proofs, developer packages, image headers, XIP lines and tags, the boot record, records in flash, TPM command and response frames, recording segment headers and blocks, sensor certificates and transcripts, session frames, user data records, log entries, attestation reports.
-- **Cryptography:** known-answer tests for each algorithm from the standards (LMS from RFC 8554, ML-KEM and ML-DSA from the FIPS 203 and 204 vectors, Ascon-AEAD128 and Ascon-Hash256 from the SP 800-232 vectors, HMAC-SHA256 KDF from SP 800-108, AES-128-CFB from SP 800-38A, the TPM 2.0 session KDFa, HMAC and parameter-encryption formats from the TPM reference implementation); the same vectors drive the RTL and the Forth.
+- **Cryptography:** known-answer tests for each algorithm from the standards (LMS from RFC 8554, ML-KEM and ML-DSA from the FIPS 203 and 204 vectors, Ascon-AEAD128 and Ascon-Hash256 from the SP 800-232 vectors, HMAC-SHA256 KDF from SP 800-108, the TPM 2.0 session KDFa, HMAC and XOR parameter-encryption formats from the TPM reference implementation); the same vectors drive the RTL and the Forth.
 - **Protocols:** both ends of the host session, the sensor protocol and the server exchange, so each end can be tested against a model of the other; the TPM reference simulator with our NV layout and policies loaded, so a policy mistake shows up in simulation before a part is provisioned.
 
 The sensor's firmware is tested against the same models.
@@ -73,7 +73,7 @@ The sensor's firmware is tested against the same models.
 | Developer builds | Package for another device refused; old-epoch builds refused after an epoch release; counter 1 unchanged by developer installs; developer mode shown on the overlay whatever the application draws | R21, R22 |
 | Event log | Removed or altered entries detected by the host and the server | R26 |
 | Network policy and transport | A release with the port disabled holds the PHY in reset, and no software path releases it; RTL fuzzing of the Ethernet transport (malformed ARP, IP, ICMP and UDP headers, bad checksums, runt and giant frames, floods) in simulation and on hardware never delivers a payload that is not a well-formed UDP datagram to our port, and never wedges the transport beyond a re-initialization; ARP and DHCP spoofing cause only loss of connectivity; CLI refuses commands without a session; developer commands absent from production builds; the supervisor's framing and DHCP code fuzzed on the software platform and from the network, and a crashed supervisor leaves the module's state and the recording intact (R50) | R23, R28, R50 |
-| Over-the-air updates | Fake access point and fake server: forged, old and truncated packages refused; interrupted download leaves the old image active; server authentication failure stops the exchange | R29 |
+| Network updates | Fake server, hostile edge proxy and injected datagrams: forged, old and truncated packages refused; interrupted download leaves the old image active; server authentication failure stops the exchange | R29 |
 | UART status | Status output contains no user data or keys | R30 |
 | Coexistence | Sensor timing and safe-state behavior unaffected by recording, card and network load, including floods | R13 |
 
@@ -124,7 +124,7 @@ The same campaign runs on each FPGA family and on ASIC silicon, since ring-oscil
 - **Configuration decryption:** test-vector leakage assessment (TVLA) on the configuration engine as far as the family allows; on the Logos2 the question is how much the fixed legitimate bitstream leaks over repeated power-ups, since chosen ciphertexts are refused (R5).
 - **Ascon core:** TVLA on the masked core as used by the XIP engine, the recording engine and the install port, including key loading, with the mask PRNG running and with it deliberately stalled to confirm the masking is what protects it (R33).
 - **SHA-256 core:** TVLA with the pairing key and the HMAC keys; the result decides whether the core must be masked (H4).
-- **TPM:** the part's validation covers it; the session KDFa and HMACs in the SHA-256 core and the session cipher are tested for leakage in the fabric (the session cipher's keys are per session, so the test is for gross leaks, not DPA).
+- **TPM:** the part's validation covers it; the session KDFa and HMACs in the SHA-256 core, which also produces the XOR stream for encrypted parameters, are covered by the SHA-256 core's TVLA.
 - **Sensor:** TVLA on the sensor's ML-KEM decapsulation and MAC. A broken sensor exposes only itself (R15).
 
 ## 6. Tools

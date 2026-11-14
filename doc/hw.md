@@ -15,7 +15,7 @@ the TPM in `doc/tpm.md`, the flash map in `doc/flash.md`. Everything here is fam
 4. **The FPGA mirrors the ASIC's boot chain.** A small boot ROM (block RAM on the FPGA, mask ROM on the ASIC) verifies the loader image in flash, and the loader verifies the application, on both.
    The ASIC's boot chain is tested from the first FPGA build.
 5. **One key-source interface.** The pairing keys reach the SHA-256 core through a module with a fixed interface: patched block RAM constants on the FPGA, a PUF with its characterization logic on the ASIC (`doc/ics55.md`).
-6. **Secrets never cross a bus.** Keys, comparator results and the XIP fill pipeline use private, point-to-point connections, and all key-dependent symmetric work runs in one masked Ascon core, except the TPM session cipher, whose keys live for one session each.
+6. **Secrets never cross a bus.** Keys, comparator results and the XIP fill pipeline use private, point-to-point connections, and all key-dependent symmetric work runs in one masked Ascon core; the TPM sessions' parameter encryption is an XOR with a KDFa stream from the SHA-256 core.
 7. **Two buses per core, chosen by speed.** AXI4-Lite for memory; APB4 for peripherals. Each core is the only master on its own buses. No DMA except the recording path: the recording engine's private sample FIFO in, and the stream buffer's private drain to the card and network controllers out. Both carry ciphertext or samples, never keys, and neither can address memory on either core's bus.
 8. **Same Forth code everywhere.** Peripherals are reached through LiteForth's I/O ports (`>sys` and `sys>`), which `vm.c` and MCU builds implement in C.
 9. **The module is frozen; change happens outside it.** A change to the bitstream or to the loader image is a change to a validated module and costs a CMVP filing, months of queue and a
@@ -34,7 +34,7 @@ flowchart TB
     LPB["Port bridge to APB4"]
     SHA["SHA-256 core<br/>+ LMS chain sequencer"]
     SEC["Security block<br/>comparators, flow counter, key gate,<br/>detectors, lockdown, PHY reset, WAKE"]
-    TPMI["TPM interface<br/>SPI master, session cipher"]
+    TPMI["TPM interface<br/>SPI master, reset"]
     QD["QSPI direct mode,<br/>XIP control"]
     UART["Host UART<br/>(byte pipe; recovery)"]
     TRNG["TRNG + health tests"]
@@ -183,7 +183,7 @@ module**: it is what the Security Policy lists as services, and it is frozen wit
 
 | Part | What it is |
 |---|---|
-| Message RAM | A small dual-port RAM (2 KB) per mailbox, with a request ring written by one side and a response ring written by the other |
+| Message RAM | A dual-port RAM per mailbox (16 KB for mailbox A, whose 4 KB messages carry frames, manifests and certificates; 2 KB each for B and C), with a request ring written by one side and a response ring written by the other (`doc/api.md`) |
 | Doorbells | One register in each direction |
 | Terminal FIFOs | A byte FIFO each way on mailbox C. On the application core they sit behind ports 16 to 18, so LiteForth's `key`, `emit`, `key?` and `emit?` work unchanged. The supervisor forwards them to the host inside a session |
 | UART byte FIFOs | The host UART lives in the module (the boot ROM needs it for recovery) but is a byte pipe: outside recovery, its bytes pass straight through FIFOs to the supervisor, which does the framing |
@@ -226,12 +226,12 @@ command set, scheduling, the LCD's contents, the speaker, sensor policy (what to
 | Boot ROM | AXI4-Lite | Block RAM, initialized by the bitstream | Mask ROM (`doc/ics55.md`) | See Boot ROM contents |
 | Loader XIP cache | AXI4-Lite (read-only) | Block RAM + distributed RAM | SRAM macro + flip-flops | 2 KB; the loader runs from flash through it |
 | Loader SRAM | AXI4-Lite | Block RAM | SRAM macro | Buffers, stacks, variables; never keys |
-| SHA-256 core + LMS chain sequencer | APB | RTL | RTL | Private key input (pairing key, unwrapped keys) and private keyed-digest output; with the Ascon core, one of the two masked key-dependent blocks (R33, open question H4). The session cipher is the third key-dependent block, unmasked because each of its keys lives for one TPM session |
+| SHA-256 core + LMS chain sequencer | APB | RTL | RTL | Private key input (pairing key, unwrapped keys) and private keyed-digest output; with the Ascon core, one of the two masked key-dependent blocks (R33, open question H4) |
 | Install port | APB | RTL | RTL | The loader's Ascon-AEAD128 work through the Ascon core |
 | Key registers and key gate | Private | RTL | RTL | Loaded only from the SHA unwrap or derive path, with pass tokens; never readable |
 | Security block | APB | RTL | RTL | Comparators, flow counter, key gate tokens, glitch and clock detectors, lockdown, fault status, secret-clear fan-out (the zeroization path, with the ratchet-to-random in `doc/fips.md`); drives the LCD overlay's developer-mode and alarm inputs, the Ethernet PHY's reset from the signed network policy, and the WAKE (power-hold) line |
 | Key source | Private to SHA | Block RAM patched per device | PUF + helper data + characterization | See The key-source interface |
-| TPM interface | APB | RTL | RTL | SPI master in the TCG PTP FIFO protocol (4-byte header, wait states, locality 0) with the TPM's reset line, and the **session cipher**: an unmasked AES-128 core, encrypt direction only, for CFB parameter encryption of TPM sessions. Its key comes from the derive path per session and it writes decrypted sealed data straight into key registers (`doc/tpm.md`, Sessions). Nothing else on the bus |
+| TPM interface | APB | RTL | RTL | SPI master in the TCG PTP FIFO protocol (4-byte header, wait states, locality 0) with the TPM's reset line. Session parameter encryption is the TPM's XOR mode: the derive path produces the KDFa stream and XORs it into the encrypted parameter straight into a key register (`doc/tpm.md`, Sessions). Nothing else on the bus |
 | QSPI direct mode, XIP control | APB | RTL | RTL | Erase and program during installs; all caches stall meanwhile. Port window and key setup, write-once |
 | Host UART | APB, byte FIFOs to the supervisor | RTL | RTL | In recovery, the boot ROM's status and recovery protocol; otherwise a byte pipe to the supervisor, which runs the host protocol over it |
 | TRNG + health tests + HMAC_DRBG + mask PRNG | APB | Ring oscillators | Ring oscillators | SP 800-90B source with continuous health tests, conditioned in the SHA-256 core, feeding an SP 800-90A HMAC_DRBG on the same core, with the TPM's `TPM2_GetRandom` output as additional input; every key, nonce and salt comes from the DRBG; the DRBG seeds the Ascon core's mask PRNG and the application's random numbers (`doc/fips.md`) |
@@ -326,14 +326,14 @@ All key handling is in the loader core domain, and even the loader's Forth code 
 
 | Register | Holds | Loaded from | Used by |
 |---|---|---|---|
-| SHA-256 key input | A pairing key, a TPM session key, or the application, developer or log key | The key source, the derive path, or the session cipher | TPM session KDFa and HMACs, header and boot-record HMACs, log MACs, derivation |
-| TPM session key | One TPM session's key, and the AES-128 key for its parameter encryption | Derive mode: KDFa over the pairing key and both nonces | The SHA-256 core's command and response HMACs; the session cipher |
+| SHA-256 key input | A pairing key, a TPM session key, or the application, developer or log key | The key source or the derive path | TPM session KDFa and HMACs, header and boot-record HMACs, log MACs, derivation |
+| TPM session key | One TPM session's key | Derive mode: KDFa over the pairing key and both nonces | The SHA-256 core's command and response HMACs, and the KDFa stream that unmasks encrypted parameters |
 | XIP port 0 key | Loader image key | Derived from the application key | Loader cache fills |
 | XIP port 1 key | Application image key | Derived from the application key | Application cache fills |
 | XIP port 2 key | Supervisor image key | Derived from the application key, its own label | Supervisor cache fills |
 | Install key A | Distribution key, package content key, or developer package key | Unwrap or derivation | Decrypting a package on the install port |
 | Install key B | The new image key for the slot being written | Derived from the application key and a fresh salt | Encrypting and tagging lines on the install port |
-| Data key | User data key, or the developer data key | Unsealed by the TPM after the host's proof to it, decrypted by the session cipher, then derivation with the host data secret | User data records |
+| Data key | User data key, or the developer data key | Unsealed by the TPM after the host's proof to it, unmasked by the derive path, then derivation with the host data secret | User data records |
 | Session key | Host or CLI session key | Derived from the host session secret, which the TPM unseals with the data key | Session frames |
 | Segment key | One recording segment's key | The DRBG, through the derive path | Recording engine; also encapsulated to the host by the loader's ML-KEM code, which receives it wrapped for that purpose only |
 | Sensor session keys | One per direction | Derived from the sensor pairing key, unwrapped from flash under the application key | Sensor frames |
@@ -373,14 +373,14 @@ The boot ROM holds everything that must run before the loader is trusted, or whi
 
 - Reset, clocking and SRAM test; on the ASIC, the PUF reconstruction (`doc/ics55.md`)
 - Pre-operational self-tests: known-answer tests of the Ascon, SHA-256, HMAC, KBKDF, HMAC_DRBG, LMS, ML-KEM and ML-DSA implementations, and a whole-image integrity check of the loader slot before it is used, in addition to the per-line tags (`doc/fips.md`, Self-tests); a failure takes the lockdown path
-- Drivers for the SHA-256, session cipher, TPM, RTC I2C and QSPI cores, and the TRNG health check
+- Drivers for the SHA-256, TPM, host UART and QSPI cores, and the TRNG health check. The RTC and the card are on the supervisor's bus and the boot ROM never touches them; the boot cause comes from the alarm input pin
 - The TPM start-up (`TPM2_Startup`, platform hierarchy disable, self-test check), the pairing session (own key first, inherited key second), the counter 0 read, and the application key's unseal (`doc/tpm.md`)
 - The loader header check: HMAC, version against counter 0, image key derivation, then configuring and locking XIP port 0 (the supervisor and application checks are the loader's)
 - The boot record: choosing the active loader slot, and skipping slots marked bad (`doc/flash.md`)
 - LMS verification, used by UART recovery
 - Flash primitives (read into SRAM, erase, program, status), since nothing fetched from flash can run while the flash is busy
 - The lockdown path, which records the event in the flash boot record; it needs no card driver and no key
-- UART recovery: receiving a signed loader package into the staging region, verifying it, and installing it into a loader slot
+- UART recovery, two package kinds: a **bitstream repair package** (the current or a newer release's bitstream for this device, LMS-signed by the platform key, verified against the platform public key in the boot ROM and written into the bitstream slot the boot ROM is not running from; it needs no TPM exchange, which is what makes it work from a superseded bitstream, R44), and a **loader package** (verified and installed into a loader slot; possible only once the running bitstream pairs, since loader headers need the application key). Both are streamed twice over the UART, hash-then-write, because there is no card in the module to stage them on
 - UART status: versions, build mode, faults, pairing state (R30)
 
 The ratchet write, attestation, sessions and everything else is the loader's.
@@ -473,20 +473,18 @@ Rough figures in 4-input-LUT equivalents, to be replaced by synthesis results:
 | Recording engine, sample FIFO | 0.5K to 1K | Block buffer |
 | TPM SPI master, host UART, module watchdog | 0.3K to 0.5K | — |
 | Supervisor domain: SD, sensor link, RTC I2C, timers, mailbox C | 0.5K to 1K | Message RAM |
-| Session cipher: AES-128 encrypt-only, unmasked, round-based | 0.8K to 1.2K | — |
 | Ethernet transport: RMII MAC, ARP, IPv4, ICMP echo, UDP demux, FIFOs | 0.5K to 1K | Frame buffers |
 | Stream buffer: QSPI PSRAM controller, ring pointers, drain paths | 0.3K to 0.6K | Small staging FIFOs |
 | Entropy source: ring oscillators, SP 800-90B health tests, conditioner input buffering | 0.2K to 0.5K | — |
 | HMAC_DRBG sequencer and state (K, V, reseed counter; the HMACs run on the SHA-256 core) | 0.2K to 0.4K, about 550 flip-flops | — |
 | Two I2S masters, CODEC I2C, LCD controller with overlay | 1K to 2K | Line buffer |
-| **Total** | **About 17K to 30K with the masked Ascon core** | |
+| **Total** | **About 16K to 29K with the masked Ascon core** | |
 
 The PG2L50H (about 50K LUT4) leaves room for the application; the Ti60 is tighter and is the reason the supervisor core is listed in H8 as something that could fold into the application core.
 
 **DRBG in hardware or in firmware.** HMAC_DRBG is a handful of HMAC calls over a 512-bit state, so it could run as loader firmware with the SHA-256 core in derive mode, at no LUT cost.
 The hardware sequencer is preferred because the DRBG state is a CSP: in hardware it never exists in the loader's SRAM or stacks, so the "software never sees key material" claim holds without exception,
-and the boot ROM can run the DRBG's known-answer tests before the loader is trusted. HMAC_DRBG on the existing core is why the choice is cheap (F4); the session cipher's AES core could serve a CTR_DRBG, but the HMAC_DRBG's state stays on the private SHA-256 path and its
-known-answer tests are already in the boot ROM, so there is no reason to move.
+and the boot ROM can run the DRBG's known-answer tests before the loader is trusted. A CTR_DRBG would have needed its own AES core (1.5K to 3K LUTs); HMAC_DRBG on the existing core is why the choice is cheap, and why there is no AES in the fabric at all (F4).
 
 ## Open questions
 

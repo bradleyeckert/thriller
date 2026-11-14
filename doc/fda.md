@@ -18,7 +18,7 @@ its network), this document marks what the integrator must add.
 | Security Use Case Views | [4](#4-security-use-case-views) |
 
 Section 5 maps the design to the guidance's security control categories, and section 6 lists the gaps a submission would have to close.
-Terms are defined in the README and `doc/arch.md`. Risk IDs (R1–R46) refer to the Risk Assessment in `doc/arch.md`. Roles are defined in `doc/roles.md`.
+Terms are defined in the README and `doc/arch.md`. Risk IDs (R1–R50) refer to the Risk Assessment in `doc/arch.md`. Roles are defined in `doc/roles.md`.
 
 ## 1. Global System View
 
@@ -26,12 +26,12 @@ Terms are defined in the README and `doc/arch.md`. Risk IDs (R1–R46) refer to 
 
 | Element | Description | Trust |
 |---|---|---|
-| FPGA configuration engine | Vendor silicon (Pango Logos2). Checks the RSA-2048 signature and decrypts and authenticates the bitstream with its per-device AES-256-GCM eFuse key; refuses anything else; multi-boot fallback | Trusted, fixed; DPA-protected (R25) |
+| FPGA configuration engine | Vendor silicon (Pango Logos2). Checks the RSA-2048 signature and decrypts and authenticates the bitstream with its per-device AES-256-GCM eFuse key; refuses anything else; multi-boot fallback | Trusted, fixed; authenticates before it decrypts, which is its only power-analysis defense (R5, R25) |
 | Boot ROM | Block RAM in the bitstream. Starts the TPM and pairs with it, checks the loader image, UART recovery | Trusted; part of the signed bitstream |
-| Loader core domain (the FIPS 140-3 module) | LiteForth loader core and the security hardware: key registers, SHA-256 core, masked Ascon core, XIP engine, recording engine, SPI to the TPM with its session cipher, host UART | Trusted; holds every key path and security decision; a fixed service API, changed only by a CMVP-filed platform release |
+| Loader core domain (the FIPS 140-3 module) | LiteForth loader core and the security hardware: key registers, SHA-256 core, masked Ascon core, XIP engine, recording engine, SPI to the TPM, host UART | Trusted; holds every key path and security decision; a fixed service API, changed only by a CMVP-filed platform release |
 | Supervisor core domain | LiteForth supervisor core: Ethernet transport, sensor link, card, stream buffer, RTC, scheduling, CLI; runs from its flash slot | Manufacturer-signed, version-counted, outside the module; moves bytes, holds no key (R50) |
 | Application core domain | LiteForth application core, I2S acquisition, LCD; runs from its flash slot | Signed by the application owner, or a device-bound developer build; no path to any key |
-| ST33KTPM2X TPM 2.0 | Keys, counters, identity, host authentication, quotes | Trusted; FIPS 140-3 validated (CMVP #4737, physical Level 3); counters authenticated and authorized (R36) |
+| ST33KTPM2X TPM 2.0 | Keys, counters, identity, host authentication, quotes | Trusted; FIPS 140-3 validated (CMVP #5570, physical Level 3), inside the device's module boundary; counters authenticated and authorized, indices undeletable (R36) |
 | QSPI flash | Bitstreams, loader, supervisor and application images, boot record, records | Untrusted storage; everything authenticated |
 | CODECs, LCD, speaker | Acquisition, display, alarms; plaintext inside the sealed enclosure | Physically protected only (R38) |
 | MicroSD card | Recordings (encrypted to the host), user data, logs, offline packages | Untrusted storage |
@@ -206,8 +206,8 @@ The server marks the device retired and the loader sets the retired bit in the T
 |---|---|---|
 | Authentication | Vendor bitstream authentication; LMS on every package; per-line tags on both images; the TPM releases keys only to the holder of the pairing key; the host authenticates to the TPM; sensor certificates and per-frame MACs; device identity proven to the server and attested to hosts | No device certificate for the sensor to check |
 | Authorization | Loader services only, through the mailbox; keys with no CPU read path; user data only with the host's secret; developer builds bound to one device and epoch; network policy set by the application owner and enforced on the PHY's reset | Session timeouts to be set |
-| Cryptography | NIST algorithms: Ascon-AEAD128 (SP 800-232) in a first-order masked core; SHA-256, HMAC and the SP 800-108 KDF in a masked SHA-256 core; LMS, ML-KEM, ML-DSA on the loader core; ECDSA only in the TPM; AES-128-CFB only as the TPM session cipher; per-device keys | The SHA-256 core's side-channel resistance to be tested (R33); vendor bitstream signature not quantum-safe (R24) |
-| Code, data and execution integrity | Bitstream authentication every power-up; headers and versions against TPM counters; per-line authentication on every fetch; two-core isolation; the ratchet | — |
+| Cryptography | NIST algorithms: Ascon-AEAD128 (SP 800-232) in a first-order masked core; SHA-256, HMAC and the SP 800-108 KDF in a masked SHA-256 core; LMS, ML-KEM, ML-DSA on the loader core; ECDSA only in the TPM; no AES in the fabric; per-device keys | The SHA-256 core's side-channel resistance to be tested (R33); vendor bitstream signature not quantum-safe (R24) |
+| Code, data and execution integrity | Bitstream authentication every power-up; headers and versions against TPM counters; per-line authentication on every fetch; the isolation of the three cores by wiring; the ratchet | — |
 | Confidentiality | Recordings encrypted to the host inside the FPGA; bitstream, flash, card, sessions encrypted | Plaintext on I2S and the LCD inside the sealed enclosure (R38) |
 | Event detection and logging | HMAC-chained event log under the log key, written to the card, read by the host and uploaded to the server; lockdown records in the boot record | Event list to be completed |
 | Resiliency and recovery | A/B slots for every image, multi-boot for the bitstream; UART recovery for the loader; safe state on sensor loss | Behavior under denial of service on the UART and the network port to be defined |
@@ -223,7 +223,7 @@ The server marks the device retired and the loader sets the retired bit in the T
 4. **Sensor firmware update** path.
 5. **Decommissioning procedure** in detail.
 6. **SBOM:** LiteForth and the FPGA's RTL, the ML-KEM, ML-DSA and LMS code, the TPM 2.0 command formats, Pango Design Suite (Efinity for the Ti60 fallback), the edge proxy software,
-   the sensor firmware, with support status and end-of-support dates. The FPGA vendor's and Microchip's advisories feed vulnerability monitoring.
+   the sensor firmware, with support status and end-of-support dates. The FPGA vendor's and STMicroelectronics' advisories, and the CMVP's status of the TPM's certificate, feed vulnerability monitoring.
 7. **Testing evidence:** security requirements, threat mitigation and vulnerability testing as planned in `doc/test.md`; independent penetration testing to be arranged.
 8. **Risk scoring:** the Risk Assessment rates likelihood; FDA asks for an exploitability-based, non-probabilistic approach with scores before and after mitigation.
 9. **Network:** the clinical function must not depend on the network; a lost link affects uploads, updates and pairing confirmation only. The Ethernet port adds a mains-earth-referenced path,

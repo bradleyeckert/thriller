@@ -47,8 +47,9 @@ To support DSP applications, audio CODECs are planned for.
   and a scripted BRAM content updater. Candidates: Microchip PolarFire, Lattice CrossLink-NX. The ECP5 and Gowin GW5A were evaluated and dropped for lacking bitstream authentication. The requirements a family must meet are in `fpga/README.md`.
 - **QSPI NOR flash**, 32 MB proposed: bitstream slots, loader, supervisor and application images (A/B each), the boot record and a recovery staging area (`doc/flash.md`). Nothing in it is trusted.
 - **ST33KTPM2X32DKG9** TPM 2.0 (STMicroelectronics), on an SPI bus that never leaves the sealed enclosure, powered with the FPGA. Chosen over the ATECC608C when FIPS 140-3 became the target:
-  it is on CMVP certificate #4737 (FIPS 140-3, physical security Level 3), ships with ST-certified endorsement keys, and its sessions give an approved key transport, so the device's own module can be the
-  loader domain alone (`doc/fips.md`). Keys are sealed objects released only under a policy that names the pairing key; counters are its NV counters, authenticated and authorized (`doc/tpm.md`).
+  it is on CMVP certificate #5570 (FIPS 140-3, physical security Level 3), ships with ST-certified endorsement keys, and sits inside the device's own module boundary as an embedded validated
+  module, so its services need no testing of ours (`doc/fips.md`). Keys are sealed objects released only under a policy that names the pairing key; counters are its NV counters, authenticated and
+  authorized; its indices cannot be deleted by anyone but the enrollment station (`doc/tpm.md`).
   Provisioned blank at enrollment. A high-volume part, in stock at Mouser in quantity; not at LCSC, so a consigned part for JLCPCB builds (E8).
 - **2 × NAU88C22** stereo CODECs: four acquisition channels, and the speaker driver (`doc/acquisition.md`).
 - **LCD panel and speaker** inside the enclosure, which carries a tamper-evident seal.
@@ -85,8 +86,9 @@ To support DSP applications, audio CODECs are planned for.
 | Segment key | Loader domain and the recording engine, for one segment, then erased | Per segment | — | One segment of a recording |
 | Sensor pairing key | Flash (under the application key) and the sensor | Per pairing | — | Sessions with one paired sensor |
 
-The HSM derives every per-device key from a master key and the TPM's identifier (`doc/enrollment.md`). No key ever reaches software on any core: keys move from the
-TPM or the key source into hardware key registers (`doc/hw.md`, Key paths).
+The HSM derives every per-device key from a master key and the TPM's identifier (`doc/enrollment.md`). No stored key ever reaches software on any core: keys move from the
+TPM or the key source into hardware key registers (`doc/hw.md`, Key paths). The one computed secret that does pass through loader software is the ML-KEM shared secret, which the
+encapsulation code produces and hands to the derive path (H10).
 
 ## Boot
 
