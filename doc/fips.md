@@ -29,7 +29,7 @@ service, an interface) means regression testing of the affected requirements, an
    is concerned, so every bitstream release is at least an affirmation. New peripherals for the supervisor or application are therefore designed in up front, and the build flow keeps the module's
    part of the netlist placed and routed identically across releases (an incremental or partition flow), so that a release which changes only non-module logic can be shown not to touch the
    module (F12; PDS has no partition flow, so this is a locked region, fixed pins and scripted netlist locking, `fpga/logos2/README.md`). Per-device key constants patched into the key source are CSPs in a fixed design, not a firmware change; the laboratory must agree (E12).
-5. **Every algorithm the product will ever need is in the module from the first validation**: Ascon, SHA-256 and HMAC, the KBKDF, HMAC_DRBG, AES-128-CFB for the TPM, LMS, ML-KEM, ML-DSA.
+5. **Every algorithm the product will ever need is in the module from the first validation**: Ascon, SHA-256 and HMAC, the KBKDF, HMAC_DRBG, LMS, ML-KEM, ML-DSA.
    Adding an algorithm later is a revalidation; the post-quantum ones are there now so no transition forces one.
 6. **The module's version is its own.** The loader image and the bitstream carry a module version, independent of the product, supervisor and application versions, and the status report shows all four.
 7. **The entropy source is frozen too.** The ring-oscillator source and its health tests have their own ESV certificate; a change there is its own submission.
@@ -39,43 +39,52 @@ The TPM's certificate is ST's to maintain. Its firmware is never updated in the 
 
 ## Module boundary
 
-Where the boundary falls decides most of the rest. Three candidates:
+Where the boundary falls decides most of the rest. The candidates, and what happened to them:
 
 | Boundary | What is inside | Consequence |
 |---|---|---|
-| A. Multi-chip embedded module: the FPGA, the TPM and the flash, on a defined board region | Both cores, the configuration engine, the TPM, the flash. The PSRAM, RTC, CODECs, PHY and card are outside | The FPGA-to-TPM bus is internal. The application image is firmware inside the boundary: each application release is a firmware change filed with the CMVP. Tamper evidence over the region. The TPM's own certificate is not used |
-| **B. Sub-chip cryptographic subsystem: the loader domain alone (IG 2.3.B), with the TPM as a separately validated module** | The loader core, boot ROM, key registers, Ascon, SHA-256 and session-cipher cores, XIP engine, security block, TPM interface, host UART, recording engine | The supervisor and application domains are outside and their releases need no filing. Every CSP crossing the boundary does so under an approved method: keys from the TPM arrive by AES-128-CFB parameter encryption with an HMAC-SHA256 response authenticator (key transport per IG D.G), keys to the TPM leave the same way, and everything else that leaves is ciphertext or a MAC. The TPM is used as what it is: a module with its own CMVP certificate (#4737), whose services the device's module consumes |
+| A. Multi-chip embedded module: the whole FPGA, the TPM and the flash, on a defined board region | All three cores, the configuration engine, the TPM, the flash | Every bus is internal. But the supervisor and application images are firmware inside the boundary: each release of either is a filing (Designing for few filings). Not acceptable |
+| **B. Multi-chip embedded module with a sub-chip portion: the loader domain (IG 2.3.B), the TPM and the flash** | The loader core, boot ROM, key registers, Ascon and SHA-256 cores, XIP engine, security block, TPM interface, host UART, recording engine; the TPM; the flash | The supervisor and application domains are outside, as excluded logic on the same die, and their images are non-module firmware stored on the module's flash: their releases need no filing. The TPM's SPI bus and the flash are internal, so keys moving between the loader domain, the TPM and the flash are internal handling, not key transport. The TPM is an embedded validated module (certificate #5570) whose certificate and CAVP entries the Security Policy cites |
+| B′. Sub-chip subsystem alone, with the TPM and the flash outside | The loader domain only | Every key leaving the TPM or stored in flash is key transport and needs an approved method. The method available on a TPM 2.0 bus is AES-CFB parameter encryption with an HMAC authenticator, the "combination method" of IG D.G, which the 19 August 2026 IG revision now strongly recommends against, and which the draft SP 800-131A Rev. 3 plans to deprecate. Withdrawn |
 | C. The whole device | Everything | Every component becomes security-relevant; the CODECs and display drag clinical function into the validation. Not attractive |
 
-**Decision: B.** The TPM made it possible: the ATECC608C's key transport (XOR with a SHA-256 TempKey) was not an approved method, which forced boundary A and the per-release filing;
-TPM 2.0 sessions provide an approved one. The module is the loader domain exactly as `doc/hw.md` draws it, its boundary the netlist connectivity that is already checked (R37). The supervisor and
-application cores, their memories and peripherals, the mailboxes and their XIP ports are outside the module and are not security-relevant; the configuration engine is the firmware-load mechanism.
-The supervisor core exists for this reason: it takes everything that changes often out of the module (Designing for few filings).
-Physical security at Level 2 is tamper evidence over the FPGA and the TPM (a seal or conformal coating), at Level 3 the enclosure switch and the zeroization below. On the ASIC the same boundary
-becomes a sub-chip subsystem of a single-chip package, and if the TPM die is co-packaged (`doc/ics55.md`) the two modules share one physical envelope.
+**Decision: B.** The module is the loader domain exactly as `doc/hw.md` draws it, plus the TPM and the flash; its logical boundary on the die is the netlist connectivity that is already
+checked (R37), its physical boundary the tamper-evident region on the board (`hw/`). The supervisor and application cores, their memories and peripherals, the mailboxes and their XIP ports are
+excluded components, not security-relevant; their images in flash are not module firmware; the configuration engine is the firmware-load mechanism for the module's own firmware (the bitstream).
+The supervisor core exists for this reason: it takes everything that changes often out of the module (Designing for few filings). Physical security at Level 2 is tamper evidence over the region,
+at Level 3 the enclosure switch and the zeroization below. On the ASIC the same boundary becomes a sub-chip subsystem of a single-chip package, and if the TPM die is co-packaged (`doc/ics55.md`)
+the module is one package.
 
-What B costs: an unmasked AES-128 core in the loader domain for the session cipher, about 1K LUTs (`doc/hw.md`), keyed per session so no key sees more than one session's traffic; and a
-laboratory's agreement that the sub-chip subsystem and the two-module arrangement are acceptable (E12). If that agreement does not come, A remains available with the same hardware.
+What B needs from a laboratory (E12): agreement that a multi-chip embedded module may have a sub-chip portion on a die shared with excluded logic, with the mailboxes and XIP ports as the
+declared interfaces; and that non-module firmware stored on the module's flash is an excluded component. If that agreement does not come, the fallback is A, which costs filings for every
+supervisor and application release but changes no hardware.
+
+**What this means for the TPM link.** With the bus internal, the sessions' parameter encryption is defense in depth rather than approved key transport, so the TPM's XOR obfuscation (a
+one-time stream from KDFa over the session key and both nonces) is sufficient, and the design has **no AES in the fabric** (F4). An earlier revision added an AES-128-CFB session cipher to
+make B′ work; the IG D.G change removed the reason, and the core with it.
+
+**What crosses the boundary**, and how: the host data secret enters inside an authenticated, encrypted session frame (Ascon-AEAD128 under a session key derived from secrets both ends hold,
+SP 800-108), and nothing else secret ever leaves or enters; what leaves is ciphertext (recordings, records, frames), MACs, signatures and public data. Whether the session frame's key entry is an
+approved method in its own right (an AEAD under a KDF-derived key, as IG D.G allows for AES-GCM; Ascon-AEAD128's standing for this use is to be confirmed) is part of E12; the alternative is
+to carry the host data secret under ML-KEM-768, a key encapsulation method IG D.S covers, which the module already implements.
 
 ## Approved algorithms and what each needs
 
 | Algorithm | Standard | Status | What the validation needs |
 |---|---|---|---|
-| Ascon-AEAD128 | SP 800-232 | Approved (2025) | CAVP certificate for our core. ACVP test vectors for Ascon are recent; confirm coverage (A11). **Tag truncation to 64 bits for XIP lines must be checked against SP 800-232's minimum**; if 128-bit tags are required, the line format becomes 64 + 16 bytes (F6) |
+| Ascon-AEAD128 | SP 800-232 | Approved (2025) | CAVP certificate for our core. ACVP test vectors for Ascon are recent; confirm coverage (A11). 64-bit tags on XIP lines are within SP 800-232, whose floor is 32 bits and which asks for a risk analysis only below 64 (F6 closed) |
 | SHA-256, HMAC-SHA256 | FIPS 180-4, FIPS 198-1 | Approved | CAVP for the SHA-256 core, in both plain and HMAC use; HMAC is also the TPM session authenticator |
 | KDF, HMAC mode | SP 800-108r1 | Approved | CAVP (KBKDF). The TPM's KDFa is the same construction, so one implementation serves both |
-| AES-128, CFB mode | FIPS 197, SP 800-38A | Approved | CAVP for the session-cipher core (encrypt direction, CFB128). Used only for TPM session parameter encryption |
-| KTS: AES-CFB with HMAC-SHA256 | IG D.G | Approved key transport | Built from the two certificates above; 128 bits of strength. Covers every key that enters the module from the TPM and every key that leaves it for the TPM |
 | HMAC_DRBG | SP 800-90Ar1 | Approved | CAVP; the DRBG is new to the design (below) |
 | Entropy source | SP 800-90B | Required | An ESV certificate for the ring-oscillator source, from the restart and sequential data the RTC campaign produces (`doc/test.md`) |
 | LMS / HSS | SP 800-208 | Approved | CAVP (verification only, in the loader) |
 | ML-KEM-768 | FIPS 203 | Approved | CAVP (encapsulation in the loader; decapsulation on the host and sensor are outside the module) |
 | ML-DSA-44 | FIPS 204 | Approved | CAVP (verification only) |
-| TPM services: ECDSA P-256 quotes, HMAC-SHA256 identity, Hash_DRBG, NV, sessions | TCG TPM 2.0 Library; CMVP #4737 | Provided by a separately validated module | Nothing to test; the Security Policy cites the TPM's certificate and operates it in the configuration its own Security Policy describes. The CAVP list behind #4737 covers AES, ECDSA, KAS-ECC, Hash_DRBG, HMAC, the SP 800-108 KDF, RSA and SHA-2/3 (`doc/tpm.md`, Part) |
+| TPM services: ECDSA P-256 quotes, HMAC-SHA256 identity, Hash_DRBG, NV, sessions | TCG TPM 2.0 Library; CMVP #5570 | Provided by an embedded validated module | Nothing to test; the Security Policy cites the TPM's certificate and its CAVP entries (A2547 to A2555: Hash_DRBG, SHA-2/3, SP 800-108 KDF, HMAC, AES, RSA with KTS-IFC, ECDSA and KAS-ECC) and operates it in the configuration its own Security Policy describes (`doc/tpm.md`, Part) |
 | Vendor bitstream cipher and signature | Pango or Efinix | Vendor silicon | The configuration engine's AES-GCM and RSA are not the module's services; they are the firmware-load mechanism for the bitstream and are assessed as such (an approved integrity technique: AES-GCM and RSA-2048/4096 both qualify) |
 
 **Non-approved algorithms:** none in the module. Nothing runs in a non-approved mode, so there is a single approved mode and the status indicator is static. The TPM's XOR parameter
-obfuscation is never selected.
+obfuscation is internal handling inside the boundary, not a security service, and is listed as such.
 
 ## Entropy and the DRBG
 
@@ -93,7 +102,7 @@ is the ESV data collection; its raw-sample logging exists only in the test build
 
 - Firmware integrity: the configuration engine's authentication of the bitstream covers the boot ROM; the loader image gets a whole-image check at boot (an HMAC-SHA256 or LMS verification over the
   slot, in addition to the per-line tags), because the standard wants an integrity test of the firmware before it is used, not only as it is fetched.
-- Cryptographic algorithm self-tests (CASTs), known-answer tests run by the boot ROM: Ascon-AEAD128 encrypt and decrypt, SHA-256, HMAC-SHA256, KBKDF, HMAC_DRBG (instantiate, generate, reseed), AES-128-CFB,
+- Cryptographic algorithm self-tests (CASTs), known-answer tests run by the boot ROM: Ascon-AEAD128 encrypt and decrypt, SHA-256, HMAC-SHA256, KBKDF, HMAC_DRBG (instantiate, generate, reseed),
   LMS verify, ML-KEM encapsulate (with a fixed seed), ML-DSA verify. A failure enters the error state: the lockdown path, with the cause recorded. The TPM runs its own self-tests (`TPM2_SelfTest`),
   and the boot ROM checks their result before using it.
 
@@ -127,8 +136,8 @@ the storage seed and every object under it.
 
 ## CSP list
 
-Pairing keys (both), TPM session keys and the AES keys derived from them, application key, data keys and the derived data keys, host session secrets, distribution key, developer key and working key,
-log key, image keys, install keys, session keys, segment keys, sensor pairing and session keys, DRBG state and seed, the entropy source's raw output. Inside the TPM, outside the module: the
+Pairing keys (both), TPM session keys and their obfuscation streams, application key, data keys and the derived data keys, host session secrets, distribution key, developer key and working key,
+log key, image keys, install keys, session keys, segment keys, sensor pairing and session keys, DRBG state and seed, the entropy source's raw output. Inside the TPM, inside the module: the
 symmetric identity key, the attestation and endorsement private keys, the host authorization keys (as authorization values). Public and non-secret: LMS public keys, the AK and EK certificates,
 host recording public keys, the RSA digest in eFuse, the MAC address, pairing key versions, time beacons, sealed-object blobs. Each CSP's generation, entry, storage, use and destruction is already
 described in `doc/tpm.md` and `doc/hw.md`; the Security Policy collects them into the required table.
@@ -141,7 +150,7 @@ described in `doc/tpm.md` and `doc/hw.md`; the Security Policy collects them int
 4. **Zeroization as a named service**: the ratchet-to-random plus records erase.
 5. **A tamper-evident region** over the FPGA and the TPM, independent of the enclosure seal (board design).
 6. **XIP tag length** confirmed against SP 800-232 before the line format is frozen (F6).
-7. **The TPM in place of the ATECC608C** (`doc/tpm.md`), and with it the AES-128-CFB session cipher and the sub-chip boundary (E12); E9 is closed by the choice.
+7. **The TPM in place of the ATECC608C** (`doc/tpm.md`), inside the module boundary with the flash (E12); E9 is closed by the choice.
 8. **Test builds are unvalidated firmware**, kept separate from production images in the build system and never installable on a fused production device (they lack the production LMS signature).
 9. **A supervisor core outside the module**, carrying the transports, scheduling and the CLI, so that releases of those never touch the module (`doc/hw.md`); the module's service API frozen and versioned.
 10. **A partition flow for the bitstream** that keeps the module's netlist identical across releases that change only supervisor or application hardware (F12).
@@ -153,9 +162,11 @@ and the choice of laboratory. None of these should change the hardware or the ke
 
 ## Sources
 
-- NIST, *FIPS 140-3: Security Requirements for Cryptographic Modules*, and its Implementation Guidance, in particular IG 2.3.B (sub-chip cryptographic subsystems), IG D.G (key transport methods)
-  and the firmware-load and entropy sections.
-- CMVP certificate #4737, STMicroelectronics ST33KTPM2X, and its Security Policy.
+- NIST, *FIPS 140-3: Security Requirements for Cryptographic Modules*, and its Implementation Guidance, in particular IG 2.3.B (sub-chip cryptographic subsystems), IG D.G (key transport methods),
+  IG D.S (key encapsulation) and the firmware-load and entropy sections.
+- CMVP certificate #5570 (9 November 2026, replacing #4737, now historical), STMicroelectronics ST33KTPM2X, and its Security Policy.
+- CMVP, *FIPS 140-3 IG announcements*: the 19 August 2026 revision of IG D.G (the "combination method" recommendation) and the 27 February 2026 revision of IG 2.3.B.
+- NIST, draft SP 800-131A Rev. 3 (planned deprecation of key wrapping built from encryption plus separate authentication).
 - Trusted Computing Group, *TPM 2.0 Library Specification*, Parts 1 to 4; *PC Client Platform TPM Profile*.
 - NIST SP 800-232, *Ascon-Based Lightweight Cryptography Standards for Constrained Devices*.
 - NIST SP 800-90A Rev. 1, SP 800-90B, and SP 800-90C.

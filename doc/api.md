@@ -14,9 +14,11 @@ The CLI's command set, the transports, DHCP and everything the supervisor and ap
 ## Conventions
 
 - All integers are little-endian; all structures are 4-byte aligned; reserved fields are zero and are checked to be zero.
-- A **message** is a header and a payload. Requests travel in a mailbox's request ring, responses and events in its response ring. Rings are in a dual-port message RAM: mailbox A has 4 KB
-  per ring (it carries frames and package chunks), mailbox B 1 KB per ring. A message never wraps; the producer pads to the end of the ring and starts over.
-- `MAX_PAYLOAD` is 1536 bytes on mailbox A (one session frame, one package chunk) and 256 bytes on mailbox B.
+- A **message** is a header and a payload. Requests travel in a mailbox's request ring, responses and events in its response ring. Rings are in a dual-port message RAM: mailbox A has 8 KB
+  per ring (it carries frames, package chunks, manifests, segment headers and sensor certificates), mailbox B 1 KB per ring. A message never wraps; the producer pads to the end of the ring and starts over.
+- `MAX_PAYLOAD` is 4096 bytes on mailbox A and 256 bytes on mailbox B. The limits below were sized against the cryptography they carry: an LMS signature with SHA-256/32-byte parameters and
+  height 10 is 1,452 bytes and a two-level HSS signature about 2.9 KB; an ML-KEM-768 ciphertext is 1,088 bytes; an ML-DSA-44 public key and signature are 1,312 and 2,420 bytes. Anything larger
+  than one message is carried in numbered parts, and the rule for each is stated with the message.
 - Every field has a fixed limit, checked before use; a message that fails any check is answered with an error and has no other effect. The parser is fuzzed on the software platform (`doc/test.md`).
 - The module answers every request, in order, with exactly one response; it never blocks the ring on a slow operation (a TPM command, a flash erase) but answers `BUSY` or `PENDING` and finishes with an event.
 
@@ -110,7 +112,7 @@ developer data key and the same messages (`doc/roles.md`).
 
 | `op` | Name | Caller | Request | Response |
 |---|---|---|---|---|
-| 0x30 | `SEG_START` | A | `recipients` u8 (1 to 4) and their record ids (u32 each), `channels` u8, `rate_code` u8, `app_meta` (≤ 64 bytes, carried in the header) | `PENDING`; then `EVT_SEG_HEADER` to the supervisor with the authenticated segment header (≤ 1024 bytes) and `EVT_DONE` to the application; the sample FIFO opens |
+| 0x30 | `SEG_START` | A | `recipients` u8 (1 to 4) and their record ids (u32 each), `channels` u8, `rate_code` u8, `app_meta` (≤ 64 bytes, carried in the header) | `PENDING`; then `EVT_SEG_HEADER` to the supervisor with the authenticated segment header, in numbered parts of ≤ 4096 bytes (the header is about 1.2 KB per recipient, so up to two parts), and `EVT_DONE` to the application; the sample FIFO opens |
 | 0x31 | `SEG_STOP` | A | — | The engine finishes the last block; `EVT_SEG_TRAILER` to the supervisor with the final block count and tag; the segment key is erased |
 | 0x32 | `SEG_STATUS` | S, A | — | `open` u8, `blocks` u32, `fifo_overruns` u16, `beacon_in_header` u8 |
 
@@ -123,7 +125,7 @@ module only counts blocks.
 |---|---|---|---|---|
 | 0x40 | `SENSOR_POLL` | S | — | `request_frame` (≤ 32 bytes) to send to the sensor; the module starts its round-trip timer |
 | 0x41 | `SENSOR_FRAME_IN` | S | `frame` (≤ 64 bytes) | `OK` with the reading passed to the application, `VERIFY_FAIL`, or `TIMEOUT` if older than the maximum reading age (a parameter from the application header) |
-| 0x42 | `SENSOR_PAIR_STEP` | S | `step` u8, `sensor_msg` (≤ 1536 bytes: the sensor's certificate and KEM messages) | `device_msg` (≤ 1536 bytes) for the sensor, `state` u8 (continuing, paired, refused) |
+| 0x42 | `SENSOR_PAIR_STEP` | S | `step` u8, `part` u8, `sensor_msg` (≤ 4096 bytes: the sensor's ML-DSA-44 certificate is about 3.7 KB and fits one part; the KEM messages are smaller) | `device_msg` (≤ 4096 bytes) for the sensor, `state` u8 (continuing, paired, refused) |
 | 0x43 | `READING_GET` | A | — | `value` i32, `age_ms` u32, `status` u8 (fresh, late, none, sensor fault, unpaired, pairing unconfirmed), `serial` 8 bytes |
 | 0x44 | `SENSOR_INFO` | S, A | — | `paired` u8, `confirmed` u8, `serial`, `cert_digest` 32 bytes |
 
@@ -133,7 +135,7 @@ Pairing confirmation and rejection arrive from the server inside a server sessio
 
 | `op` | Name | Caller | Request | Response |
 |---|---|---|---|---|
-| 0x50 | `INSTALL_BEGIN` | S | `kind` u8 (1 platform, 2 supervisor, 3 application, 4 developer), `total_len` u32, `manifest` (≤ 1024 bytes: version, digest, LMS signature, inclusion proof) | `OK`, `VERSION_OLD`, `VERIFY_FAIL` (manifest signature), `BUSY` |
+| 0x50 | `INSTALL_BEGIN` | S | `kind` u8 (1 platform, 2 supervisor, 3 application, 4 developer), `total_len` u32, `manifest` (≤ 4096 bytes: version, digest, the LMS or HSS signature, inclusion proof) | `OK`, `VERSION_OLD`, `VERIFY_FAIL` (manifest signature), `BUSY` |
 | 0x51 | `INSTALL_DATA` | S | `offset` u32, `chunk` (≤ 1024 bytes) | `OK`; pass 1 hashes only |
 | 0x52 | `INSTALL_VERIFY` | S | — | `OK` if the running digest matches the manifest; the inactive slot is erased (`PENDING`, then `EVT_DONE`) |
 | 0x53 | `INSTALL_DATA2` | S | `offset` u32, `chunk` (≤ 1024 bytes) | `OK`; pass 2 re-hashes, decrypts and writes lines through the install port. The supervisor or application core being replaced is held in reset from here |
@@ -146,7 +148,7 @@ Chunks must arrive in order and cover the package exactly; anything else aborts 
 
 | `op` | Name | Caller | Request | Response |
 |---|---|---|---|---|
-| 0x60 | `ATTEST` | S | `kind` u8 (1 quote, 2 identity HMAC), `verifier_nonce` 32 bytes | `PENDING`; then `EVT_DONE` with the report, the PCR values, and the quote or MAC (≤ 1536 bytes) |
+| 0x60 | `ATTEST` | S | `kind` u8 (1 quote, 2 identity HMAC), `verifier_nonce` 32 bytes | `PENDING`; then `EVT_DONE` with the report, the PCR values, and the quote or MAC (≤ 2048 bytes) |
 | 0x61 | `CERTS` | S | `which` u8 (AK certificate, EK certificate) | The certificate bytes, from the records region or the TPM's NV (public) |
 | 0x70 | `LOG_APPEND` | S, A | `class` u8 (supervisor or application; the module's own classes are reserved), `payload` (≤ 64 bytes) | `entry` (payload, sequence number, local time hint, chain MAC; ≤ 112 bytes) to store |
 | 0x71 | `LOG_HEAD` | S | — | `sequence` u32, `chain_head` 32 bytes |
@@ -166,7 +168,7 @@ Records are written only through the Session API (settings from a host, denylist
 | `op` | Name | To | Payload |
 |---|---|---|---|
 | 0xE0 | `EVT_DONE` | Requester | `tag` of the pending request, `status`, result payload |
-| 0xE1 | `EVT_SEG_HEADER` | S | Segment header bytes to write ahead of the ciphertext |
+| 0xE1 | `EVT_SEG_HEADER` | S | Segment header bytes to write ahead of the ciphertext, `part` u8 of `parts` u8 |
 | 0xE2 | `EVT_SEG_TRAILER` | S | Final block count and tag |
 | 0xE3 | `EVT_LOG` | S | A module log entry to store |
 | 0xE4 | `EVT_SESSION` | S, A | Session opened, closed, refused (with reason), attempt limit reached |
@@ -215,6 +217,12 @@ are specified with the reference model in `doc/test.md`; their byte layouts are 
 **Fixed in the module** (security parameters, part of the validation): key and tag sizes, frame counter width, `STEP_TIMEOUT` (30 s), `MAX_BAD_FRAMES` (8), session attempt limits
 (5 failed handshakes, then a 60 s hold per transport, logged), the host slot count (8, set by TPM provisioning), record and chunk size limits, the recording block size (4 KB), the TPM
 dictionary-attack parameters.
+
+## Recovery (boot ROM, UART)
+
+When the running bitstream cannot pair or no loader slot checks, the boot ROM speaks a third, smaller protocol on the host UART, with no session and no mailbox: `STATUS` (the status block in
+hexadecimal), `REPAIR_BITSTREAM` (a bitstream repair package, streamed twice, verified against the platform public key in the boot ROM) and `REPAIR_LOADER` (a loader package, possible only
+once the bitstream pairs). It is part of the module and frozen with it (`doc/flash.md`, Recovery).
 
 ## What a developer build can and cannot do
 

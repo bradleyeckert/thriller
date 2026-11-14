@@ -27,5 +27,5 @@ pushbutton, or the RTC's open-drain /INT; the boot ROM asserts WAKE early, the l
 
 TPM connection (`../doc/tpm.md`, Part): SPI from the loader domain's bank, `CS` with the 56 pF capacitor ST recommends so `SPI_CLK` is low at the falling edge of `CS`, optional 33 Ω series
 resistors; `RST` driven by an FPGA output with a pull-down, so the TPM stays in reset until the boot ROM runs; `GPI_I2C_Select` open (SPI); `GPIO_PP` at its internal pull-down; `PIRQ`
-unconnected; 100 nF plus 1 µF on VCC; exposed pad to ground. The dashed outline on the top sheet is the tamper-evident region around the FPGA and the TPM, the two FIPS 140-3 modules
-(`../doc/fips.md`, boundary B); the flash sits in its notch, outside both.
+unconnected; 100 nF plus 1 µF on VCC; exposed pad to ground. The dashed box on the top sheet is the FIPS 140-3 module's physical boundary and tamper-evident region: the FPGA (whose loader
+domain is the module's logic), the TPM (an embedded validated module) and the flash (`../doc/fips.md`, boundary B).
