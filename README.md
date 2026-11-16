@@ -61,7 +61,7 @@ To support DSP applications, audio CODECs are planned for.
 - **SI5351A-B-GTR** precision clock generator. Use a 25 MHz crystal.
 - **27.12 MHz oscillator**
 - Voltage regulators, bypass caps, etc.
-- SODIMM-like PCBA form factor: 69.6 x 50 mm with 260 fingers.
+- SODIMM-like PCBA form factor: 69.6 x 40 mm with 260 fingers.
 
 ## Application peripherals
 
