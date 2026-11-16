@@ -58,10 +58,9 @@ To support DSP applications, audio CODECs are planned for.
   entire trust chain; the alarm is also an input pin, so the supervisor sees it as an interrupt when awake. It also automates NIST SP 800-90B restart testing of the TRNG: a thousand wakes, each logging its first raw samples (`doc/hw.md`, Real-time clock).
 - **Ethernet PHY**, RMII such as the LAN8742A: the path to the server for attestation, updates, uploads and sensor-pairing confirmation. The FPGA speaks only UDP on one port,
   implemented in hardware; there is no network stack anywhere in the device (see Network). An untrusted edge proxy on site relays the datagrams to the server over TLS where IT requires port 443.
-- **SI5351A-B-GTR** precision clock generator. Use a 25 MHz crystal.
-- **27.12 MHz oscillator**
+- **25 MHz oscillator** clocks both PHY and FPGA
 - Voltage regulators, bypass caps, etc.
-- SODIMM-like PCBA form factor: 69.6 x 40 mm with 260 fingers.
+- SODIMM-like PCBA form factor: 69.6 x 45 mm with 260 fingers. Same as Jetson Nano.
 
 ## Application peripherals
 
@@ -76,6 +75,7 @@ The module contains the chipset. The carrier board contains everything else:
 - **MicroSD** card socket with TVS on all data lines
 - **Sensor connector**: a wired, two-way link to a replaceable temperature sensor; the supervisor moves the bytes, the module checks every frame (`doc/sensor.md`).
 - **2 × NAU88C22** stereo CODECs: four acquisition channels, and the speaker driver (`doc/acquisition.md`).
+- **SI5351A-B-GTR** precision clock generator. Use a 25 MHz crystal.
 - **Freq reference input**: 10 MHz reference input to FPGA, with Schmitt-trigger squaring.
 - **speaker** with amplifier, may use simple PWM.
 - **LCD panel** with touch panel (I2C) and 4-wire SPI LCD controller.
