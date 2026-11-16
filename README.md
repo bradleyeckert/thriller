@@ -41,9 +41,9 @@ To support DSP applications, audio CODECs are planned for.
 | `doc/ics55.md` | ASIC migration to the ICS55 55 nm process: the PUF behind the key-source interface |
 | `doc/questions.md` | Every open question in one matrix, and the decisions taken |
 
-## Chipset
+## Module Chipset
 
-- **FPGA with an encrypted and authenticated bitstream.** Current choice: **Pango Logos2 PG2L50H-6IFBG484** (50K-class), which authenticates bitstreams before decrypting them
+- **FPGA with an encrypted and authenticated bitstream.** Current choice: **Pango Logos2 PG2L50H-6IMBG324** (50K-class), which authenticates bitstreams before decrypting them
   (`fpga/logos2/`). No family offers a hardened cipher usable from the fabric, so all symmetric cryptography runs in a masked Ascon core of our own (`doc/hw.md`). It configures itself from the flash at power-up in master SPI mode, with the vendor's multi-boot fallback to a second bitstream. Fallback: **Efinix Titanium Ti60** (`fpga/ti60/`), which meets the same hard requirements with RSA-4096 authentication
   and a scripted BRAM content updater. Candidates: Microchip PolarFire, Lattice CrossLink-NX. The ECP5 and Gowin GW5A were evaluated and dropped for lacking bitstream authentication. The requirements a family must meet are in `fpga/README.md`.
 - **QSPI NOR flash**, 32 MB proposed: bitstream slots, loader, supervisor and application images (A/B each), the boot record and a recovery staging area (`doc/flash.md`). Nothing in it is trusted.
@@ -51,20 +51,36 @@ To support DSP applications, audio CODECs are planned for.
   it is on CMVP certificate #5570 (FIPS 140-3, physical security Level 3), ships with ST-certified endorsement keys, and sits inside the device's own module boundary as an embedded validated
   module, so its services need no testing of ours (`doc/fips.md`). Keys are sealed objects released only under a policy that names the pairing key; counters are its NV counters, authenticated and
   authorized; its indices cannot be deleted by anyone but the enrollment station (`doc/tpm.md`).
-  Provisioned blank at enrollment. A high-volume part, in stock at Mouser in quantity; not at LCSC, so a consigned part for JLCPCB builds (E8).
-- **2 × NAU88C22** stereo CODECs: four acquisition channels, and the speaker driver (`doc/acquisition.md`).
-- **LCD panel and speaker** inside the enclosure, which carries a tamper-evident seal.
-- **MicroSD card socket**, driven by the FPGA: encrypted recordings and user data, the event log, offline update packages.
+  Provisioned blank at enrollment.
 - **ESP-PSRAM64H** (8 MB QSPI PSRAM): a ring buffer for the encrypted recording stream between the recording engine and the card or the network, riding out card write latency and network stalls.
-  It holds ciphertext only, about ten seconds of it at the full rate, and is outside the trust boundary like the card (`doc/acquisition.md`, Stream buffer).
-- **Sensor connector**: a wired, two-way link to a replaceable temperature sensor; the supervisor moves the bytes, the module checks every frame (`doc/sensor.md`).
-- **UART** (USB-UART bridge): status reports, and the wired path for host sessions, updates and the CLI.
-- **Ethernet**, 10/100 over RMII to a PHY such as the LAN8742A: the path to the server for attestation, updates, uploads and sensor-pairing confirmation. The FPGA speaks only UDP on one port,
-  implemented in hardware; there is no network stack anywhere in the device (see Network). An untrusted edge proxy on site relays the datagrams to the server over TLS where IT requires port 443.
-- **YXC YSN8130E real-time clock** (3225 module with built-in crystal, 0.9 µA, open-drain /INT that survives a VDD cycle), backed by two SR44 cells; A10 for the remaining checks. Its time is untrusted and never stands in for the server's time beacons (`doc/acquisition.md`); its job is
+- **YXC YSN8130E real-time clock** (3225 module with built-in crystal, 0.9 µA, open-drain /INT that survives a VDD cycle); A10 for the remaining checks. Its time is untrusted and never stands in for the server's time beacons (`doc/acquisition.md`); its job is
   scheduling and local display, and **its alarm output wakes the device from deep sleep** (the regulators' enables on the FPGA board, RST_N on the ASIC), so every scheduled wake is a cold start through the
   entire trust chain; the alarm is also an input pin, so the supervisor sees it as an interrupt when awake. It also automates NIST SP 800-90B restart testing of the TRNG: a thousand wakes, each logging its first raw samples (`doc/hw.md`, Real-time clock).
-- Oscillator, voltage regulators, and test connectors not populated in production. The FPGA's JTAG is permanently disabled at enrollment where the family allows it.
+- **Ethernet PHY**, RMII such as the LAN8742A: the path to the server for attestation, updates, uploads and sensor-pairing confirmation. The FPGA speaks only UDP on one port,
+  implemented in hardware; there is no network stack anywhere in the device (see Network). An untrusted edge proxy on site relays the datagrams to the server over TLS where IT requires port 443.
+- **SI5351A-B-GTR** precision clock generator. Use a 25 MHz crystal.
+- **27.12 MHz oscillator**
+- Voltage regulators, bypass caps, etc.
+- SODIMM-like PCBA form factor: 69.6 x 50 mm with 260 fingers.
+
+## Application peripherals
+
+Each FPGA version will have its own version of module with mezzanine connectors.
+The module contains the chipset. The carrier board contains everything else:
+
+- **5V input** from **USB-C jack**.
+- **MicroSD card socket**, driven by the FPGA: encrypted recordings and user data, the event log, offline update packages.
+- **FT2232H** (USB-UART bridge and JTAG): status reports, and the wired path for host sessions, updates and the CLI.
+- **Battery holder** for two SR44 cells (not CR2032, lithium is a shipping hassle)
+- **Ethernet Jack**, 10/100 mag jack RJ45
+- **MicroSD** card socket with TVS on all data lines
+- **Sensor connector**: a wired, two-way link to a replaceable temperature sensor; the supervisor moves the bytes, the module checks every frame (`doc/sensor.md`).
+- **2 × NAU88C22** stereo CODECs: four acquisition channels, and the speaker driver (`doc/acquisition.md`).
+- **Freq reference input**: 10 MHz reference input to FPGA, with Schmitt-trigger squaring.
+- **speaker** with amplifier, may use simple PWM.
+- **LCD panel** with touch panel (I2C) and 4-wire SPI LCD controller.
+
+Treat these components as if they are either inside or sticking through a tamper-evident enclosure.
 
 ## Keys and what unlocks them
 

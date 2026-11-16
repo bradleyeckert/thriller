@@ -44,11 +44,10 @@ a vendor-provided hardened PUF that wraps the configuration key or user keys (it
 Each FPGA type has a demo module, about 80-100 cm2, with a pair of 100-pin mezzanine (Board to Board) connectors.
 A mating bench board contains connectors for power, UART, ISP, magjack, etc. Some mezzanine connectors are:
 
-- GT-B0403FSV14-100B1101, 0.4mm pitch, 1.4mm height
-- GT-B0403FSV29-100B1101, 0.4mm pitch, 2.9mm height
-- GT-B0403FSV39-100B1101, 0.4mm pitch, 3.9mm height
-- GT-B0403MSV11-100B1101, 0.4mm pitch, 1.1mm height
+- GT-B0403FSV14-100B1101, 0.4mm pitch, 1.4mm height, user side
+- GT-B0403FSV29-100B1101, 0.4mm pitch, 2.9mm height, user side
+- GT-B0403FSV39-100B1101, 0.4mm pitch, 3.9mm height, user side
+- GT-B0403MSV11-100B1101, 0.4mm pitch, 1.1mm height, module side
 
 Depending on how you pair the above, the board stacking height is 2.5, 4, or 5 mm.
 The module uses a pair of GT-B0403MSV11-100B1101.
-
