@@ -76,7 +76,9 @@ and one developer session at a time, one install, one recording segment.
 build mode (u8: production, developer with epoch u16); approved-mode indicator (u8, always 1 in this module); self-test state (u8: passed, running, failed with the failing test in `fault_code`);
 fault code (u16); lockdown count (u16) and last lockdown cause (u8); lifecycle bits (u8: enrolled, retired, wiped); network policy as read from the application header (u8); session state
 (u8 bit field: host, server, developer open; host slot u8); segment state (u8); install state (u8); TPM state (u8: not started, started, platform hierarchy disabled, lockout active);
-boot cause (u8); latest verified beacon time (u64, zero if none) and the sample count at that beacon (u64). The UART status report in recovery is the same block, in hexadecimal.
+boot cause (u8); `backup_lost` (u8: the RTC lost its backup since the last acknowledged boot, which is the module-removal indicator, `hw/module.md`); `carrier_id` (8 bytes, as read from the
+carrier's identifier, zero if none) and `carrier_match` (u8, against the identifier recorded when the installed bit was set); latest verified beacon time (u64, zero if none) and the sample count
+at that beacon (u64). The UART status report in recovery is the same block, in hexadecimal.
 
 ### Sessions
 
@@ -174,7 +176,7 @@ Records are written only through the Session API (settings from a host, denylist
 | 0xE4 | `EVT_SESSION` | S, A | Session opened, closed, refused (with reason), attempt limit reached |
 | 0xE5 | `EVT_SENSOR` | S, A | Pairing confirmed or rejected; reading late; sensor changed |
 | 0xE6 | `EVT_ALARM` | S, A | Security alarm (class u8) that the application should show and sound; the overlay band is already driven in hardware |
-| 0xE7 | `EVT_LIFECYCLE` | S, A | Retired, wiped, ratchet completed, host slot changed |
+| 0xE7 | `EVT_LIFECYCLE` | S, A | Retired, wiped, ratchet completed, host slot changed, installed, backup lost (module removed), carrier identifier changed |
 | 0xE8 | `EVT_BEACON` | S | A new verified beacon (time, for the supervisor's clock discipline and the display) |
 | 0xE9 | `EVT_REBOOT` | S, A | A reboot follows in `delay_ms` (after a platform install or a lifecycle change) |
 
@@ -194,7 +196,7 @@ frozen with it; the kinds it passes through (CLI commands, user data transfers, 
 | 0x11 | `BEACON_REQUEST` | Module → server | — | Sent when a segment starts or on the supervisor's request |
 | 0x12 | `PAIRING_VERDICT` | Server → module | Module | Confirmed or rejected, per sensor serial (`doc/sensor.md`) |
 | 0x13 | `DENYLIST` | Server → module | Module | A signed denylist; stored as a record |
-| 0x14 | `LIFECYCLE` | Server → module | Module | Retire, wipe, host slot set (slot, new authorization value, encrypted end to end under the session), host slot revoke; each acknowledged with `LIFECYCLE_ACK` after the TPM operation |
+| 0x14 | `LIFECYCLE` | Server → module | Module | Retire, wipe, host slot set (slot, new authorization value, encrypted end to end under the session), host slot revoke, install (sets the installed bit and records the carrier identifier), acknowledge removal (clears `backup_lost`); each acknowledged with `LIFECYCLE_ACK` after the TPM operation |
 | 0x15 | `PACKAGE_OFFER` | Server → module | Passed through | The supervisor fetches and installs through the mailbox; listed here because its manifest format is the module's |
 | 0x20 to 0x7F | Supervisor-defined | Either | Passed through | CLI, user data transfer, log export, recording download, terminal, acknowledgements and windows |
 | 0x80 to 0xFF | Reserved | | | |

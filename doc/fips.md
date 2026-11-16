@@ -51,8 +51,8 @@ Where the boundary falls decides most of the rest. The candidates, and what happ
 **Decision: B.** The module is the loader domain exactly as `doc/hw.md` draws it, plus the TPM and the flash; its logical boundary on the die is the netlist connectivity that is already
 checked (R37), its physical boundary the tamper-evident region on the board (`hw/`). The supervisor and application cores, their memories and peripherals, the mailboxes and their XIP ports are
 excluded components, not security-relevant; their images in flash are not module firmware; the configuration engine is the firmware-load mechanism for the module's own firmware (the bitstream).
-The supervisor core exists for this reason: it takes everything that changes often out of the module (Designing for few filings). Physical security at Level 2 is tamper evidence over the region,
-at Level 3 the enclosure switch and the zeroization below. On the ASIC the same boundary becomes a sub-chip subsystem of a single-chip package, and if the TPM die is co-packaged (`doc/ics55.md`)
+The supervisor core exists for this reason: it takes everything that changes often out of the module (Designing for few filings). The physical boundary is the potted plug-in module (`hw/module.md`): at Level 2 a tamper-evident coating over the card,
+at Level 3 hard opaque potting with rail and temperature monitors for EFP/EFT, plus the seal loop and enclosure switch from the carrier and the zeroization below. On the ASIC the same boundary becomes a sub-chip subsystem of a single-chip package, and if the TPM die is co-packaged (`doc/ics55.md`)
 the module is one package.
 
 What B needs from a laboratory (E12): agreement that a multi-chip embedded module may have a sub-chip portion on a die shared with excluded logic, with the mailboxes and XIP ports as the
@@ -148,7 +148,7 @@ described in `doc/tpm.md` and `doc/hw.md`; the Security Policy collects them int
 2. **Power-up CASTs and a whole-image loader integrity check** in the boot ROM (`doc/hw.md`, Boot ROM contents).
 3. **A static approved-mode indicator and self-test status** in the status report.
 4. **Zeroization as a named service**: the ratchet-to-random plus records erase.
-5. **A tamper-evident region** over the FPGA and the TPM, independent of the enclosure seal (board design).
+5. **The chipset on a potted plug-in module** (`hw/module.md`), so the physical boundary is the card and the application device's seal is a separate matter.
 6. **XIP tag length** confirmed against SP 800-232 before the line format is frozen (F6).
 7. **The TPM in place of the ATECC608C** (`doc/tpm.md`), inside the module boundary with the flash (E12); E9 is closed by the choice.
 8. **Test builds are unvalidated firmware**, kept separate from production images in the build system and never installable on a fused production device (they lack the production LMS signature).

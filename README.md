@@ -39,6 +39,7 @@ To support DSP applications, audio CODECs are planned for.
 | `doc/network.md` | Network security posture: why the device cannot be a network attack vector, for IT departments and the FDA |
 | `doc/fips.md` | FIPS 140-3 as the long-term target: designing for few filings, module boundary, approved algorithms, DRBG, self-tests, roles, zeroization, and what it changes now |
 | `doc/ics55.md` | ASIC migration to the ICS55 55 nm process: the PUF behind the key-source interface |
+| `hw/module.md` | The plug-in module and its carrier: what is on which, what is potted, the 260-pin contract, clocking, removal detection, the two carriers |
 | `doc/questions.md` | Every open question in one matrix, and the decisions taken |
 
 ## Module Chipset
