@@ -34,6 +34,9 @@ Rule: a part goes on the module only if the module's security argument needs it 
 
 ## Potting
 
+Why, and when, is in [`potting.md`](potting.md): for confidentiality the potting is a formality, since no key is ever on a trace in a usable form; what it buys is resistance
+to bricking, glitching, substitution and silent tampering, and Level 3 when a market asks for it.
+
 **What is potted:** the whole card, both sides, every component, with these exceptions:
 
 - the two DF40 connectors and a keep-out around each for the mating receptacle, on the carrier-facing side; the potting on that side is kept below the mated height of the connector pair

@@ -40,6 +40,7 @@ To support DSP applications, audio CODECs are planned for.
 | `doc/fips.md` | FIPS 140-3 as the long-term target: designing for few filings, module boundary, approved algorithms, DRBG, self-tests, roles, zeroization, and what it changes now |
 | `doc/ics55.md` | ASIC migration to the ICS55 55 nm process: the PUF behind the key-source interface |
 | `hw/module.md` | The mezzanine module and its carrier: what is on which, what is potted, the 160-contact pinout contract, clocking, removal detection, the two carriers |
+| `hw/potting.md` | What potting defends against and what it does not; Level 2 coating versus Level 3 potting; validate at Level 2 first |
 | `doc/questions.md` | Every open question in one matrix, and the decisions taken |
 
 ## Module Chipset
