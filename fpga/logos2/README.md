@@ -26,7 +26,7 @@ From the *Logos2 Family FPGAs Device Datasheet*:
 | 6 | Room for a masked Ascon core | Yes; a 50K-class part. No vendor cipher block is usable from the fabric, so the core is ours (F4) |
 | 7 | Ring-oscillator TRNG | To confirm |
 | 8 | Enough logic | A 50K-class part: ample room for the three cores, the security blocks and the application. LUT size and block RAM to confirm |
-| 9 | QSPI and peripheral pins | General I/O; 484 balls |
+| 9 | QSPI and peripheral pins | General I/O; 324 balls, 210 user I/O |
 | 10 | Module placement held stable | **Partly:** hierarchy isolation, a locked region and fixed pins in the physical constraints editor; no partition flow, so netlist locking and the build-to-build comparison are scripts to write (Keeping the module's partition stable, below) |
 
 ## Against the Ti60 fallback

@@ -1,0 +1,2376 @@
+(kicad_sch (version 20250114) (generator "eeschema") (generator_version "9.0") (uuid "31bfc057-adba-4549-9601-3bbea8b87893") (paper "A3")
+(title_block (title "FPGA configuration, JTAG, core power and ground") (date "2026-11-18") (rev "0.2") (company "thriller: FPGA root-of-trust platform (github.com/bradleyeckert/thriller)"))
+
+(lib_symbols
+(symbol "FPGA_Pango_Logos2:PG2L50H-6IMBG324" (pin_names (offset 1.016)) (in_bom yes) (on_board yes)
+(property "Reference" "U" (at 0 3.81 0) (effects (font (size 1.27 1.27))))
+
+(property "Value" "PG2L50H-6IMBG324" (at 0 -3.81 0) (effects (font (size 1.27 1.27))))
+
+(property "Footprint" "" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))
+
+(property "Datasheet" "Pango PK04006 V1.1 (PG2L50H_MBG324)" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))
+
+(property "ki_keywords" "FPGA Pango Logos2 PG2L50H" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))
+
+(property "ki_description" "Pango Logos-2 FPGA, 210 user I/O, no HSST, MBG-324 BGA 15x15mm 0.8mm pitch" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))
+
+(property "ki_fp_filters" "BGA*15.0x15.0mm*Layout18x18*P0.8mm*" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))
+
+(symbol "PG2L50H-6IMBG324_1_1"
+(rectangle (start -40.64 15.24) (end 40.64 -15.24) (stroke (width 0.254) (type default) (color 0 0 0 0)) (fill (type background)))
+
+(text "Bank L3" (at 0 0 0) (effects (font (size 1.27 1.27))))
+
+(pin bidirectional line (at -45.72 5.08 0) (length 5.08) (name "DIFFIO_L3_G0_05N_VREF" (effects (font (size 1.27 1.27)))) (number "D9" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -45.72 2.54 0) (length 5.08) (name "DIFFIO_L3_G1_10P_GSCLK" (effects (font (size 1.27 1.27)))) (number "C9" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -45.72 0 0) (length 5.08) (name "DIFFIO_L3_G1_10N_GSCLK" (effects (font (size 1.27 1.27)))) (number "B9" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -45.72 -2.54 0) (length 5.08) (name "DIFFIO_L3_G1_11P_GMCLK" (effects (font (size 1.27 1.27)))) (number "B8" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -45.72 -5.08 0) (length 5.08) (name "DIFFIO_L3_G1_11N_GMCLK" (effects (font (size 1.27 1.27)))) (number "A8" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 45.72 5.08 180) (length 5.08) (name "DIFFIO_L3_G2_12P_GMCLK" (effects (font (size 1.27 1.27)))) (number "C11" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 45.72 2.54 180) (length 5.08) (name "DIFFIO_L3_G2_12N_GMCLK" (effects (font (size 1.27 1.27)))) (number "C10" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 45.72 0 180) (length 5.08) (name "DIFFIO_L3_G2_13P_GSCLK" (effects (font (size 1.27 1.27)))) (number "A10" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 45.72 -2.54 180) (length 5.08) (name "DIFFIO_L3_G2_13N_GSCLK" (effects (font (size 1.27 1.27)))) (number "A9" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 45.72 -5.08 180) (length 5.08) (name "DIFFIO_L3_G3_18N_VREF" (effects (font (size 1.27 1.27)))) (number "D10" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at 0 20.32 270) (length 5.08) (name "VCCIOL3" (effects (font (size 1.27 1.27)))) (number "B10" (effects (font (size 1.27 1.27))))))
+
+(symbol "PG2L50H-6IMBG324_2_1"
+(rectangle (start -48.26 40.64) (end 48.26 -40.64) (stroke (width 0.254) (type default) (color 0 0 0 0)) (fill (type background)))
+
+(text "Bank L4" (at 0 0 0) (effects (font (size 1.27 1.27))))
+
+(pin bidirectional line (at -53.34 30.48 0) (length 5.08) (name "SIO_L4_00" (effects (font (size 1.27 1.27)))) (number "G13" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -53.34 25.4 0) (length 5.08) (name "DIFFIO_L4_G0_00P_VAA1P" (effects (font (size 1.27 1.27)))) (number "D14" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -53.34 22.86 0) (length 5.08) (name "DIFFIO_L4_G0_00N_VAA1N" (effects (font (size 1.27 1.27)))) (number "C14" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -53.34 20.32 0) (length 5.08) (name "DIFFIO_L4_G0_01P_VAA2P" (effects (font (size 1.27 1.27)))) (number "B13" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -53.34 17.78 0) (length 5.08) (name "DIFFIO_L4_G0_01N_VAA2N" (effects (font (size 1.27 1.27)))) (number "B14" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -53.34 15.24 0) (length 5.08) (name "DIFFIO_L4_G0_02P_DQS_VAA3P" (effects (font (size 1.27 1.27)))) (number "C12" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -53.34 12.7 0) (length 5.08) (name "DIFFIO_L4_G0_02N_DQS_VAA3N" (effects (font (size 1.27 1.27)))) (number "B12" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -53.34 10.16 0) (length 5.08) (name "DIFFIO_L4_G0_03P" (effects (font (size 1.27 1.27)))) (number "B11" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -53.34 7.62 0) (length 5.08) (name "DIFFIO_L4_G0_03N" (effects (font (size 1.27 1.27)))) (number "A11" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -53.34 5.08 0) (length 5.08) (name "DIFFIO_L4_G0_04P_VAA5P" (effects (font (size 1.27 1.27)))) (number "F13" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -53.34 2.54 0) (length 5.08) (name "DIFFIO_L4_G0_04N_VAA5N" (effects (font (size 1.27 1.27)))) (number "F14" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -53.34 0 0) (length 5.08) (name "DIFFIO_L4_G0_05P" (effects (font (size 1.27 1.27)))) (number "D12" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -53.34 -2.54 0) (length 5.08) (name "DIFFIO_L4_G0_05N_VREF" (effects (font (size 1.27 1.27)))) (number "D13" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -53.34 -5.08 0) (length 5.08) (name "DIFFIO_L4_G1_06P_VAA7P" (effects (font (size 1.27 1.27)))) (number "B16" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -53.34 -7.62 0) (length 5.08) (name "DIFFIO_L4_G1_06N_VAA7N" (effects (font (size 1.27 1.27)))) (number "B17" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -53.34 -10.16 0) (length 5.08) (name "DIFFIO_L4_G1_07P_VAA8P" (effects (font (size 1.27 1.27)))) (number "A15" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -53.34 -12.7 0) (length 5.08) (name "DIFFIO_L4_G1_07N_VAA8N" (effects (font (size 1.27 1.27)))) (number "A16" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -53.34 -15.24 0) (length 5.08) (name "DIFFIO_L4_G1_08P_DQS_VAA9P" (effects (font (size 1.27 1.27)))) (number "A13" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -53.34 -17.78 0) (length 5.08) (name "DIFFIO_L4_G1_08N_DQS_VAA9N" (effects (font (size 1.27 1.27)))) (number "A14" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -53.34 -20.32 0) (length 5.08) (name "DIFFIO_L4_G1_09P_VAA10P" (effects (font (size 1.27 1.27)))) (number "B18" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -53.34 -22.86 0) (length 5.08) (name "DIFFIO_L4_G1_09N_VAA10N" (effects (font (size 1.27 1.27)))) (number "A18" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -53.34 -25.4 0) (length 5.08) (name "DIFFIO_L4_G1_10P_GSCLK" (effects (font (size 1.27 1.27)))) (number "E15" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -53.34 -27.94 0) (length 5.08) (name "DIFFIO_L4_G1_10N_GSCLK" (effects (font (size 1.27 1.27)))) (number "E16" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -53.34 -30.48 0) (length 5.08) (name "DIFFIO_L4_G1_11P_GMCLK" (effects (font (size 1.27 1.27)))) (number "D15" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -53.34 -33.02 0) (length 5.08) (name "DIFFIO_L4_G1_11N_GMCLK" (effects (font (size 1.27 1.27)))) (number "C15" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 53.34 30.48 180) (length 5.08) (name "DIFFIO_L4_G2_12P_GMCLK" (effects (font (size 1.27 1.27)))) (number "H16" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 53.34 27.94 180) (length 5.08) (name "DIFFIO_L4_G2_12N_GMCLK" (effects (font (size 1.27 1.27)))) (number "G16" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 53.34 25.4 180) (length 5.08) (name "DIFFIO_L4_G2_13P_GSCLK" (effects (font (size 1.27 1.27)))) (number "F15" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 53.34 22.86 180) (length 5.08) (name "DIFFIO_L4_G2_13N_GSCLK" (effects (font (size 1.27 1.27)))) (number "F16" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 53.34 20.32 180) (length 5.08) (name "DIFFIO_L4_G2_14P_DQS" (effects (font (size 1.27 1.27)))) (number "H14" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 53.34 17.78 180) (length 5.08) (name "DIFFIO_L4_G2_14N_DQS_BADRVO_N" (effects (font (size 1.27 1.27)))) (number "G14" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 53.34 15.24 180) (length 5.08) (name "DIFFIO_L4_G2_15P_A28" (effects (font (size 1.27 1.27)))) (number "E17" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 53.34 12.7 180) (length 5.08) (name "DIFFIO_L4_G2_15N_A27" (effects (font (size 1.27 1.27)))) (number "D17" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 53.34 10.16 180) (length 5.08) (name "DIFFIO_L4_G2_16P_A26" (effects (font (size 1.27 1.27)))) (number "K13" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 53.34 7.62 180) (length 5.08) (name "DIFFIO_L4_G2_16N_A25" (effects (font (size 1.27 1.27)))) (number "J13" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 53.34 5.08 180) (length 5.08) (name "DIFFIO_L4_G2_17P_A24" (effects (font (size 1.27 1.27)))) (number "H17" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 53.34 2.54 180) (length 5.08) (name "DIFFIO_L4_G2_17N_A23" (effects (font (size 1.27 1.27)))) (number "G17" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 53.34 0 180) (length 5.08) (name "DIFFIO_L4_G3_18P_A22" (effects (font (size 1.27 1.27)))) (number "J14" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 53.34 -2.54 180) (length 5.08) (name "DIFFIO_L4_G3_18N_VREF_A21" (effects (font (size 1.27 1.27)))) (number "H15" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 53.34 -5.08 180) (length 5.08) (name "DIFFIO_L4_G3_19P_A20" (effects (font (size 1.27 1.27)))) (number "C16" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 53.34 -7.62 180) (length 5.08) (name "DIFFIO_L4_G3_19N_A19" (effects (font (size 1.27 1.27)))) (number "C17" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 53.34 -10.16 180) (length 5.08) (name "DIFFIO_L4_G3_20P_DQS" (effects (font (size 1.27 1.27)))) (number "E18" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 53.34 -12.7 180) (length 5.08) (name "DIFFIO_L4_G3_20N_DQS_A18" (effects (font (size 1.27 1.27)))) (number "D18" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 53.34 -15.24 180) (length 5.08) (name "DIFFIO_L4_G3_21P_A17" (effects (font (size 1.27 1.27)))) (number "G18" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 53.34 -17.78 180) (length 5.08) (name "DIFFIO_L4_G3_21N_A16" (effects (font (size 1.27 1.27)))) (number "F18" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 53.34 -20.32 180) (length 5.08) (name "DIFFIO_L4_G3_22P_BFOE_N" (effects (font (size 1.27 1.27)))) (number "J17" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 53.34 -22.86 180) (length 5.08) (name "DIFFIO_L4_G3_22N_BFWE_FCS2_N" (effects (font (size 1.27 1.27)))) (number "J18" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 53.34 -25.4 180) (length 5.08) (name "DIFFIO_L4_G3_23P_VS1" (effects (font (size 1.27 1.27)))) (number "K15" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 53.34 -27.94 180) (length 5.08) (name "DIFFIO_L4_G3_23N_VS0" (effects (font (size 1.27 1.27)))) (number "J15" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 53.34 -33.02 180) (length 5.08) (name "SIO_L4_01" (effects (font (size 1.27 1.27)))) (number "K16" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -6.35 45.72 270) (length 5.08) (name "VCCIOL4" (effects (font (size 1.27 1.27)))) (number "A17" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -3.81 45.72 270) (length 5.08) (name "VCCIOL4" (effects (font (size 1.27 1.27)))) (number "C13" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -1.27 45.72 270) (length 5.08) (name "VCCIOL4" (effects (font (size 1.27 1.27)))) (number "D16" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at 1.27 45.72 270) (length 5.08) (name "VCCIOL4" (effects (font (size 1.27 1.27)))) (number "G15" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at 3.81 45.72 270) (length 5.08) (name "VCCIOL4" (effects (font (size 1.27 1.27)))) (number "H18" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at 6.35 45.72 270) (length 5.08) (name "VCCIOL4" (effects (font (size 1.27 1.27)))) (number "K14" (effects (font (size 1.27 1.27))))))
+
+(symbol "PG2L50H-6IMBG324_3_1"
+(rectangle (start -50.8 40.64) (end 50.8 -40.64) (stroke (width 0.254) (type default) (color 0 0 0 0)) (fill (type background)))
+
+(text "Bank L5" (at 0 0 0) (effects (font (size 1.27 1.27))))
+
+(pin bidirectional line (at -55.88 30.48 0) (length 5.08) (name "SIO_L5_00" (effects (font (size 1.27 1.27)))) (number "R11" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -55.88 25.4 0) (length 5.08) (name "DIFFIO_L5_G0_00P_MOSI_D0" (effects (font (size 1.27 1.27)))) (number "K17" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -55.88 22.86 0) (length 5.08) (name "DIFFIO_L5_G0_00N_MISO_D1_DI" (effects (font (size 1.27 1.27)))) (number "K18" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -55.88 20.32 0) (length 5.08) (name "DIFFIO_L5_G0_01P_D2" (effects (font (size 1.27 1.27)))) (number "L14" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -55.88 17.78 0) (length 5.08) (name "DIFFIO_L5_G0_01N_D3" (effects (font (size 1.27 1.27)))) (number "M14" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -55.88 15.24 0) (length 5.08) (name "DIFFIO_L5_G0_02P_DQS_IO_STATUS_C" (effects (font (size 1.27 1.27)))) (number "L15" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -55.88 12.7 0) (length 5.08) (name "DIFFIO_L5_G0_02N_DQS_ECCLKIN" (effects (font (size 1.27 1.27)))) (number "L16" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -55.88 10.16 0) (length 5.08) (name "DIFFIO_L5_G0_03P_D4" (effects (font (size 1.27 1.27)))) (number "L18" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -55.88 7.62 0) (length 5.08) (name "DIFFIO_L5_G0_03N_D5" (effects (font (size 1.27 1.27)))) (number "M18" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -55.88 5.08 0) (length 5.08) (name "DIFFIO_L5_G0_04P_D6" (effects (font (size 1.27 1.27)))) (number "R12" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -55.88 2.54 0) (length 5.08) (name "DIFFIO_L5_G0_04N_D7" (effects (font (size 1.27 1.27)))) (number "R13" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -55.88 0 0) (length 5.08) (name "DIFFIO_L5_G0_05P_FCS_N" (effects (font (size 1.27 1.27)))) (number "L13" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -55.88 -2.54 0) (length 5.08) (name "DIFFIO_L5_G0_05N_VREF_D8" (effects (font (size 1.27 1.27)))) (number "M13" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -55.88 -5.08 0) (length 5.08) (name "DIFFIO_L5_G1_06P_D9" (effects (font (size 1.27 1.27)))) (number "R18" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -55.88 -7.62 0) (length 5.08) (name "DIFFIO_L5_G1_06N_D10" (effects (font (size 1.27 1.27)))) (number "T18" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -55.88 -10.16 0) (length 5.08) (name "DIFFIO_L5_G1_07P_D11" (effects (font (size 1.27 1.27)))) (number "N14" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -55.88 -12.7 0) (length 5.08) (name "DIFFIO_L5_G1_07N_D12" (effects (font (size 1.27 1.27)))) (number "P14" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -55.88 -15.24 0) (length 5.08) (name "DIFFIO_L5_G1_08P_DQS_N" (effects (font (size 1.27 1.27)))) (number "N17" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -55.88 -17.78 0) (length 5.08) (name "DIFFIO_L5_G1_08N_DQS_D13" (effects (font (size 1.27 1.27)))) (number "P18" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -55.88 -20.32 0) (length 5.08) (name "DIFFIO_L5_G1_09P_D14" (effects (font (size 1.27 1.27)))) (number "M16" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -55.88 -22.86 0) (length 5.08) (name "DIFFIO_L5_G1_09N_D15" (effects (font (size 1.27 1.27)))) (number "M17" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -55.88 -25.4 0) (length 5.08) (name "DIFFIO_L5_G1_10P_GSCLK" (effects (font (size 1.27 1.27)))) (number "N15" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -55.88 -27.94 0) (length 5.08) (name "DIFFIO_L5_G1_10N_GSCLK" (effects (font (size 1.27 1.27)))) (number "N16" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -55.88 -30.48 0) (length 5.08) (name "DIFFIO_L5_G1_11P_GMCLK" (effects (font (size 1.27 1.27)))) (number "P17" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -55.88 -33.02 0) (length 5.08) (name "DIFFIO_L5_G1_11N_GMCLK" (effects (font (size 1.27 1.27)))) (number "R17" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 55.88 30.48 180) (length 5.08) (name "DIFFIO_L5_G2_12P_GMCLK" (effects (font (size 1.27 1.27)))) (number "P15" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 55.88 27.94 180) (length 5.08) (name "DIFFIO_L5_G2_12N_GMCLK" (effects (font (size 1.27 1.27)))) (number "R15" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 55.88 25.4 180) (length 5.08) (name "DIFFIO_L5_G2_13P_GSCLK" (effects (font (size 1.27 1.27)))) (number "T14" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 55.88 22.86 180) (length 5.08) (name "DIFFIO_L5_G2_13N_GSCLK" (effects (font (size 1.27 1.27)))) (number "T15" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 55.88 20.32 180) (length 5.08) (name "DIFFIO_L5_G2_14P_DQS_RWSEL" (effects (font (size 1.27 1.27)))) (number "R16" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 55.88 17.78 180) (length 5.08) (name "DIFFIO_L5_G2_14N_DQS_CSO_DOUT" (effects (font (size 1.27 1.27)))) (number "T16" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 55.88 15.24 180) (length 5.08) (name "DIFFIO_L5_G2_15P_CS_N" (effects (font (size 1.27 1.27)))) (number "V15" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 55.88 12.7 180) (length 5.08) (name "DIFFIO_L5_G2_15N_D31_A15" (effects (font (size 1.27 1.27)))) (number "V16" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 55.88 10.16 180) (length 5.08) (name "DIFFIO_L5_G2_16P_D30_A14" (effects (font (size 1.27 1.27)))) (number "U17" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 55.88 7.62 180) (length 5.08) (name "DIFFIO_L5_G2_16N_D29_A13" (effects (font (size 1.27 1.27)))) (number "U18" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 55.88 5.08 180) (length 5.08) (name "DIFFIO_L5_G2_17P_D28_A12" (effects (font (size 1.27 1.27)))) (number "U16" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 55.88 2.54 180) (length 5.08) (name "DIFFIO_L5_G2_17N_D27_A11" (effects (font (size 1.27 1.27)))) (number "V17" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 55.88 0 180) (length 5.08) (name "DIFFIO_L5_G3_18P_D26_A10" (effects (font (size 1.27 1.27)))) (number "T11" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 55.88 -2.54 180) (length 5.08) (name "DIFFIO_L5_G3_18N_VREF_D25_A9" (effects (font (size 1.27 1.27)))) (number "U11" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 55.88 -5.08 180) (length 5.08) (name "DIFFIO_L5_G3_19P_D24_A8" (effects (font (size 1.27 1.27)))) (number "U12" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 55.88 -7.62 180) (length 5.08) (name "DIFFIO_L5_G3_19N_D23_A7" (effects (font (size 1.27 1.27)))) (number "V12" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 55.88 -10.16 180) (length 5.08) (name "DIFFIO_L5_G3_20P_DQS" (effects (font (size 1.27 1.27)))) (number "V10" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 55.88 -12.7 180) (length 5.08) (name "DIFFIO_L5_G3_20N_DQS_D22_A6" (effects (font (size 1.27 1.27)))) (number "V11" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 55.88 -15.24 180) (length 5.08) (name "DIFFIO_L5_G3_21P_D21_A5" (effects (font (size 1.27 1.27)))) (number "U14" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 55.88 -17.78 180) (length 5.08) (name "DIFFIO_L5_G3_21N_D20_A4" (effects (font (size 1.27 1.27)))) (number "V14" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 55.88 -20.32 180) (length 5.08) (name "DIFFIO_L5_G3_22P_D19_A3" (effects (font (size 1.27 1.27)))) (number "T13" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 55.88 -22.86 180) (length 5.08) (name "DIFFIO_L5_G3_22N_D18_A2" (effects (font (size 1.27 1.27)))) (number "U13" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 55.88 -25.4 180) (length 5.08) (name "DIFFIO_L5_G3_23P_D17_A1" (effects (font (size 1.27 1.27)))) (number "T9" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 55.88 -27.94 180) (length 5.08) (name "DIFFIO_L5_G3_23N_D16_A0" (effects (font (size 1.27 1.27)))) (number "T10" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 55.88 -33.02 180) (length 5.08) (name "SIO_L5_01" (effects (font (size 1.27 1.27)))) (number "R10" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -6.35 45.72 270) (length 5.08) (name "VCCIOL5" (effects (font (size 1.27 1.27)))) (number "L17" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -3.81 45.72 270) (length 5.08) (name "VCCIOL5" (effects (font (size 1.27 1.27)))) (number "N13" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -1.27 45.72 270) (length 5.08) (name "VCCIOL5" (effects (font (size 1.27 1.27)))) (number "P16" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at 1.27 45.72 270) (length 5.08) (name "VCCIOL5" (effects (font (size 1.27 1.27)))) (number "T12" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at 3.81 45.72 270) (length 5.08) (name "VCCIOL5" (effects (font (size 1.27 1.27)))) (number "U15" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at 6.35 45.72 270) (length 5.08) (name "VCCIOL5" (effects (font (size 1.27 1.27)))) (number "V18" (effects (font (size 1.27 1.27))))))
+
+(symbol "PG2L50H-6IMBG324_4_1"
+(rectangle (start -43.18 40.64) (end 43.18 -40.64) (stroke (width 0.254) (type default) (color 0 0 0 0)) (fill (type background)))
+
+(text "Bank R4" (at 0 0 0) (effects (font (size 1.27 1.27))))
+
+(pin bidirectional line (at -48.26 30.48 0) (length 5.08) (name "SIO_R4_00" (effects (font (size 1.27 1.27)))) (number "F5" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -48.26 25.4 0) (length 5.08) (name "DIFFIO_R4_G0_00P_VAA4P" (effects (font (size 1.27 1.27)))) (number "C6" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -48.26 22.86 0) (length 5.08) (name "DIFFIO_R4_G0_00N_VAA4N" (effects (font (size 1.27 1.27)))) (number "C5" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -48.26 20.32 0) (length 5.08) (name "DIFFIO_R4_G0_01P_VAA6P" (effects (font (size 1.27 1.27)))) (number "B7" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -48.26 17.78 0) (length 5.08) (name "DIFFIO_R4_G0_01N_VAA6N" (effects (font (size 1.27 1.27)))) (number "B6" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -48.26 15.24 0) (length 5.08) (name "DIFFIO_R4_G0_02P_DQS_VAA11P" (effects (font (size 1.27 1.27)))) (number "A6" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -48.26 12.7 0) (length 5.08) (name "DIFFIO_R4_G0_02N_DQS_VAA11N" (effects (font (size 1.27 1.27)))) (number "A5" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -48.26 10.16 0) (length 5.08) (name "DIFFIO_R4_G0_03P" (effects (font (size 1.27 1.27)))) (number "D8" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -48.26 7.62 0) (length 5.08) (name "DIFFIO_R4_G0_03N" (effects (font (size 1.27 1.27)))) (number "C7" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -48.26 5.08 0) (length 5.08) (name "DIFFIO_R4_G0_04P_VAA12P" (effects (font (size 1.27 1.27)))) (number "E6" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -48.26 2.54 0) (length 5.08) (name "DIFFIO_R4_G0_04N_VAA12N" (effects (font (size 1.27 1.27)))) (number "E5" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -48.26 0 0) (length 5.08) (name "DIFFIO_R4_G0_05P" (effects (font (size 1.27 1.27)))) (number "E7" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -48.26 -2.54 0) (length 5.08) (name "DIFFIO_R4_G0_05N_VREF" (effects (font (size 1.27 1.27)))) (number "D7" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -48.26 -5.08 0) (length 5.08) (name "DIFFIO_R4_G1_06P_VAA13P" (effects (font (size 1.27 1.27)))) (number "C4" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -48.26 -7.62 0) (length 5.08) (name "DIFFIO_R4_G1_06N_VAA13N" (effects (font (size 1.27 1.27)))) (number "B4" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -48.26 -10.16 0) (length 5.08) (name "DIFFIO_R4_G1_07P_VAA14P" (effects (font (size 1.27 1.27)))) (number "A4" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -48.26 -12.7 0) (length 5.08) (name "DIFFIO_R4_G1_07N_VAA14N" (effects (font (size 1.27 1.27)))) (number "A3" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -48.26 -15.24 0) (length 5.08) (name "DIFFIO_R4_G1_08P_DQS_VAA15P" (effects (font (size 1.27 1.27)))) (number "B1" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -48.26 -17.78 0) (length 5.08) (name "DIFFIO_R4_G1_08N_DQS_VAA15N" (effects (font (size 1.27 1.27)))) (number "A1" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -48.26 -20.32 0) (length 5.08) (name "DIFFIO_R4_G1_09P_VAA0P" (effects (font (size 1.27 1.27)))) (number "B3" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -48.26 -22.86 0) (length 5.08) (name "DIFFIO_R4_G1_09N_VAA0N" (effects (font (size 1.27 1.27)))) (number "B2" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -48.26 -25.4 0) (length 5.08) (name "DIFFIO_R4_G1_10P_GSCLK" (effects (font (size 1.27 1.27)))) (number "D5" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -48.26 -27.94 0) (length 5.08) (name "DIFFIO_R4_G1_10N_GSCLK" (effects (font (size 1.27 1.27)))) (number "D4" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -48.26 -30.48 0) (length 5.08) (name "DIFFIO_R4_G1_11P_GMCLK" (effects (font (size 1.27 1.27)))) (number "E3" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -48.26 -33.02 0) (length 5.08) (name "DIFFIO_R4_G1_11N_GMCLK" (effects (font (size 1.27 1.27)))) (number "D3" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 48.26 30.48 180) (length 5.08) (name "DIFFIO_R4_G2_12P_GMCLK" (effects (font (size 1.27 1.27)))) (number "F4" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 48.26 27.94 180) (length 5.08) (name "DIFFIO_R4_G2_12N_GMCLK" (effects (font (size 1.27 1.27)))) (number "F3" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 48.26 25.4 180) (length 5.08) (name "DIFFIO_R4_G2_13P_GSCLK" (effects (font (size 1.27 1.27)))) (number "E2" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 48.26 22.86 180) (length 5.08) (name "DIFFIO_R4_G2_13N_GSCLK" (effects (font (size 1.27 1.27)))) (number "D2" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 48.26 20.32 180) (length 5.08) (name "DIFFIO_R4_G2_14P_DQS" (effects (font (size 1.27 1.27)))) (number "H2" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 48.26 17.78 180) (length 5.08) (name "DIFFIO_R4_G2_14N_DQS" (effects (font (size 1.27 1.27)))) (number "G2" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 48.26 15.24 180) (length 5.08) (name "DIFFIO_R4_G2_15P" (effects (font (size 1.27 1.27)))) (number "C2" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 48.26 12.7 180) (length 5.08) (name "DIFFIO_R4_G2_15N" (effects (font (size 1.27 1.27)))) (number "C1" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 48.26 10.16 180) (length 5.08) (name "DIFFIO_R4_G2_16P" (effects (font (size 1.27 1.27)))) (number "H1" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 48.26 7.62 180) (length 5.08) (name "DIFFIO_R4_G2_16N" (effects (font (size 1.27 1.27)))) (number "G1" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 48.26 5.08 180) (length 5.08) (name "DIFFIO_R4_G2_17P" (effects (font (size 1.27 1.27)))) (number "F1" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 48.26 2.54 180) (length 5.08) (name "DIFFIO_R4_G2_17N" (effects (font (size 1.27 1.27)))) (number "E1" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 48.26 0 180) (length 5.08) (name "DIFFIO_R4_G3_18P" (effects (font (size 1.27 1.27)))) (number "G6" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 48.26 -2.54 180) (length 5.08) (name "DIFFIO_R4_G3_18N_VREF" (effects (font (size 1.27 1.27)))) (number "F6" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 48.26 -5.08 180) (length 5.08) (name "DIFFIO_R4_G3_19P" (effects (font (size 1.27 1.27)))) (number "G4" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 48.26 -7.62 180) (length 5.08) (name "DIFFIO_R4_G3_19N" (effects (font (size 1.27 1.27)))) (number "G3" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 48.26 -10.16 180) (length 5.08) (name "DIFFIO_R4_G3_20P_DQS" (effects (font (size 1.27 1.27)))) (number "J4" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 48.26 -12.7 180) (length 5.08) (name "DIFFIO_R4_G3_20N_DQS" (effects (font (size 1.27 1.27)))) (number "H4" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 48.26 -15.24 180) (length 5.08) (name "DIFFIO_R4_G3_21P" (effects (font (size 1.27 1.27)))) (number "J3" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 48.26 -17.78 180) (length 5.08) (name "DIFFIO_R4_G3_21N" (effects (font (size 1.27 1.27)))) (number "J2" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 48.26 -20.32 180) (length 5.08) (name "DIFFIO_R4_G3_22P" (effects (font (size 1.27 1.27)))) (number "K2" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 48.26 -22.86 180) (length 5.08) (name "DIFFIO_R4_G3_22N" (effects (font (size 1.27 1.27)))) (number "K1" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 48.26 -25.4 180) (length 5.08) (name "DIFFIO_R4_G3_23P" (effects (font (size 1.27 1.27)))) (number "H6" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 48.26 -27.94 180) (length 5.08) (name "DIFFIO_R4_G3_23N" (effects (font (size 1.27 1.27)))) (number "H5" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 48.26 -33.02 180) (length 5.08) (name "SIO_R4_01" (effects (font (size 1.27 1.27)))) (number "J5" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -6.35 45.72 270) (length 5.08) (name "VCCIOR4" (effects (font (size 1.27 1.27)))) (number "A7" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -3.81 45.72 270) (length 5.08) (name "VCCIOR4" (effects (font (size 1.27 1.27)))) (number "C3" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -1.27 45.72 270) (length 5.08) (name "VCCIOR4" (effects (font (size 1.27 1.27)))) (number "D6" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at 1.27 45.72 270) (length 5.08) (name "VCCIOR4" (effects (font (size 1.27 1.27)))) (number "F2" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at 3.81 45.72 270) (length 5.08) (name "VCCIOR4" (effects (font (size 1.27 1.27)))) (number "G5" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at 6.35 45.72 270) (length 5.08) (name "VCCIOR4" (effects (font (size 1.27 1.27)))) (number "J1" (effects (font (size 1.27 1.27))))))
+
+(symbol "PG2L50H-6IMBG324_5_1"
+(rectangle (start -40.64 40.64) (end 40.64 -40.64) (stroke (width 0.254) (type default) (color 0 0 0 0)) (fill (type background)))
+
+(text "Bank R5" (at 0 0 0) (effects (font (size 1.27 1.27))))
+
+(pin bidirectional line (at -45.72 30.48 0) (length 5.08) (name "SIO_R5_00" (effects (font (size 1.27 1.27)))) (number "K6" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -45.72 25.4 0) (length 5.08) (name "DIFFIO_R5_G0_00P" (effects (font (size 1.27 1.27)))) (number "L1" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -45.72 22.86 0) (length 5.08) (name "DIFFIO_R5_G0_00N" (effects (font (size 1.27 1.27)))) (number "M1" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -45.72 20.32 0) (length 5.08) (name "DIFFIO_R5_G0_01P" (effects (font (size 1.27 1.27)))) (number "K3" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -45.72 17.78 0) (length 5.08) (name "DIFFIO_R5_G0_01N" (effects (font (size 1.27 1.27)))) (number "L3" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -45.72 15.24 0) (length 5.08) (name "DIFFIO_R5_G0_02P_DQS" (effects (font (size 1.27 1.27)))) (number "N2" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -45.72 12.7 0) (length 5.08) (name "DIFFIO_R5_G0_02N_DQS" (effects (font (size 1.27 1.27)))) (number "N1" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -45.72 10.16 0) (length 5.08) (name "DIFFIO_R5_G0_03P" (effects (font (size 1.27 1.27)))) (number "M3" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -45.72 7.62 0) (length 5.08) (name "DIFFIO_R5_G0_03N" (effects (font (size 1.27 1.27)))) (number "M2" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -45.72 5.08 0) (length 5.08) (name "DIFFIO_R5_G0_04P" (effects (font (size 1.27 1.27)))) (number "K5" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -45.72 2.54 0) (length 5.08) (name "DIFFIO_R5_G0_04N" (effects (font (size 1.27 1.27)))) (number "L4" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -45.72 0 0) (length 5.08) (name "DIFFIO_R5_G0_05P" (effects (font (size 1.27 1.27)))) (number "L6" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -45.72 -2.54 0) (length 5.08) (name "DIFFIO_R5_G0_05N_VREF" (effects (font (size 1.27 1.27)))) (number "L5" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -45.72 -5.08 0) (length 5.08) (name "DIFFIO_R5_G1_06P" (effects (font (size 1.27 1.27)))) (number "U1" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -45.72 -7.62 0) (length 5.08) (name "DIFFIO_R5_G1_06N" (effects (font (size 1.27 1.27)))) (number "V1" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -45.72 -10.16 0) (length 5.08) (name "DIFFIO_R5_G1_07P" (effects (font (size 1.27 1.27)))) (number "U4" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -45.72 -12.7 0) (length 5.08) (name "DIFFIO_R5_G1_07N" (effects (font (size 1.27 1.27)))) (number "U3" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -45.72 -15.24 0) (length 5.08) (name "DIFFIO_R5_G1_08P_DQS" (effects (font (size 1.27 1.27)))) (number "U2" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -45.72 -17.78 0) (length 5.08) (name "DIFFIO_R5_G1_08N_DQS" (effects (font (size 1.27 1.27)))) (number "V2" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -45.72 -20.32 0) (length 5.08) (name "DIFFIO_R5_G1_09P" (effects (font (size 1.27 1.27)))) (number "V5" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -45.72 -22.86 0) (length 5.08) (name "DIFFIO_R5_G1_09N" (effects (font (size 1.27 1.27)))) (number "V4" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -45.72 -25.4 0) (length 5.08) (name "DIFFIO_R5_G1_10P_GSCLK" (effects (font (size 1.27 1.27)))) (number "R3" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -45.72 -27.94 0) (length 5.08) (name "DIFFIO_R5_G1_10N_GSCLK" (effects (font (size 1.27 1.27)))) (number "T3" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -45.72 -30.48 0) (length 5.08) (name "DIFFIO_R5_G1_11P_GMCLK" (effects (font (size 1.27 1.27)))) (number "T5" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -45.72 -33.02 0) (length 5.08) (name "DIFFIO_R5_G1_11N_GMCLK" (effects (font (size 1.27 1.27)))) (number "T4" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 45.72 30.48 180) (length 5.08) (name "DIFFIO_R5_G2_12P_GMCLK" (effects (font (size 1.27 1.27)))) (number "N5" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 45.72 27.94 180) (length 5.08) (name "DIFFIO_R5_G2_12N_GMCLK" (effects (font (size 1.27 1.27)))) (number "P5" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 45.72 25.4 180) (length 5.08) (name "DIFFIO_R5_G2_13P_GSCLK" (effects (font (size 1.27 1.27)))) (number "P4" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 45.72 22.86 180) (length 5.08) (name "DIFFIO_R5_G2_13N_GSCLK" (effects (font (size 1.27 1.27)))) (number "P3" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 45.72 20.32 180) (length 5.08) (name "DIFFIO_R5_G2_14P_DQS" (effects (font (size 1.27 1.27)))) (number "P2" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 45.72 17.78 180) (length 5.08) (name "DIFFIO_R5_G2_14N_DQS" (effects (font (size 1.27 1.27)))) (number "R2" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 45.72 15.24 180) (length 5.08) (name "DIFFIO_R5_G2_15P" (effects (font (size 1.27 1.27)))) (number "M4" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 45.72 12.7 180) (length 5.08) (name "DIFFIO_R5_G2_15N" (effects (font (size 1.27 1.27)))) (number "N4" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 45.72 10.16 180) (length 5.08) (name "DIFFIO_R5_G2_16P" (effects (font (size 1.27 1.27)))) (number "R1" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 45.72 7.62 180) (length 5.08) (name "DIFFIO_R5_G2_16N" (effects (font (size 1.27 1.27)))) (number "T1" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 45.72 5.08 180) (length 5.08) (name "DIFFIO_R5_G2_17P" (effects (font (size 1.27 1.27)))) (number "M6" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 45.72 2.54 180) (length 5.08) (name "DIFFIO_R5_G2_17N" (effects (font (size 1.27 1.27)))) (number "N6" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 45.72 0 180) (length 5.08) (name "DIFFIO_R5_G3_18P" (effects (font (size 1.27 1.27)))) (number "R6" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 45.72 -2.54 180) (length 5.08) (name "DIFFIO_R5_G3_18N_VREF" (effects (font (size 1.27 1.27)))) (number "R5" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 45.72 -5.08 180) (length 5.08) (name "DIFFIO_R5_G3_19P" (effects (font (size 1.27 1.27)))) (number "V7" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 45.72 -7.62 180) (length 5.08) (name "DIFFIO_R5_G3_19N" (effects (font (size 1.27 1.27)))) (number "V6" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 45.72 -10.16 180) (length 5.08) (name "DIFFIO_R5_G3_20P_DQS" (effects (font (size 1.27 1.27)))) (number "U9" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 45.72 -12.7 180) (length 5.08) (name "DIFFIO_R5_G3_20N_DQS" (effects (font (size 1.27 1.27)))) (number "V9" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 45.72 -15.24 180) (length 5.08) (name "DIFFIO_R5_G3_21P" (effects (font (size 1.27 1.27)))) (number "U7" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 45.72 -17.78 180) (length 5.08) (name "DIFFIO_R5_G3_21N" (effects (font (size 1.27 1.27)))) (number "U6" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 45.72 -20.32 180) (length 5.08) (name "DIFFIO_R5_G3_22P" (effects (font (size 1.27 1.27)))) (number "R7" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 45.72 -22.86 180) (length 5.08) (name "DIFFIO_R5_G3_22N" (effects (font (size 1.27 1.27)))) (number "T6" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 45.72 -25.4 180) (length 5.08) (name "DIFFIO_R5_G3_23P" (effects (font (size 1.27 1.27)))) (number "R8" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 45.72 -27.94 180) (length 5.08) (name "DIFFIO_R5_G3_23N" (effects (font (size 1.27 1.27)))) (number "T8" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at 45.72 -33.02 180) (length 5.08) (name "SIO_R5_01" (effects (font (size 1.27 1.27)))) (number "U8" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -6.35 45.72 270) (length 5.08) (name "VCCIOR5" (effects (font (size 1.27 1.27)))) (number "K4" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -3.81 45.72 270) (length 5.08) (name "VCCIOR5" (effects (font (size 1.27 1.27)))) (number "N3" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -1.27 45.72 270) (length 5.08) (name "VCCIOR5" (effects (font (size 1.27 1.27)))) (number "P6" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at 1.27 45.72 270) (length 5.08) (name "VCCIOR5" (effects (font (size 1.27 1.27)))) (number "T2" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at 3.81 45.72 270) (length 5.08) (name "VCCIOR5" (effects (font (size 1.27 1.27)))) (number "U5" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at 6.35 45.72 270) (length 5.08) (name "VCCIOR5" (effects (font (size 1.27 1.27)))) (number "V8" (effects (font (size 1.27 1.27))))))
+
+(symbol "PG2L50H-6IMBG324_6_1"
+(rectangle (start -30.48 27.94) (end 30.48 -27.94) (stroke (width 0.254) (type default) (color 0 0 0 0)) (fill (type background)))
+
+(text "Config / JTAG / ADC" (at 0 0 0) (effects (font (size 1.27 1.27))))
+
+(pin input line (at -35.56 15.24 0) (length 5.08) (name "MODE_0" (effects (font (size 1.27 1.27)))) (number "P12" (effects (font (size 1.27 1.27)))))
+
+(pin input line (at -35.56 12.7 0) (length 5.08) (name "MODE_1" (effects (font (size 1.27 1.27)))) (number "P13" (effects (font (size 1.27 1.27)))))
+
+(pin input line (at -35.56 10.16 0) (length 5.08) (name "MODE_2" (effects (font (size 1.27 1.27)))) (number "P11" (effects (font (size 1.27 1.27)))))
+
+(pin input line (at -35.56 7.62 0) (length 5.08) (name "SCBV" (effects (font (size 1.27 1.27)))) (number "P8" (effects (font (size 1.27 1.27)))))
+
+(pin input line (at -35.56 2.54 0) (length 5.08) (name "RSTN" (effects (font (size 1.27 1.27)))) (number "P9" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -35.56 0 0) (length 5.08) (name "INIT_FLAG_N" (effects (font (size 1.27 1.27)))) (number "P7" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -35.56 -2.54 0) (length 5.08) (name "CFG_DONE" (effects (font (size 1.27 1.27)))) (number "P10" (effects (font (size 1.27 1.27)))))
+
+(pin bidirectional line (at -35.56 -5.08 0) (length 5.08) (name "CFG_CLK" (effects (font (size 1.27 1.27)))) (number "E9" (effects (font (size 1.27 1.27)))))
+
+(pin input line (at -35.56 -10.16 0) (length 5.08) (name "TCK" (effects (font (size 1.27 1.27)))) (number "E10" (effects (font (size 1.27 1.27)))))
+
+(pin input line (at -35.56 -12.7 0) (length 5.08) (name "TMS" (effects (font (size 1.27 1.27)))) (number "E12" (effects (font (size 1.27 1.27)))))
+
+(pin input line (at -35.56 -15.24 0) (length 5.08) (name "TDI" (effects (font (size 1.27 1.27)))) (number "E11" (effects (font (size 1.27 1.27)))))
+
+(pin output line (at -35.56 -17.78 0) (length 5.08) (name "TDO" (effects (font (size 1.27 1.27)))) (number "E13" (effects (font (size 1.27 1.27)))))
+
+(pin input line (at 35.56 7.62 180) (length 5.08) (name "VAADC_P" (effects (font (size 1.27 1.27)))) (number "J10" (effects (font (size 1.27 1.27)))))
+
+(pin input line (at 35.56 5.08 180) (length 5.08) (name "VAADC_N" (effects (font (size 1.27 1.27)))) (number "K9" (effects (font (size 1.27 1.27)))))
+
+(pin passive line (at 35.56 0 180) (length 5.08) (name "VREFADC_P" (effects (font (size 1.27 1.27)))) (number "K10" (effects (font (size 1.27 1.27)))))
+
+(pin passive line (at 35.56 -2.54 180) (length 5.08) (name "VREFADC_N" (effects (font (size 1.27 1.27)))) (number "J9" (effects (font (size 1.27 1.27)))))
+
+(pin passive line (at 35.56 -7.62 180) (length 5.08) (name "TSDP" (effects (font (size 1.27 1.27)))) (number "L10" (effects (font (size 1.27 1.27)))))
+
+(pin passive line (at 35.56 -10.16 180) (length 5.08) (name "TSDN" (effects (font (size 1.27 1.27)))) (number "L9" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -2.54 33.02 270) (length 5.08) (name "VCCIOCFG" (effects (font (size 1.27 1.27)))) (number "R9" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at 0 33.02 270) (length 5.08) (name "VCCB" (effects (font (size 1.27 1.27)))) (number "E8" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at 2.54 33.02 270) (length 5.08) (name "VCCADC" (effects (font (size 1.27 1.27)))) (number "H10" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at 0 -33.02 90) (length 5.08) (name "VSSADC" (effects (font (size 1.27 1.27)))) (number "H9" (effects (font (size 1.27 1.27))))))
+
+(symbol "PG2L50H-6IMBG324_7_1"
+(rectangle (start -22.86 25.4) (end 22.86 -25.4) (stroke (width 0.254) (type default) (color 0 0 0 0)) (fill (type background)))
+
+(text "Core / Aux Power" (at 0 0 0) (effects (font (size 1.27 1.27))))
+
+(pin power_in line (at -27.94 17.78 0) (length 5.08) (name "VCC" (effects (font (size 1.27 1.27)))) (number "F8" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -27.94 15.24 0) (length 5.08) (name "VCC" (effects (font (size 1.27 1.27)))) (number "G7" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -27.94 12.7 0) (length 5.08) (name "VCC" (effects (font (size 1.27 1.27)))) (number "G9" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -27.94 10.16 0) (length 5.08) (name "VCC" (effects (font (size 1.27 1.27)))) (number "H8" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -27.94 7.62 0) (length 5.08) (name "VCC" (effects (font (size 1.27 1.27)))) (number "J7" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -27.94 5.08 0) (length 5.08) (name "VCC" (effects (font (size 1.27 1.27)))) (number "J11" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -27.94 2.54 0) (length 5.08) (name "VCC" (effects (font (size 1.27 1.27)))) (number "K8" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -27.94 0 0) (length 5.08) (name "VCC" (effects (font (size 1.27 1.27)))) (number "L7" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -27.94 -2.54 0) (length 5.08) (name "VCC" (effects (font (size 1.27 1.27)))) (number "L11" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -27.94 -5.08 0) (length 5.08) (name "VCC" (effects (font (size 1.27 1.27)))) (number "M8" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -27.94 -7.62 0) (length 5.08) (name "VCC" (effects (font (size 1.27 1.27)))) (number "M10" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -27.94 -10.16 0) (length 5.08) (name "VCC" (effects (font (size 1.27 1.27)))) (number "N7" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -27.94 -12.7 0) (length 5.08) (name "VCC" (effects (font (size 1.27 1.27)))) (number "N9" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -27.94 -15.24 0) (length 5.08) (name "VCC" (effects (font (size 1.27 1.27)))) (number "N11" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -27.94 -17.78 0) (length 5.08) (name "VCC_DRM" (effects (font (size 1.27 1.27)))) (number "F10" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -27.94 -20.32 0) (length 5.08) (name "VCC_DRM" (effects (font (size 1.27 1.27)))) (number "G11" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at 27.94 17.78 180) (length 5.08) (name "VCCA" (effects (font (size 1.27 1.27)))) (number "F12" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at 27.94 15.24 180) (length 5.08) (name "VCCA" (effects (font (size 1.27 1.27)))) (number "H12" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at 27.94 12.7 180) (length 5.08) (name "VCCA" (effects (font (size 1.27 1.27)))) (number "K12" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at 27.94 10.16 180) (length 5.08) (name "VCCA" (effects (font (size 1.27 1.27)))) (number "M12" (effects (font (size 1.27 1.27))))))
+
+(symbol "PG2L50H-6IMBG324_8_1"
+(rectangle (start -17.78 35.56) (end 17.78 -35.56) (stroke (width 0.254) (type default) (color 0 0 0 0)) (fill (type background)))
+
+(text "Ground" (at 0 0 0) (effects (font (size 1.27 1.27))))
+
+(pin power_in line (at -22.86 27.94 0) (length 5.08) (name "VSS" (effects (font (size 1.27 1.27)))) (number "A2" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -22.86 25.4 0) (length 5.08) (name "VSS" (effects (font (size 1.27 1.27)))) (number "A12" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -22.86 22.86 0) (length 5.08) (name "VSS" (effects (font (size 1.27 1.27)))) (number "B5" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -22.86 20.32 0) (length 5.08) (name "VSS" (effects (font (size 1.27 1.27)))) (number "B15" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -22.86 17.78 0) (length 5.08) (name "VSS" (effects (font (size 1.27 1.27)))) (number "C8" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -22.86 15.24 0) (length 5.08) (name "VSS" (effects (font (size 1.27 1.27)))) (number "C18" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -22.86 12.7 0) (length 5.08) (name "VSS" (effects (font (size 1.27 1.27)))) (number "D1" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -22.86 10.16 0) (length 5.08) (name "VSS" (effects (font (size 1.27 1.27)))) (number "D11" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -22.86 7.62 0) (length 5.08) (name "VSS" (effects (font (size 1.27 1.27)))) (number "E4" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -22.86 5.08 0) (length 5.08) (name "VSS" (effects (font (size 1.27 1.27)))) (number "E14" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -22.86 2.54 0) (length 5.08) (name "VSS" (effects (font (size 1.27 1.27)))) (number "F7" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -22.86 0 0) (length 5.08) (name "VSS" (effects (font (size 1.27 1.27)))) (number "F9" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -22.86 -2.54 0) (length 5.08) (name "VSS" (effects (font (size 1.27 1.27)))) (number "F11" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -22.86 -5.08 0) (length 5.08) (name "VSS" (effects (font (size 1.27 1.27)))) (number "F17" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -22.86 -7.62 0) (length 5.08) (name "VSS" (effects (font (size 1.27 1.27)))) (number "G8" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -22.86 -10.16 0) (length 5.08) (name "VSS" (effects (font (size 1.27 1.27)))) (number "G10" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -22.86 -12.7 0) (length 5.08) (name "VSS" (effects (font (size 1.27 1.27)))) (number "G12" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -22.86 -15.24 0) (length 5.08) (name "VSS" (effects (font (size 1.27 1.27)))) (number "H3" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -22.86 -17.78 0) (length 5.08) (name "VSS" (effects (font (size 1.27 1.27)))) (number "H7" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -22.86 -20.32 0) (length 5.08) (name "VSS" (effects (font (size 1.27 1.27)))) (number "H11" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -22.86 -22.86 0) (length 5.08) (name "VSS" (effects (font (size 1.27 1.27)))) (number "H13" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -22.86 -25.4 0) (length 5.08) (name "VSS" (effects (font (size 1.27 1.27)))) (number "J6" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -22.86 -27.94 0) (length 5.08) (name "VSS" (effects (font (size 1.27 1.27)))) (number "J8" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at -22.86 -30.48 0) (length 5.08) (name "VSS" (effects (font (size 1.27 1.27)))) (number "J12" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at 22.86 27.94 180) (length 5.08) (name "VSS" (effects (font (size 1.27 1.27)))) (number "J16" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at 22.86 25.4 180) (length 5.08) (name "VSS" (effects (font (size 1.27 1.27)))) (number "K7" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at 22.86 22.86 180) (length 5.08) (name "VSS" (effects (font (size 1.27 1.27)))) (number "K11" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at 22.86 20.32 180) (length 5.08) (name "VSS" (effects (font (size 1.27 1.27)))) (number "L2" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at 22.86 17.78 180) (length 5.08) (name "VSS" (effects (font (size 1.27 1.27)))) (number "L8" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at 22.86 15.24 180) (length 5.08) (name "VSS" (effects (font (size 1.27 1.27)))) (number "L12" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at 22.86 12.7 180) (length 5.08) (name "VSS" (effects (font (size 1.27 1.27)))) (number "M5" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at 22.86 10.16 180) (length 5.08) (name "VSS" (effects (font (size 1.27 1.27)))) (number "M7" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at 22.86 7.62 180) (length 5.08) (name "VSS" (effects (font (size 1.27 1.27)))) (number "M9" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at 22.86 5.08 180) (length 5.08) (name "VSS" (effects (font (size 1.27 1.27)))) (number "M11" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at 22.86 2.54 180) (length 5.08) (name "VSS" (effects (font (size 1.27 1.27)))) (number "M15" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at 22.86 0 180) (length 5.08) (name "VSS" (effects (font (size 1.27 1.27)))) (number "N8" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at 22.86 -2.54 180) (length 5.08) (name "VSS" (effects (font (size 1.27 1.27)))) (number "N10" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at 22.86 -5.08 180) (length 5.08) (name "VSS" (effects (font (size 1.27 1.27)))) (number "N12" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at 22.86 -7.62 180) (length 5.08) (name "VSS" (effects (font (size 1.27 1.27)))) (number "N18" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at 22.86 -10.16 180) (length 5.08) (name "VSS" (effects (font (size 1.27 1.27)))) (number "P1" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at 22.86 -12.7 180) (length 5.08) (name "VSS" (effects (font (size 1.27 1.27)))) (number "R4" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at 22.86 -15.24 180) (length 5.08) (name "VSS" (effects (font (size 1.27 1.27)))) (number "R14" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at 22.86 -17.78 180) (length 5.08) (name "VSS" (effects (font (size 1.27 1.27)))) (number "T7" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at 22.86 -20.32 180) (length 5.08) (name "VSS" (effects (font (size 1.27 1.27)))) (number "T17" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at 22.86 -22.86 180) (length 5.08) (name "VSS" (effects (font (size 1.27 1.27)))) (number "U10" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at 22.86 -25.4 180) (length 5.08) (name "VSS" (effects (font (size 1.27 1.27)))) (number "V3" (effects (font (size 1.27 1.27)))))
+
+(pin power_in line (at 22.86 -27.94 180) (length 5.08) (name "VSS" (effects (font (size 1.27 1.27)))) (number "V13" (effects (font (size 1.27 1.27)))))))
+
+(symbol "thriller:+3V3" (power) (pin_numbers (hide yes)) (pin_names (offset 0) (hide yes)) (exclude_from_sim no) (in_bom no) (on_board no)
+(property "Reference" "#PWR" (at -1.27 3.81 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "+3V3" (at -1.27 -1.27 0) (effects (font (size 1.27 1.27))))
+
+(property "Footprint" "" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Datasheet" "" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Description" "Power symbol, global net +3V3" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(symbol "+3V3_0_1"
+(polyline (pts (xy -0.762 1.27) (xy 0 2.54) (xy 0.762 1.27)) (stroke (width 0) (type default)) (fill (type none)))
+
+(polyline (pts (xy 0 0) (xy 0 2.54)) (stroke (width 0) (type default)) (fill (type none))))
+
+(symbol "+3V3_1_1"
+(pin power_in line (at 0 0 90) (length 0) (name "+3V3" (effects (font (size 1.27 1.27)))) (number "1" (effects (font (size 1.27 1.27))))))
+(embedded_fonts no))
+
+(symbol "thriller:+1V0" (power) (pin_numbers (hide yes)) (pin_names (offset 0) (hide yes)) (exclude_from_sim no) (in_bom no) (on_board no)
+(property "Reference" "#PWR" (at -1.27 3.81 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "+1V0" (at -1.27 -1.27 0) (effects (font (size 1.27 1.27))))
+
+(property "Footprint" "" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Datasheet" "" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Description" "Power symbol, global net +1V0" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(symbol "+1V0_0_1"
+(polyline (pts (xy -0.762 1.27) (xy 0 2.54) (xy 0.762 1.27)) (stroke (width 0) (type default)) (fill (type none)))
+
+(polyline (pts (xy 0 0) (xy 0 2.54)) (stroke (width 0) (type default)) (fill (type none))))
+
+(symbol "+1V0_1_1"
+(pin power_in line (at 0 0 90) (length 0) (name "+1V0" (effects (font (size 1.27 1.27)))) (number "1" (effects (font (size 1.27 1.27))))))
+(embedded_fonts no))
+
+(symbol "thriller:+1V8" (power) (pin_numbers (hide yes)) (pin_names (offset 0) (hide yes)) (exclude_from_sim no) (in_bom no) (on_board no)
+(property "Reference" "#PWR" (at -1.27 3.81 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "+1V8" (at -1.27 -1.27 0) (effects (font (size 1.27 1.27))))
+
+(property "Footprint" "" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Datasheet" "" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Description" "Power symbol, global net +1V8" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(symbol "+1V8_0_1"
+(polyline (pts (xy -0.762 1.27) (xy 0 2.54) (xy 0.762 1.27)) (stroke (width 0) (type default)) (fill (type none)))
+
+(polyline (pts (xy 0 0) (xy 0 2.54)) (stroke (width 0) (type default)) (fill (type none))))
+
+(symbol "+1V8_1_1"
+(pin power_in line (at 0 0 90) (length 0) (name "+1V8" (effects (font (size 1.27 1.27)))) (number "1" (effects (font (size 1.27 1.27))))))
+(embedded_fonts no))
+
+(symbol "thriller:+3V3_AO" (power) (pin_numbers (hide yes)) (pin_names (offset 0) (hide yes)) (exclude_from_sim no) (in_bom no) (on_board no)
+(property "Reference" "#PWR" (at -1.27 3.81 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "+3V3_AO" (at -1.27 -1.27 0) (effects (font (size 1.27 1.27))))
+
+(property "Footprint" "" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Datasheet" "" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Description" "Power symbol, global net +3V3_AO" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(symbol "+3V3_AO_0_1"
+(polyline (pts (xy -0.762 1.27) (xy 0 2.54) (xy 0.762 1.27)) (stroke (width 0) (type default)) (fill (type none)))
+
+(polyline (pts (xy 0 0) (xy 0 2.54)) (stroke (width 0) (type default)) (fill (type none))))
+
+(symbol "+3V3_AO_1_1"
+(pin power_in line (at 0 0 90) (length 0) (name "+3V3_AO" (effects (font (size 1.27 1.27)))) (number "1" (effects (font (size 1.27 1.27))))))
+(embedded_fonts no))
+
+(symbol "thriller:GND" (power) (pin_numbers (hide yes)) (pin_names (offset 0) (hide yes)) (exclude_from_sim no) (in_bom no) (on_board no)
+(property "Reference" "#PWR" (at -1.27 1.27 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "GND" (at -1.27 -3.81 0) (effects (font (size 1.27 1.27))))
+
+(property "Footprint" "" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Datasheet" "" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Description" "Power symbol, global net GND" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(symbol "GND_0_1"
+(polyline (pts (xy 0 0) (xy 0 -1.27) (xy 1.27 -1.27) (xy 0 -2.54) (xy -1.27 -1.27) (xy 0 -1.27)) (stroke (width 0) (type default)) (fill (type none))))
+
+(symbol "GND_1_1"
+(pin power_in line (at 0 0 270) (length 0) (name "GND" (effects (font (size 1.27 1.27)))) (number "1" (effects (font (size 1.27 1.27))))))
+(embedded_fonts no))
+
+(symbol "thriller:C" (pin_numbers (hide yes)) (pin_names (offset 0) (hide yes)) (exclude_from_sim no) (in_bom yes) (on_board yes)
+(property "Reference" "C" (at -1.27 3.81 0) (effects (font (size 1.27 1.27))))
+
+(property "Value" "C" (at -1.27 -3.81 0) (effects (font (size 1.27 1.27))))
+
+(property "Footprint" "" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Datasheet" "" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Description" "Capacitor" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(symbol "C_0_1"
+(polyline (pts (xy -1.524 0.381) (xy 1.524 0.381)) (stroke (width 0.4) (type default)) (fill (type none)))
+
+(polyline (pts (xy -1.524 -0.381) (xy 1.524 -0.381)) (stroke (width 0.4) (type default)) (fill (type none))))
+
+(symbol "C_1_1"
+(pin passive line (at 0 3.81 270) (length 3.429) (name "~" (effects (font (size 1.27 1.27)))) (number "1" (effects (font (size 1.27 1.27)))))
+
+(pin passive line (at 0 -3.81 90) (length 3.429) (name "~" (effects (font (size 1.27 1.27)))) (number "2" (effects (font (size 1.27 1.27))))))
+(embedded_fonts no))
+
+(symbol "thriller:R" (pin_numbers (hide yes)) (pin_names (offset 0) (hide yes)) (exclude_from_sim no) (in_bom yes) (on_board yes)
+(property "Reference" "R" (at -1.27 3.81 0) (effects (font (size 1.27 1.27))))
+
+(property "Value" "R" (at -1.27 -3.81 0) (effects (font (size 1.27 1.27))))
+
+(property "Footprint" "" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Datasheet" "" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Description" "Resistor" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(symbol "R_0_1"
+(rectangle (start -1.016 2.54) (end 1.016 -2.54) (stroke (width 0.254) (type default)) (fill (type none))))
+
+(symbol "R_1_1"
+(pin passive line (at 0 3.81 270) (length 1.27) (name "~" (effects (font (size 1.27 1.27)))) (number "1" (effects (font (size 1.27 1.27)))))
+
+(pin passive line (at 0 -3.81 90) (length 1.27) (name "~" (effects (font (size 1.27 1.27)))) (number "2" (effects (font (size 1.27 1.27))))))
+(embedded_fonts no))
+
+(symbol "thriller:PWR_FLAG" (power) (pin_numbers (hide yes)) (pin_names (offset 0) (hide yes)) (exclude_from_sim no) (in_bom no) (on_board no)
+(property "Reference" "#FLG" (at -1.27 3.81 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "PWR_FLAG" (at -1.27 -1.27 0) (effects (font (size 1.27 1.27))))
+
+(property "Footprint" "" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Datasheet" "" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Description" "Power flag" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(symbol "PWR_FLAG_0_1"
+(polyline (pts (xy 0 0) (xy 0 1.27) (xy -1.016 1.905) (xy 0 2.54) (xy 1.016 1.905) (xy 0 1.27)) (stroke (width 0) (type default)) (fill (type none))))
+
+(symbol "PWR_FLAG_1_1"
+(pin power_out line (at 0 0 90) (length 0) (name "pwr" (effects (font (size 1.27 1.27)))) (number "1" (effects (font (size 1.27 1.27))))))
+(embedded_fonts no)))
+
+(symbol (lib_id "FPGA_Pango_Logos2:PG2L50H-6IMBG324") (at 90.56 130 0) (unit 6) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "90d744ea-0110-4b9e-92a4-d774442f54bf")
+(property "Reference" "U1" (at 90.56 127.46 0) (effects (font (size 1.27 1.27))))
+
+(property "Value" "PG2L50H-6IMBG324" (at 90.56 132.54 0) (effects (font (size 1.27 1.27))))
+
+(property "Footprint" "Package_BGA:BGA-324_18x18_15.0x15.0mm_Pitch0.8mm" (at 90.56 130 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Datasheet" "Pango PK04006 V1.1 (PG2L50H_MBG324)" (at 90.56 130 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "LCSC" "" (at 90.56 130 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "MPN" "PG2L50H-6IMBG324" (at 90.56 130 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(pin "P12" (uuid "fdc9facf-fec0-4028-8273-bd2390387bcf"))
+
+(pin "P13" (uuid "318e173e-2304-41d8-b23d-fcc4de2549f6"))
+
+(pin "P11" (uuid "a372281e-70f8-45e6-91e8-f091c704ea25"))
+
+(pin "P8" (uuid "6f10ad96-90fe-4975-913e-94a365c730b4"))
+
+(pin "P9" (uuid "96502234-7047-44f5-82b4-19803343c246"))
+
+(pin "P7" (uuid "6563b20c-1736-4a99-bee7-eb30862946c1"))
+
+(pin "P10" (uuid "44890ed7-dec9-4a62-9fc0-7095fa31bc32"))
+
+(pin "E9" (uuid "e1414b02-48bb-4acd-9154-5dde9a2ce263"))
+
+(pin "E10" (uuid "36b1228a-1a7c-49a2-8991-c1cad14f46b8"))
+
+(pin "E12" (uuid "80681a37-231c-4a81-a789-1e8cfec00493"))
+
+(pin "E11" (uuid "0bd9d351-98b0-4da9-b503-0eee9fb249cc"))
+
+(pin "E13" (uuid "6fb581bc-df56-44db-a7c4-14913938bf3f"))
+
+(pin "J10" (uuid "286e8bf6-2f04-4f22-8e02-6591159d243f"))
+
+(pin "K9" (uuid "06bf5fb7-c0af-4a57-84d3-3612ce972ce4"))
+
+(pin "K10" (uuid "0847bb35-1f0e-4186-90fd-8e84b0d5161e"))
+
+(pin "J9" (uuid "5463cc2c-aabc-4ba2-8a4a-9847bfcfb69a"))
+
+(pin "L10" (uuid "17410d9c-494f-4f27-9429-c5ce54a6f5d4"))
+
+(pin "L9" (uuid "2b25e814-41b7-49dd-8588-a1eb8b6ac2a9"))
+
+(pin "R9" (uuid "fd1ef9f0-b833-4f9d-baea-e891cef0a173"))
+
+(pin "E8" (uuid "e1acb3c1-199a-47f5-9b57-67de046b59ff"))
+
+(pin "H10" (uuid "bf7b7f13-b308-4113-ac3e-bedc8ba8666f"))
+
+(pin "H9" (uuid "bc3188a1-2394-414d-b842-6ac031e90368"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "U1") (unit 6)))))
+
+(wire (pts (xy 55 114.76) (xy 49.92 114.76)) (stroke (width 0) (type default)) (uuid "2dce7055-2fde-4aed-931b-3c3209d602aa"))
+
+(global_label "CFG_MODE0" (shape passive) (at 49.92 114.76 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "c673a621-1726-4fdd-be7c-c83ea2f0ad3e"))
+
+(wire (pts (xy 55 117.3) (xy 49.92 117.3)) (stroke (width 0) (type default)) (uuid "48f0fe7e-116b-49cc-be62-0d86cae2c9e5"))
+
+(global_label "CFG_MODE1" (shape passive) (at 49.92 117.3 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "399cd36d-3913-4202-b0a1-5dcff0cb9026"))
+
+(wire (pts (xy 55 119.84) (xy 49.92 119.84)) (stroke (width 0) (type default)) (uuid "66ad7329-44db-46ed-a02a-5c9af47d8cc2"))
+
+(global_label "CFG_MODE2" (shape passive) (at 49.92 119.84 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "e3462c58-578c-44a1-bc2f-c61787b581a0"))
+
+(wire (pts (xy 55 122.38) (xy 49.92 122.38)) (stroke (width 0) (type default)) (uuid "c74eff68-5b45-4f7e-a1f4-abf273a49ef5"))
+
+(wire (pts (xy 55 127.46) (xy 49.92 127.46)) (stroke (width 0) (type default)) (uuid "a4027ea2-68c3-46b7-ac0d-7d32bc98bf0b"))
+
+(global_label "FPGA_RST_N" (shape passive) (at 49.92 127.46 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "7fbcbff4-3ff2-4d72-bbde-68a815b57501"))
+
+(wire (pts (xy 55 130) (xy 49.92 130)) (stroke (width 0) (type default)) (uuid "2462dbff-ba24-49df-9f68-6d0dab13a41d"))
+
+(global_label "CFG_INIT_N" (shape passive) (at 49.92 130 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "661acdd8-5b04-46c9-b596-a2ebe9b5354f"))
+
+(wire (pts (xy 55 132.54) (xy 49.92 132.54)) (stroke (width 0) (type default)) (uuid "c607d7a1-9bea-4921-94cb-53d47d17a8be"))
+
+(global_label "CFG_DONE" (shape passive) (at 49.92 132.54 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "da4694ce-1520-405b-9de3-0dd9f25ca6e7"))
+
+(wire (pts (xy 55 135.08) (xy 49.92 135.08)) (stroke (width 0) (type default)) (uuid "12a71819-b1ec-42c0-ab53-926593f09ee8"))
+
+(global_label "CFG_CLK" (shape passive) (at 49.92 135.08 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "d9b1480d-0aff-49d2-9c0d-cd90dec11121"))
+
+(wire (pts (xy 55 140.16) (xy 49.92 140.16)) (stroke (width 0) (type default)) (uuid "65bb4f55-0eee-4094-ad1e-02eb66e4eaf4"))
+
+(global_label "JTAG_TCK" (shape passive) (at 49.92 140.16 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "82c97c27-0ca7-41ed-a0a9-84fb8a533cba"))
+
+(wire (pts (xy 55 142.7) (xy 49.92 142.7)) (stroke (width 0) (type default)) (uuid "68360252-f8fe-4fbd-9054-cf29144e290a"))
+
+(global_label "JTAG_TMS" (shape passive) (at 49.92 142.7 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "0cf03731-e96d-412f-bff7-d28e11514737"))
+
+(wire (pts (xy 55 145.24) (xy 49.92 145.24)) (stroke (width 0) (type default)) (uuid "620808f8-8a5f-4ff5-b848-b8eb9ccff102"))
+
+(global_label "JTAG_TDI" (shape passive) (at 49.92 145.24 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "04c450b4-9e01-49f6-ad84-5f303ab58a6f"))
+
+(wire (pts (xy 55 147.78) (xy 49.92 147.78)) (stroke (width 0) (type default)) (uuid "c1d26939-afad-46c1-a938-80897bd5fc0e"))
+
+(global_label "JTAG_TDO" (shape passive) (at 49.92 147.78 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "b4a7bda1-887a-4d91-984e-9dc25b2cebbc"))
+
+(wire (pts (xy 126.12 122.38) (xy 131.2 122.38)) (stroke (width 0) (type default)) (uuid "551f9c68-ba78-4f3a-943f-5aecad0863ce"))
+
+(global_label "ADC_5V_MON" (shape passive) (at 131.2 122.38 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "ed0f99a4-7ccd-4ee7-bafb-b6f9fc788b20"))
+
+(wire (pts (xy 126.12 124.92) (xy 131.2 124.92)) (stroke (width 0) (type default)) (uuid "12f49e02-7db3-4c74-a8e2-219ce1261635"))
+
+(no_connect (at 126.12 130) (uuid "e7de2136-8bb3-4967-b203-424bb9ae8968"))
+
+(no_connect (at 126.12 132.54) (uuid "254907e6-e008-49af-a789-cc0786c3517d"))
+
+(no_connect (at 126.12 137.62) (uuid "e36731d4-caf3-4338-a087-72d8ad21b78a"))
+
+(no_connect (at 126.12 140.16) (uuid "bd29a240-fb14-45b2-add1-e088ce8fa29d"))
+
+(wire (pts (xy 88.02 96.98) (xy 88.02 91.9)) (stroke (width 0) (type default)) (uuid "6a8a33fb-01f5-48ea-90e6-438eec1db681"))
+
+(symbol (lib_id "thriller:+3V3") (at 88.02 91.9 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "6934d745-2b48-4a24-b57e-66113b6dcc2e")
+(property "Reference" "#PWR" (at 88.02 89.36 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "+3V3" (at 88.02 94.44 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "6428e871-d46d-4b39-a724-3fd878a5f49c"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(wire (pts (xy 90.56 96.98) (xy 90.56 91.9)) (stroke (width 0) (type default)) (uuid "bb3f5295-7f97-4648-a5fa-11e71c136e0f"))
+
+(global_label "VCCB" (shape passive) (at 90.56 91.9 90) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "3f33695e-249b-47a2-8c64-bce010c84079"))
+
+(wire (pts (xy 93.1 96.98) (xy 93.1 91.9)) (stroke (width 0) (type default)) (uuid "41fd4662-a386-4d11-bd2f-7a508e5da6f7"))
+
+(global_label "VCCADC" (shape passive) (at 93.1 91.9 90) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "3fb99855-e67d-40ff-8f5d-3c394a3c5cf3"))
+
+(wire (pts (xy 90.56 163.02) (xy 90.56 168.1)) (stroke (width 0) (type default)) (uuid "a630c459-8806-4227-9ba6-4376eb6bb51c"))
+
+(symbol (lib_id "thriller:GND") (at 90.56 168.1 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "93c01a56-7dc4-41b4-8a4f-b172390d1d87")
+(property "Reference" "#PWR" (at 90.56 165.56 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "GND" (at 90.56 170.64 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "098bfd30-5a0d-43c6-89e5-51f0d0ee17a3"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(symbol (lib_id "thriller:+3V3") (at 49.92 122.38 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "6e177c38-d314-4263-8b82-dd6db60f2c3b")
+(property "Reference" "#PWR" (at 49.92 119.84 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "+3V3" (at 49.92 124.92 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "db82d9a2-f0b8-43a8-a687-ddf5d785eb40"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(symbol (lib_id "thriller:GND") (at 131.2 124.92 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "8d5ed0d2-c298-4f3b-84c7-be9fb6996367")
+(property "Reference" "#PWR" (at 131.2 122.38 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "GND" (at 131.2 127.46 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "b5c96b67-f4a1-4fb7-a5a2-a33b94f53c6c"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(symbol (lib_id "FPGA_Pango_Logos2:PG2L50H-6IMBG324") (at 234.06 130 0) (unit 7) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "a778b4f1-aaf1-4dfc-b9e5-9cb64d6623d2")
+(property "Reference" "U1" (at 234.06 127.46 0) (effects (font (size 1.27 1.27))))
+
+(property "Value" "PG2L50H-6IMBG324" (at 234.06 132.54 0) (effects (font (size 1.27 1.27))))
+
+(property "Footprint" "Package_BGA:BGA-324_18x18_15.0x15.0mm_Pitch0.8mm" (at 234.06 130 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Datasheet" "Pango PK04006 V1.1 (PG2L50H_MBG324)" (at 234.06 130 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "LCSC" "" (at 234.06 130 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "MPN" "PG2L50H-6IMBG324" (at 234.06 130 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(pin "F8" (uuid "fb96065b-4fc3-45c1-8691-bc74f8e2521c"))
+
+(pin "G7" (uuid "fdb34f55-9704-4bf4-a262-313dbc244b77"))
+
+(pin "G9" (uuid "f88acf9a-c9e7-47fe-a783-6b286f6653d4"))
+
+(pin "H8" (uuid "48726595-bede-4bc2-b04b-ff7f72ffac7e"))
+
+(pin "J7" (uuid "232b622b-5cbf-4e3d-8d6c-66a2b3dbef37"))
+
+(pin "J11" (uuid "3770fe40-3cb6-4f49-a1ca-bef79371755e"))
+
+(pin "K8" (uuid "f3cbf989-def8-46ab-872b-7da84f5dc660"))
+
+(pin "L7" (uuid "74b935a4-fc79-469d-8882-0478061ac751"))
+
+(pin "L11" (uuid "6b078f8c-6c65-42bf-97ca-d0c624b500ea"))
+
+(pin "M8" (uuid "42c02f22-bd52-4741-a3cb-13d95dd65b50"))
+
+(pin "M10" (uuid "8502c14a-ce72-4cfd-a9ce-4a9618cd292d"))
+
+(pin "N7" (uuid "084e1436-f98f-4c72-9f33-5b234c3fdc92"))
+
+(pin "N9" (uuid "621a0f93-f895-4cdd-87e1-5b3c7305167a"))
+
+(pin "N11" (uuid "2e6849a9-d929-43d7-8c7d-dd93c6bedd5e"))
+
+(pin "F10" (uuid "83c4482f-5c35-4725-9416-3c97e909097c"))
+
+(pin "G11" (uuid "8e355500-be80-425a-a467-3e3859f1ae9a"))
+
+(pin "F12" (uuid "a747bc7d-b773-417a-95b5-6ea922c374c7"))
+
+(pin "H12" (uuid "36bf7bae-3230-4b2d-914a-238505cbc2b6"))
+
+(pin "K12" (uuid "84864ee1-7dac-427d-9a1a-66696a2a440d"))
+
+(pin "M12" (uuid "da950dc0-b813-4796-a0de-c9d938e76d61"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "U1") (unit 7)))))
+
+(wire (pts (xy 206.12 112.22) (xy 201.04 112.22)) (stroke (width 0) (type default)) (uuid "25feced6-31e8-4f17-b877-719a5d044c54"))
+
+(wire (pts (xy 206.12 114.76) (xy 201.04 114.76)) (stroke (width 0) (type default)) (uuid "b478e6d5-f7c6-4898-b3bf-7d8b7fff80fb"))
+
+(wire (pts (xy 206.12 117.3) (xy 201.04 117.3)) (stroke (width 0) (type default)) (uuid "f09dfe16-9784-4c61-b088-5e34e1a93ff2"))
+
+(wire (pts (xy 206.12 119.84) (xy 201.04 119.84)) (stroke (width 0) (type default)) (uuid "4e59a554-a503-4372-ab82-eb39ab28973a"))
+
+(wire (pts (xy 206.12 122.38) (xy 201.04 122.38)) (stroke (width 0) (type default)) (uuid "b57c7a39-70aa-499e-a6ae-d5d5b8fc9d02"))
+
+(wire (pts (xy 206.12 124.92) (xy 201.04 124.92)) (stroke (width 0) (type default)) (uuid "47ce7899-555d-4e4b-8f6e-028c71caab31"))
+
+(wire (pts (xy 206.12 127.46) (xy 201.04 127.46)) (stroke (width 0) (type default)) (uuid "a5ae882a-6464-40cc-a459-b84e9fc8f66f"))
+
+(wire (pts (xy 206.12 130) (xy 201.04 130)) (stroke (width 0) (type default)) (uuid "c6a2a5cc-d467-4409-92d8-ef07bbc54f83"))
+
+(wire (pts (xy 206.12 132.54) (xy 201.04 132.54)) (stroke (width 0) (type default)) (uuid "9c660e34-c261-4d4c-8546-f0e23963321d"))
+
+(wire (pts (xy 206.12 135.08) (xy 201.04 135.08)) (stroke (width 0) (type default)) (uuid "f6315d0f-bc8e-49ae-8738-eed169494954"))
+
+(wire (pts (xy 206.12 137.62) (xy 201.04 137.62)) (stroke (width 0) (type default)) (uuid "eb70b9ec-1d22-4aa0-aece-c0298b785b2e"))
+
+(wire (pts (xy 206.12 140.16) (xy 201.04 140.16)) (stroke (width 0) (type default)) (uuid "b853747a-2db9-4d35-bd81-b92e0da5b89c"))
+
+(wire (pts (xy 206.12 142.7) (xy 201.04 142.7)) (stroke (width 0) (type default)) (uuid "ef79b339-5919-49ee-bd32-0e90f6c5bc68"))
+
+(wire (pts (xy 206.12 145.24) (xy 201.04 145.24)) (stroke (width 0) (type default)) (uuid "b8e8d417-8111-4ed2-9f63-95eee9a547e3"))
+
+(wire (pts (xy 206.12 147.78) (xy 201.04 147.78)) (stroke (width 0) (type default)) (uuid "4407d3e6-e8bf-41bb-94d4-abaf120abdca"))
+
+(wire (pts (xy 206.12 150.32) (xy 201.04 150.32)) (stroke (width 0) (type default)) (uuid "356bf765-88f2-4b87-98ca-020ed9a9ca51"))
+
+(wire (pts (xy 262 112.22) (xy 267.08 112.22)) (stroke (width 0) (type default)) (uuid "2ab6bf06-aa1c-49c7-b569-3743bc784fe0"))
+
+(wire (pts (xy 262 114.76) (xy 267.08 114.76)) (stroke (width 0) (type default)) (uuid "22e437d4-16ed-486b-984d-92ed89544fc8"))
+
+(wire (pts (xy 262 117.3) (xy 267.08 117.3)) (stroke (width 0) (type default)) (uuid "c84869f3-4a1c-4831-94e3-a02931c57cc0"))
+
+(wire (pts (xy 262 119.84) (xy 267.08 119.84)) (stroke (width 0) (type default)) (uuid "b27a4c70-5ed4-45e8-9c39-64f4273254c7"))
+
+(wire (pts (xy 201.04 112.22) (xy 201.04 150.32)) (stroke (width 0) (type default)) (uuid "551b92fa-ffaf-4484-a2a2-e95b0395289d"))
+
+(junction (at 201.04 114.76) (diameter 0) (color 0 0 0 0) (uuid "6a18f71d-fcd6-452c-af0a-0a6027986987"))
+
+(junction (at 201.04 117.3) (diameter 0) (color 0 0 0 0) (uuid "2140f0af-84cc-4868-bcba-292cf820d1e4"))
+
+(junction (at 201.04 119.84) (diameter 0) (color 0 0 0 0) (uuid "a960ab24-6405-4235-b80e-4df07f67d45a"))
+
+(junction (at 201.04 122.38) (diameter 0) (color 0 0 0 0) (uuid "d15b5658-1bc2-47ce-b870-98624ba32528"))
+
+(junction (at 201.04 124.92) (diameter 0) (color 0 0 0 0) (uuid "c85ce0ef-494e-42a6-bace-9c32f94c9ff1"))
+
+(junction (at 201.04 127.46) (diameter 0) (color 0 0 0 0) (uuid "95a2bca5-8604-4a50-b1a1-04d44ba7d2ae"))
+
+(junction (at 201.04 130) (diameter 0) (color 0 0 0 0) (uuid "28d43b17-d512-4add-9e87-e3a61dd75160"))
+
+(junction (at 201.04 132.54) (diameter 0) (color 0 0 0 0) (uuid "020764b0-ef4f-48f5-a4ff-a77eccf3d11a"))
+
+(junction (at 201.04 135.08) (diameter 0) (color 0 0 0 0) (uuid "dae34d8a-ebad-4ece-bd5f-40b778d6eb25"))
+
+(junction (at 201.04 137.62) (diameter 0) (color 0 0 0 0) (uuid "a7801305-d272-4aa6-8c8c-946ff8774220"))
+
+(junction (at 201.04 140.16) (diameter 0) (color 0 0 0 0) (uuid "00b4eb64-62d9-4c49-8335-406ec85cdc4a"))
+
+(junction (at 201.04 142.7) (diameter 0) (color 0 0 0 0) (uuid "37a806e7-7a9b-4cae-8181-c776cb7c9900"))
+
+(junction (at 201.04 145.24) (diameter 0) (color 0 0 0 0) (uuid "8c641023-e541-4694-9033-7e91bfbea993"))
+
+(junction (at 201.04 147.78) (diameter 0) (color 0 0 0 0) (uuid "fc739582-6cd7-4407-9b42-e5e59e9d4da4"))
+
+(symbol (lib_id "thriller:+1V0") (at 201.04 112.22 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "d59003f6-75f4-4f26-b48f-87a019124b94")
+(property "Reference" "#PWR" (at 201.04 109.68 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "+1V0" (at 201.04 114.76 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "dacff39f-8319-4bb7-a408-0cfd2d8b6142"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(wire (pts (xy 267.08 112.22) (xy 267.08 119.84)) (stroke (width 0) (type default)) (uuid "f909d95d-6675-4816-959c-253b2ec32d60"))
+
+(junction (at 267.08 114.76) (diameter 0) (color 0 0 0 0) (uuid "7fe65375-a170-48c9-99b8-4a83d9c9297e"))
+
+(junction (at 267.08 117.3) (diameter 0) (color 0 0 0 0) (uuid "5c4518ec-44d5-428a-a488-f0c2abde9bd6"))
+
+(symbol (lib_id "thriller:+1V8") (at 267.08 112.22 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "13045320-40a2-43de-b06a-f978e8ccc8a8")
+(property "Reference" "#PWR" (at 267.08 109.68 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "+1V8" (at 267.08 114.76 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "23e7d151-495a-44d5-bd99-7d531c0f3c4f"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(symbol (lib_id "FPGA_Pango_Logos2:PG2L50H-6IMBG324") (at 364.86 130 0) (unit 8) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "ccf73bda-a654-4277-b178-dcee1a377e5f")
+(property "Reference" "U1" (at 364.86 127.46 0) (effects (font (size 1.27 1.27))))
+
+(property "Value" "PG2L50H-6IMBG324" (at 364.86 132.54 0) (effects (font (size 1.27 1.27))))
+
+(property "Footprint" "Package_BGA:BGA-324_18x18_15.0x15.0mm_Pitch0.8mm" (at 364.86 130 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Datasheet" "Pango PK04006 V1.1 (PG2L50H_MBG324)" (at 364.86 130 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "LCSC" "" (at 364.86 130 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "MPN" "PG2L50H-6IMBG324" (at 364.86 130 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(pin "A2" (uuid "f50ddddd-56bb-4a64-bd82-7fea07090e69"))
+
+(pin "A12" (uuid "b2e5c130-7851-455b-8f1f-7ea9d29e49a9"))
+
+(pin "B5" (uuid "fcee20cf-23ce-4d0d-8be6-9cc8b316c57d"))
+
+(pin "B15" (uuid "985de376-671b-4edf-b9e9-fcbb1af2dfef"))
+
+(pin "C8" (uuid "bb9f3a11-2d1a-4894-98a1-912db5afb733"))
+
+(pin "C18" (uuid "9f706e36-be24-422a-acab-8d78b8502da8"))
+
+(pin "D1" (uuid "eb6c3b40-a4d8-4c87-973b-5438675c576f"))
+
+(pin "D11" (uuid "4774ec20-57a0-4049-863b-bfacbaa8dbc8"))
+
+(pin "E4" (uuid "becef85e-2fdd-4bc1-b5bb-34a98550399b"))
+
+(pin "E14" (uuid "a52ac68c-84f3-41fc-aa28-dcb669a6545b"))
+
+(pin "F7" (uuid "6b91ba85-4f4f-4b64-a2a3-e76a330a6e39"))
+
+(pin "F9" (uuid "d407430e-1918-47ab-b35b-80609cf71153"))
+
+(pin "F11" (uuid "4759ea3e-7a30-4b88-b043-3f7e96383a5c"))
+
+(pin "F17" (uuid "63d9ed19-5fab-43d6-b558-dea4527beca0"))
+
+(pin "G8" (uuid "03a39d35-94a9-409a-ab9c-3b2dbbf6a8e3"))
+
+(pin "G10" (uuid "2b9da925-6be1-4323-8da3-914f2ecac3bf"))
+
+(pin "G12" (uuid "7891c7c7-255b-4417-baaf-c5c38627adfc"))
+
+(pin "H3" (uuid "f9eebf73-da44-44a5-9672-8b9f38a1a909"))
+
+(pin "H7" (uuid "f963b694-e16d-4801-a927-1d366093dbc1"))
+
+(pin "H11" (uuid "0d0155b2-912d-4511-857e-5c6f3bcd43f7"))
+
+(pin "H13" (uuid "2f36c674-cbbb-461a-9d42-2efcf37a1115"))
+
+(pin "J6" (uuid "d93d60df-cb29-447d-9a2f-b3aab7e821bd"))
+
+(pin "J8" (uuid "8d4a5115-7f9d-4e24-828d-d3edc867928f"))
+
+(pin "J12" (uuid "921a9ddb-2296-4e0d-beb9-bd1724299e15"))
+
+(pin "J16" (uuid "071ad38e-adaf-47fb-913a-fc3dc14f22ac"))
+
+(pin "K7" (uuid "dd166ef1-29b9-479e-82af-52f8273e5c13"))
+
+(pin "K11" (uuid "5070aafa-d9bc-49a7-914d-31f93bbe8c1b"))
+
+(pin "L2" (uuid "0b0a950e-cd8a-4be5-8379-e7c5b5977c10"))
+
+(pin "L8" (uuid "fa09dd09-a103-49cb-be7d-9a5821136eae"))
+
+(pin "L12" (uuid "5ec784bc-4e8d-4760-8658-530d4dfa66de"))
+
+(pin "M5" (uuid "f88273e6-979d-4adf-a437-205b80d2cf8c"))
+
+(pin "M7" (uuid "138fb12b-f9ec-4688-9ef5-3bbf4dd3d9f7"))
+
+(pin "M9" (uuid "66217687-8f0c-4581-b701-1755ba306715"))
+
+(pin "M11" (uuid "e0d6aac1-4097-4fb1-b7b1-312f90b9ba50"))
+
+(pin "M15" (uuid "03cc6de8-b5da-40fd-9184-db4a10135d32"))
+
+(pin "N8" (uuid "b1cf5724-0690-4623-99a0-4a7573912f9e"))
+
+(pin "N10" (uuid "6c1d8f86-1b25-4690-98a4-9ef88d35e942"))
+
+(pin "N12" (uuid "b99d8f89-7c80-4676-a057-7e8b9dd3c96e"))
+
+(pin "N18" (uuid "90501fe6-edaa-4c83-a17e-cf8c0191d554"))
+
+(pin "P1" (uuid "265132bc-c42c-4cc0-8bfe-f763cd87cb1d"))
+
+(pin "R4" (uuid "0a23344c-3cf1-4050-b9dd-5f29d47debac"))
+
+(pin "R14" (uuid "01beea8b-4696-4c0d-adb6-dc80b198090e"))
+
+(pin "T7" (uuid "cbe9425d-29ea-4817-b4c2-f8facc7e04d1"))
+
+(pin "T17" (uuid "7ee058cc-b86d-4ed5-a328-06c1d851d5eb"))
+
+(pin "U10" (uuid "b3253a1e-95b2-43e9-b611-d967ea33507b"))
+
+(pin "V3" (uuid "ab7ee70e-4ec3-4a3f-a4a8-5e2ffeb6b8f0"))
+
+(pin "V13" (uuid "73c12ed5-66b2-439a-977d-37e13bfa3c49"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "U1") (unit 8)))))
+
+(wire (pts (xy 342 102.06) (xy 336.92 102.06)) (stroke (width 0) (type default)) (uuid "3deeb345-784e-49fc-824e-e233e9d3f4b6"))
+
+(wire (pts (xy 342 104.6) (xy 336.92 104.6)) (stroke (width 0) (type default)) (uuid "b771eeb0-d06f-4635-85c8-4e2c6bb5d253"))
+
+(wire (pts (xy 342 107.14) (xy 336.92 107.14)) (stroke (width 0) (type default)) (uuid "9ac2ade7-a936-46e3-a0b3-74e14e370825"))
+
+(wire (pts (xy 342 109.68) (xy 336.92 109.68)) (stroke (width 0) (type default)) (uuid "8e8726a6-e446-4f8e-a448-887837268817"))
+
+(wire (pts (xy 342 112.22) (xy 336.92 112.22)) (stroke (width 0) (type default)) (uuid "cbd6550b-2d1e-4ddf-83c1-6226aec3712d"))
+
+(wire (pts (xy 342 114.76) (xy 336.92 114.76)) (stroke (width 0) (type default)) (uuid "af20424c-5db2-4419-a42f-29b8bb529bf5"))
+
+(wire (pts (xy 342 117.3) (xy 336.92 117.3)) (stroke (width 0) (type default)) (uuid "026e8c90-d058-4946-a74f-4a138b36fa79"))
+
+(wire (pts (xy 342 119.84) (xy 336.92 119.84)) (stroke (width 0) (type default)) (uuid "bada0c43-ba3e-4203-bc75-1b28fb9b7bb8"))
+
+(wire (pts (xy 342 122.38) (xy 336.92 122.38)) (stroke (width 0) (type default)) (uuid "3a4a5f4f-0c37-4ba4-8714-208d1da47b01"))
+
+(wire (pts (xy 342 124.92) (xy 336.92 124.92)) (stroke (width 0) (type default)) (uuid "de863295-7103-42eb-9feb-8ccbebd45268"))
+
+(wire (pts (xy 342 127.46) (xy 336.92 127.46)) (stroke (width 0) (type default)) (uuid "6d1f7abf-7a50-4262-afca-b51d06cc7cd7"))
+
+(wire (pts (xy 342 130) (xy 336.92 130)) (stroke (width 0) (type default)) (uuid "0a5863a8-873d-4166-92aa-c80573e5f9ce"))
+
+(wire (pts (xy 342 132.54) (xy 336.92 132.54)) (stroke (width 0) (type default)) (uuid "feb50efb-6181-4c51-9cca-b97b712ce605"))
+
+(wire (pts (xy 342 135.08) (xy 336.92 135.08)) (stroke (width 0) (type default)) (uuid "7ee42e50-dd89-418b-b06e-a30a19208daf"))
+
+(wire (pts (xy 342 137.62) (xy 336.92 137.62)) (stroke (width 0) (type default)) (uuid "08aa9241-41d4-4cdc-9744-2385c0e69275"))
+
+(wire (pts (xy 342 140.16) (xy 336.92 140.16)) (stroke (width 0) (type default)) (uuid "3afff99a-4999-4262-a120-30b20f355d50"))
+
+(wire (pts (xy 342 142.7) (xy 336.92 142.7)) (stroke (width 0) (type default)) (uuid "1da14599-f290-4ea1-8861-1710858f7c63"))
+
+(wire (pts (xy 342 145.24) (xy 336.92 145.24)) (stroke (width 0) (type default)) (uuid "b330b1f0-4acd-4a80-a1e6-4a53c3d630cb"))
+
+(wire (pts (xy 342 147.78) (xy 336.92 147.78)) (stroke (width 0) (type default)) (uuid "96073d8f-6ee8-40ed-b4c2-844ec1b46ffa"))
+
+(wire (pts (xy 342 150.32) (xy 336.92 150.32)) (stroke (width 0) (type default)) (uuid "203d0479-1dec-492e-aefd-b060d64757ae"))
+
+(wire (pts (xy 342 152.86) (xy 336.92 152.86)) (stroke (width 0) (type default)) (uuid "a5df695a-69b2-46fd-8f26-14b48746afc6"))
+
+(wire (pts (xy 342 155.4) (xy 336.92 155.4)) (stroke (width 0) (type default)) (uuid "d66e2063-9b6d-4c4a-b046-a3ffa3bc276b"))
+
+(wire (pts (xy 342 157.94) (xy 336.92 157.94)) (stroke (width 0) (type default)) (uuid "a4cfe07d-26b9-4807-a876-77db82b457ad"))
+
+(wire (pts (xy 342 160.48) (xy 336.92 160.48)) (stroke (width 0) (type default)) (uuid "42d81e28-8e53-4344-8357-31e70995e4f8"))
+
+(wire (pts (xy 387.72 102.06) (xy 392.8 102.06)) (stroke (width 0) (type default)) (uuid "28c608fd-c90e-4773-9a18-4db8ba2f73b5"))
+
+(wire (pts (xy 387.72 104.6) (xy 392.8 104.6)) (stroke (width 0) (type default)) (uuid "f5d84714-d6c3-4ae5-bf38-3563a3ed6885"))
+
+(wire (pts (xy 387.72 107.14) (xy 392.8 107.14)) (stroke (width 0) (type default)) (uuid "8aac062e-802e-4239-9571-ab4cdcaee62b"))
+
+(wire (pts (xy 387.72 109.68) (xy 392.8 109.68)) (stroke (width 0) (type default)) (uuid "f463f6b9-8831-4f38-a6fd-0b82fafcc949"))
+
+(wire (pts (xy 387.72 112.22) (xy 392.8 112.22)) (stroke (width 0) (type default)) (uuid "957f4676-b123-4fb4-936c-7d20ff88f70e"))
+
+(wire (pts (xy 387.72 114.76) (xy 392.8 114.76)) (stroke (width 0) (type default)) (uuid "2bc8e239-970b-4bfc-9f02-237bbcb9ba25"))
+
+(wire (pts (xy 387.72 117.3) (xy 392.8 117.3)) (stroke (width 0) (type default)) (uuid "4b2122e5-4fcf-49eb-8fd3-ce46093a6bc8"))
+
+(wire (pts (xy 387.72 119.84) (xy 392.8 119.84)) (stroke (width 0) (type default)) (uuid "f112eb42-df58-4d6c-8752-baa6f0fd0484"))
+
+(wire (pts (xy 387.72 122.38) (xy 392.8 122.38)) (stroke (width 0) (type default)) (uuid "a2369e0a-5eb5-46a7-9545-988f05e5269e"))
+
+(wire (pts (xy 387.72 124.92) (xy 392.8 124.92)) (stroke (width 0) (type default)) (uuid "18234afb-21a5-4928-a769-37ff8261bf76"))
+
+(wire (pts (xy 387.72 127.46) (xy 392.8 127.46)) (stroke (width 0) (type default)) (uuid "beedf9b4-00c5-4d40-b9d1-7d6f4ac8b2f8"))
+
+(wire (pts (xy 387.72 130) (xy 392.8 130)) (stroke (width 0) (type default)) (uuid "a037f99e-60c2-454f-9cdb-7ff088f43540"))
+
+(wire (pts (xy 387.72 132.54) (xy 392.8 132.54)) (stroke (width 0) (type default)) (uuid "19e9427e-1379-4f00-9ec1-11bd76b3b789"))
+
+(wire (pts (xy 387.72 135.08) (xy 392.8 135.08)) (stroke (width 0) (type default)) (uuid "19411cc2-052d-4295-9749-412291bbd9da"))
+
+(wire (pts (xy 387.72 137.62) (xy 392.8 137.62)) (stroke (width 0) (type default)) (uuid "a6cd0e55-739b-4f83-84d3-292b2e8c96ea"))
+
+(wire (pts (xy 387.72 140.16) (xy 392.8 140.16)) (stroke (width 0) (type default)) (uuid "728c5e32-b48f-4472-ae7d-b255c5e83ade"))
+
+(wire (pts (xy 387.72 142.7) (xy 392.8 142.7)) (stroke (width 0) (type default)) (uuid "38ea4f12-d1fa-4388-b4f8-6ca335926072"))
+
+(wire (pts (xy 387.72 145.24) (xy 392.8 145.24)) (stroke (width 0) (type default)) (uuid "c46ed915-34f7-4b6f-ac6d-06ffbf20d365"))
+
+(wire (pts (xy 387.72 147.78) (xy 392.8 147.78)) (stroke (width 0) (type default)) (uuid "3f4a70a9-32b8-4f80-9a67-8631ddd91c5a"))
+
+(wire (pts (xy 387.72 150.32) (xy 392.8 150.32)) (stroke (width 0) (type default)) (uuid "227402dc-d4ea-4476-9381-80c267c986b3"))
+
+(wire (pts (xy 387.72 152.86) (xy 392.8 152.86)) (stroke (width 0) (type default)) (uuid "d0f03e05-5b42-4285-a018-5675f724c246"))
+
+(wire (pts (xy 387.72 155.4) (xy 392.8 155.4)) (stroke (width 0) (type default)) (uuid "5bcc745d-1f52-4498-8df8-d3f4a39a41dc"))
+
+(wire (pts (xy 387.72 157.94) (xy 392.8 157.94)) (stroke (width 0) (type default)) (uuid "be8caa4c-5adb-4cb0-b992-52c7274ff20f"))
+
+(wire (pts (xy 336.92 102.06) (xy 336.92 160.48)) (stroke (width 0) (type default)) (uuid "e42da281-3b1c-4833-a5d2-8a41632be4cf"))
+
+(junction (at 336.92 104.6) (diameter 0) (color 0 0 0 0) (uuid "4466eaf0-32ba-4a0b-8972-8820bbf9a33b"))
+
+(junction (at 336.92 107.14) (diameter 0) (color 0 0 0 0) (uuid "7977eb4b-6695-469b-a6f3-262ed33c4fac"))
+
+(junction (at 336.92 109.68) (diameter 0) (color 0 0 0 0) (uuid "527d5812-960f-4d19-b207-3429a7cf96bb"))
+
+(junction (at 336.92 112.22) (diameter 0) (color 0 0 0 0) (uuid "7943983f-66bd-4054-a460-e39efddba17d"))
+
+(junction (at 336.92 114.76) (diameter 0) (color 0 0 0 0) (uuid "7634e5ae-41a7-4771-b3ab-362c3fd0eec1"))
+
+(junction (at 336.92 117.3) (diameter 0) (color 0 0 0 0) (uuid "a884ef85-5022-4057-8084-ec7793b26d04"))
+
+(junction (at 336.92 119.84) (diameter 0) (color 0 0 0 0) (uuid "42a1c2ac-c70f-4a27-9d13-7e3fc1d34893"))
+
+(junction (at 336.92 122.38) (diameter 0) (color 0 0 0 0) (uuid "b6956a78-cc5d-4c00-9076-51a537405144"))
+
+(junction (at 336.92 124.92) (diameter 0) (color 0 0 0 0) (uuid "28ea7955-daeb-4f06-984d-f2cb07e55e23"))
+
+(junction (at 336.92 127.46) (diameter 0) (color 0 0 0 0) (uuid "f3addb0e-d445-4fb8-ba52-ddff30980df4"))
+
+(junction (at 336.92 130) (diameter 0) (color 0 0 0 0) (uuid "9b3fc0a5-098a-4b99-95a6-e2d9122b4f0f"))
+
+(junction (at 336.92 132.54) (diameter 0) (color 0 0 0 0) (uuid "8b894c75-a082-48cf-a7bc-0ef058185db1"))
+
+(junction (at 336.92 135.08) (diameter 0) (color 0 0 0 0) (uuid "1ad9efa7-1b01-45de-9353-353ccf829307"))
+
+(junction (at 336.92 137.62) (diameter 0) (color 0 0 0 0) (uuid "1996d469-3722-44bb-9436-836c4d87429d"))
+
+(junction (at 336.92 140.16) (diameter 0) (color 0 0 0 0) (uuid "7cab74c3-f810-4b87-b110-61f16fb87265"))
+
+(junction (at 336.92 142.7) (diameter 0) (color 0 0 0 0) (uuid "3e708cc2-0860-49b2-94d7-3a22525f1cc0"))
+
+(junction (at 336.92 145.24) (diameter 0) (color 0 0 0 0) (uuid "ea95876c-7a23-4d24-82f8-1b7b3fdd3de2"))
+
+(junction (at 336.92 147.78) (diameter 0) (color 0 0 0 0) (uuid "b00753f7-7ed0-487f-a4fd-540da5487fd1"))
+
+(junction (at 336.92 150.32) (diameter 0) (color 0 0 0 0) (uuid "e18acd37-f372-44bf-814b-a1716af941bb"))
+
+(junction (at 336.92 152.86) (diameter 0) (color 0 0 0 0) (uuid "2cc8da65-2c7e-4ba9-8275-106f357f7ad0"))
+
+(junction (at 336.92 155.4) (diameter 0) (color 0 0 0 0) (uuid "aee407d2-432f-45fa-a5cb-75345f84138c"))
+
+(junction (at 336.92 157.94) (diameter 0) (color 0 0 0 0) (uuid "afba5d08-f2cf-49bf-834d-0c3bbfca0188"))
+
+(symbol (lib_id "thriller:GND") (at 336.92 160.48 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "2795ae7a-b351-469c-bf5b-7e683ca4bd26")
+(property "Reference" "#PWR" (at 336.92 157.94 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "GND" (at 336.92 163.02 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "1d15af15-500a-4b34-b97d-8ff5ffb60567"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(wire (pts (xy 392.8 102.06) (xy 392.8 157.94)) (stroke (width 0) (type default)) (uuid "a6ef6705-0498-408d-af7c-f4831a61cc79"))
+
+(junction (at 392.8 104.6) (diameter 0) (color 0 0 0 0) (uuid "a21b7520-7c74-4b88-9fef-af36dcdcaf26"))
+
+(junction (at 392.8 107.14) (diameter 0) (color 0 0 0 0) (uuid "7e5937fc-0af2-423d-9604-b0b2c76af83e"))
+
+(junction (at 392.8 109.68) (diameter 0) (color 0 0 0 0) (uuid "b136adfd-95b2-48cb-8b4a-d1cb265d1f2e"))
+
+(junction (at 392.8 112.22) (diameter 0) (color 0 0 0 0) (uuid "086729b0-6ebd-450c-8aa9-cc154612a70d"))
+
+(junction (at 392.8 114.76) (diameter 0) (color 0 0 0 0) (uuid "5ec40276-8f09-42e1-b34c-42aa57c3fd5e"))
+
+(junction (at 392.8 117.3) (diameter 0) (color 0 0 0 0) (uuid "43ff19a3-865c-484f-9354-7bf060d7293f"))
+
+(junction (at 392.8 119.84) (diameter 0) (color 0 0 0 0) (uuid "08dd883a-53d6-4faf-bc88-0ec717f02979"))
+
+(junction (at 392.8 122.38) (diameter 0) (color 0 0 0 0) (uuid "f63f7587-1c93-4459-bcc2-f93ab88389e4"))
+
+(junction (at 392.8 124.92) (diameter 0) (color 0 0 0 0) (uuid "360e26b1-0810-4b45-8dfe-236f3239c984"))
+
+(junction (at 392.8 127.46) (diameter 0) (color 0 0 0 0) (uuid "6c16b078-9b67-460d-8454-4e6e8a3d07b2"))
+
+(junction (at 392.8 130) (diameter 0) (color 0 0 0 0) (uuid "47a98f3f-a66d-47e9-b9e6-3495bb53f85a"))
+
+(junction (at 392.8 132.54) (diameter 0) (color 0 0 0 0) (uuid "d887e456-3af3-40a7-ab0b-b7272ec156f5"))
+
+(junction (at 392.8 135.08) (diameter 0) (color 0 0 0 0) (uuid "66933741-90a3-455d-b380-da5cb93a863c"))
+
+(junction (at 392.8 137.62) (diameter 0) (color 0 0 0 0) (uuid "8d83df1a-71ec-4de8-a617-29dc2eebc808"))
+
+(junction (at 392.8 140.16) (diameter 0) (color 0 0 0 0) (uuid "560091ad-ba2a-414f-8078-486597be31b9"))
+
+(junction (at 392.8 142.7) (diameter 0) (color 0 0 0 0) (uuid "69380a62-4e41-4cc4-aa6b-7e31f137a0af"))
+
+(junction (at 392.8 145.24) (diameter 0) (color 0 0 0 0) (uuid "0d3348eb-c705-4cd8-bf8c-529e4eba0e53"))
+
+(junction (at 392.8 147.78) (diameter 0) (color 0 0 0 0) (uuid "97c83e91-a8c7-415b-9fc1-0fb78c681cfc"))
+
+(junction (at 392.8 150.32) (diameter 0) (color 0 0 0 0) (uuid "5ae45c99-bea3-4e9a-9bfd-d3993c13f663"))
+
+(junction (at 392.8 152.86) (diameter 0) (color 0 0 0 0) (uuid "37b8f326-3130-4008-b332-71266d0aab6d"))
+
+(junction (at 392.8 155.4) (diameter 0) (color 0 0 0 0) (uuid "214a3863-abcf-4d04-9fa1-276fd67d5c93"))
+
+(symbol (lib_id "thriller:GND") (at 392.8 157.94 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "816ab3c7-e958-47c2-a327-2437512562b3")
+(property "Reference" "#PWR" (at 392.8 155.4 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "GND" (at 392.8 160.48 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "04abedd4-518f-40fe-b797-3c998008c4e1"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(symbol (lib_id "thriller:C") (at 40 240 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "fb3b2e40-7e25-4d98-8aeb-582e46dc8505")
+(property "Reference" "C241" (at 40 237.46 0) (effects (font (size 1.27 1.27))))
+
+(property "Value" "100u" (at 40 242.54 0) (effects (font (size 1.27 1.27))))
+
+(property "Footprint" "Capacitor_SMD:C_1206_3216Metric" (at 40 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Description" "Capacitor 100 uF 6.3 V X5R 1206" (at 40 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "LCSC" "C15008" (at 40 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(pin "1" (uuid "5a1d3f0b-c117-4158-9709-b6dc6747a9ce"))
+
+(pin "2" (uuid "f0e1e1ca-313c-464c-8e6e-45f050f3f71e"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "C241") (unit 1)))))
+
+(symbol (lib_id "thriller:+1V0") (at 40 236.19 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "41493a7b-5226-4a7d-88e9-f2cd940bc46d")
+(property "Reference" "#PWR" (at 40 233.65 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "+1V0" (at 40 238.73 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "9e50ae01-610d-4c8c-8c7d-2a79ce805a40"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(symbol (lib_id "thriller:GND") (at 40 243.81 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "e030e6c8-46a9-4ab8-b631-ab0f5f45f006")
+(property "Reference" "#PWR" (at 40 241.27 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "GND" (at 40 246.35 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "dd9f62b8-fb94-4d06-bead-6c6a1e34429e"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(symbol (lib_id "thriller:C") (at 52 240 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "a68a2a47-efc2-498b-b8aa-caf38d12cf40")
+(property "Reference" "C242" (at 52 237.46 0) (effects (font (size 1.27 1.27))))
+
+(property "Value" "4u7" (at 52 242.54 0) (effects (font (size 1.27 1.27))))
+
+(property "Footprint" "Capacitor_SMD:C_0603_1608Metric" (at 52 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Description" "Capacitor 4.7 uF 10 V X5R 0603" (at 52 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "LCSC" "C19666" (at 52 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(pin "1" (uuid "3741ceee-cbcb-4a35-be43-c40a09a08c0a"))
+
+(pin "2" (uuid "5dbfabd0-deff-48e0-8b5a-a7e051000054"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "C242") (unit 1)))))
+
+(symbol (lib_id "thriller:+1V0") (at 52 236.19 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "de7b48d9-5995-44b5-a86d-1fb773533abe")
+(property "Reference" "#PWR" (at 52 233.65 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "+1V0" (at 52 238.73 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "40af0292-52e6-4711-96d4-bfd6815da5d7"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(symbol (lib_id "thriller:GND") (at 52 243.81 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "a063f2aa-a7a4-4677-ba2e-bee1746cdbd1")
+(property "Reference" "#PWR" (at 52 241.27 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "GND" (at 52 246.35 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "a3311f7e-fe7b-449c-a19a-981e11b3af09"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(symbol (lib_id "thriller:C") (at 64 240 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "44eb7812-11d0-4add-bfd5-ef157b06bbf4")
+(property "Reference" "C243" (at 64 237.46 0) (effects (font (size 1.27 1.27))))
+
+(property "Value" "4u7" (at 64 242.54 0) (effects (font (size 1.27 1.27))))
+
+(property "Footprint" "Capacitor_SMD:C_0603_1608Metric" (at 64 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Description" "Capacitor 4.7 uF 10 V X5R 0603" (at 64 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "LCSC" "C19666" (at 64 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(pin "1" (uuid "254db850-3e3f-48d8-9744-cc33e0548475"))
+
+(pin "2" (uuid "6641757d-cc43-4822-8c18-832c04809916"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "C243") (unit 1)))))
+
+(symbol (lib_id "thriller:+1V0") (at 64 236.19 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "4a305b1c-f441-41d2-b350-23c9b8e36ec4")
+(property "Reference" "#PWR" (at 64 233.65 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "+1V0" (at 64 238.73 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "7a1af718-8467-46d2-951d-fd74363e8544"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(symbol (lib_id "thriller:GND") (at 64 243.81 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "2671be49-adb4-4fd3-a257-625b21150033")
+(property "Reference" "#PWR" (at 64 241.27 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "GND" (at 64 246.35 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "7f2f6faf-51e2-46ff-a1b2-58e509a75866"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(symbol (lib_id "thriller:C") (at 76 240 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "47380b13-e2ac-435a-ba6f-b5d4fdec7586")
+(property "Reference" "C244" (at 76 237.46 0) (effects (font (size 1.27 1.27))))
+
+(property "Value" "4u7" (at 76 242.54 0) (effects (font (size 1.27 1.27))))
+
+(property "Footprint" "Capacitor_SMD:C_0603_1608Metric" (at 76 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Description" "Capacitor 4.7 uF 10 V X5R 0603" (at 76 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "LCSC" "C19666" (at 76 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(pin "1" (uuid "e03525b9-cc30-42ff-9343-e05033bbcbcf"))
+
+(pin "2" (uuid "bdc69e16-0a78-40d9-b71f-718b9f0f289c"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "C244") (unit 1)))))
+
+(symbol (lib_id "thriller:+1V0") (at 76 236.19 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "aba997a3-cdb8-4078-acd1-95005a68b895")
+(property "Reference" "#PWR" (at 76 233.65 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "+1V0" (at 76 238.73 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "a56f7be7-5c60-4897-83d0-ea4bfbe7e30c"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(symbol (lib_id "thriller:GND") (at 76 243.81 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "89df2889-b926-4cf9-a5cf-b76118460f25")
+(property "Reference" "#PWR" (at 76 241.27 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "GND" (at 76 246.35 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "602ef89d-6944-459f-8e8e-935fa33c9591"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(symbol (lib_id "thriller:C") (at 88 240 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "2d3e89ee-c02a-4b9d-bcf3-b4a2ac81b79e")
+(property "Reference" "C245" (at 88 237.46 0) (effects (font (size 1.27 1.27))))
+
+(property "Value" "470n" (at 88 242.54 0) (effects (font (size 1.27 1.27))))
+
+(property "Footprint" "Capacitor_SMD:C_0402_1005Metric" (at 88 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Description" "Capacitor 470 nF 10 V X5R/X7R 0402 (UG040012 Table 2-6)" (at 88 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "LCSC" "" (at 88 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(pin "1" (uuid "137e34f8-5993-4fc1-ab63-77ceb5cf6051"))
+
+(pin "2" (uuid "7e661cff-9a63-4a03-9c77-7b2cdf4204ce"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "C245") (unit 1)))))
+
+(symbol (lib_id "thriller:+1V0") (at 88 236.19 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "fe97db9f-caec-4b3b-9ee3-cd2c0fe6eba3")
+(property "Reference" "#PWR" (at 88 233.65 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "+1V0" (at 88 238.73 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "66d1bea1-a71a-46ec-b411-b4b6dbd69358"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(symbol (lib_id "thriller:GND") (at 88 243.81 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "7f40b202-e02b-43b3-b0ea-764995ae224b")
+(property "Reference" "#PWR" (at 88 241.27 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "GND" (at 88 246.35 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "91d5cc18-d738-4bcd-b67e-137af189ca74"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(symbol (lib_id "thriller:C") (at 100 240 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "f7f2af5e-0447-454b-8997-15384a1e817c")
+(property "Reference" "C246" (at 100 237.46 0) (effects (font (size 1.27 1.27))))
+
+(property "Value" "470n" (at 100 242.54 0) (effects (font (size 1.27 1.27))))
+
+(property "Footprint" "Capacitor_SMD:C_0402_1005Metric" (at 100 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Description" "Capacitor 470 nF 10 V X5R/X7R 0402 (UG040012 Table 2-6)" (at 100 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "LCSC" "" (at 100 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(pin "1" (uuid "6dc2b687-7103-4ef6-b2b4-eb81ebf5c5a1"))
+
+(pin "2" (uuid "520281f7-1cfd-4a4d-b98a-eb2edb3fa1db"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "C246") (unit 1)))))
+
+(symbol (lib_id "thriller:+1V0") (at 100 236.19 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "0f26621c-276e-4708-9683-0a1d49b4de29")
+(property "Reference" "#PWR" (at 100 233.65 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "+1V0" (at 100 238.73 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "78c27163-2069-4923-9731-be530a347df9"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(symbol (lib_id "thriller:GND") (at 100 243.81 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "5adbc97b-7db3-4796-b9ab-97ac4de58306")
+(property "Reference" "#PWR" (at 100 241.27 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "GND" (at 100 246.35 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "d36242a8-f718-419a-bdf9-be3351e50ccc"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(symbol (lib_id "thriller:C") (at 112 240 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "4f4e8a32-8683-47c3-841d-f0e87c6d9933")
+(property "Reference" "C247" (at 112 237.46 0) (effects (font (size 1.27 1.27))))
+
+(property "Value" "470n" (at 112 242.54 0) (effects (font (size 1.27 1.27))))
+
+(property "Footprint" "Capacitor_SMD:C_0402_1005Metric" (at 112 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Description" "Capacitor 470 nF 10 V X5R/X7R 0402 (UG040012 Table 2-6)" (at 112 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "LCSC" "" (at 112 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(pin "1" (uuid "d4d7ddfe-9b13-4543-bd74-b8ecf08ed0c7"))
+
+(pin "2" (uuid "c784cfb5-bc3c-479d-a4b5-637890d48841"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "C247") (unit 1)))))
+
+(symbol (lib_id "thriller:+1V0") (at 112 236.19 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "58b5f250-1a53-4e2f-8610-276e99a5ddbc")
+(property "Reference" "#PWR" (at 112 233.65 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "+1V0" (at 112 238.73 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "5791cf01-61ef-47bc-85ab-8da5b0c3b69a"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(symbol (lib_id "thriller:GND") (at 112 243.81 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "e4b6ae6b-0485-423c-92cf-cc9a0b76b003")
+(property "Reference" "#PWR" (at 112 241.27 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "GND" (at 112 246.35 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "ae4e6562-cdd0-46af-af4b-efdc0fff4882"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(symbol (lib_id "thriller:C") (at 124 240 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "9d465153-d1d6-40a4-885c-d78207b3c65e")
+(property "Reference" "C248" (at 124 237.46 0) (effects (font (size 1.27 1.27))))
+
+(property "Value" "470n" (at 124 242.54 0) (effects (font (size 1.27 1.27))))
+
+(property "Footprint" "Capacitor_SMD:C_0402_1005Metric" (at 124 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Description" "Capacitor 470 nF 10 V X5R/X7R 0402 (UG040012 Table 2-6)" (at 124 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "LCSC" "" (at 124 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(pin "1" (uuid "7d4db5a7-c8af-413a-a44c-be4da762d896"))
+
+(pin "2" (uuid "4e290c6a-d705-477a-ba6e-9d137f6e6758"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "C248") (unit 1)))))
+
+(symbol (lib_id "thriller:+1V0") (at 124 236.19 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "49ce4fd8-16e8-4729-8125-080206f453ff")
+(property "Reference" "#PWR" (at 124 233.65 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "+1V0" (at 124 238.73 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "e6c7a3d4-d80d-4a9d-ae4e-583e26b34631"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(symbol (lib_id "thriller:GND") (at 124 243.81 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "c8f88385-6a70-4862-a94a-e01c3fbba5de")
+(property "Reference" "#PWR" (at 124 241.27 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "GND" (at 124 246.35 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "e2315ca5-5ed6-49d5-bd32-1e34adcc0e9c"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(symbol (lib_id "thriller:C") (at 136 240 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "8d79ac00-4c5d-480c-8c8a-19c06cec337a")
+(property "Reference" "C249" (at 136 237.46 0) (effects (font (size 1.27 1.27))))
+
+(property "Value" "100n" (at 136 242.54 0) (effects (font (size 1.27 1.27))))
+
+(property "Footprint" "Capacitor_SMD:C_0402_1005Metric" (at 136 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Description" "Capacitor 100 nF 16 V X7R 0402" (at 136 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "LCSC" "C1525" (at 136 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(pin "1" (uuid "90a7cda5-d9d7-4073-b8fa-ed72fed16e31"))
+
+(pin "2" (uuid "9c808a04-31c6-49f5-8286-6058212c67e4"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "C249") (unit 1)))))
+
+(symbol (lib_id "thriller:+1V0") (at 136 236.19 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "b8f501ca-648f-4ee9-a316-93ce64ac758f")
+(property "Reference" "#PWR" (at 136 233.65 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "+1V0" (at 136 238.73 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "294a3889-fda4-4c6d-95c6-320f8db0c013"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(symbol (lib_id "thriller:GND") (at 136 243.81 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "04a579a9-fcfb-4c93-8d40-1a3824f570e5")
+(property "Reference" "#PWR" (at 136 241.27 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "GND" (at 136 246.35 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "5bfd2971-b620-4ecb-b64a-1364be4fdc0e"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(symbol (lib_id "thriller:C") (at 148 240 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "95f58599-d1cc-4679-a922-1f110bc32a0a")
+(property "Reference" "C250" (at 148 237.46 0) (effects (font (size 1.27 1.27))))
+
+(property "Value" "100n" (at 148 242.54 0) (effects (font (size 1.27 1.27))))
+
+(property "Footprint" "Capacitor_SMD:C_0402_1005Metric" (at 148 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Description" "Capacitor 100 nF 16 V X7R 0402" (at 148 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "LCSC" "C1525" (at 148 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(pin "1" (uuid "7bd21a74-4e01-4522-995d-1d9dd487a4d4"))
+
+(pin "2" (uuid "7cebf0a7-71d5-4821-8a59-1ff30d1b1137"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "C250") (unit 1)))))
+
+(symbol (lib_id "thriller:+1V0") (at 148 236.19 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "42c493fe-823f-4bc8-92b8-4d62e3393313")
+(property "Reference" "#PWR" (at 148 233.65 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "+1V0" (at 148 238.73 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "4eec05d1-1e84-4f69-9d75-4d22590d5c40"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(symbol (lib_id "thriller:GND") (at 148 243.81 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "46a0f36d-18d7-4c72-b025-aec01b801178")
+(property "Reference" "#PWR" (at 148 241.27 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "GND" (at 148 246.35 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "80880778-7c5f-4490-abff-757f622f8021"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(symbol (lib_id "thriller:C") (at 160 240 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "e0d89f5b-032d-4418-aa6b-1a009b689672")
+(property "Reference" "C251" (at 160 237.46 0) (effects (font (size 1.27 1.27))))
+
+(property "Value" "100n" (at 160 242.54 0) (effects (font (size 1.27 1.27))))
+
+(property "Footprint" "Capacitor_SMD:C_0402_1005Metric" (at 160 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Description" "Capacitor 100 nF 16 V X7R 0402" (at 160 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "LCSC" "C1525" (at 160 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(pin "1" (uuid "e0ca7b8f-7588-4630-8884-2d67272c85d4"))
+
+(pin "2" (uuid "94e64642-8bbb-4a75-a560-65b0972cce4f"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "C251") (unit 1)))))
+
+(symbol (lib_id "thriller:+1V0") (at 160 236.19 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "8fa890ce-23e1-4999-84e3-ba3dab51b5b5")
+(property "Reference" "#PWR" (at 160 233.65 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "+1V0" (at 160 238.73 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "c0243235-da25-4f56-b896-033882cc8705"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(symbol (lib_id "thriller:GND") (at 160 243.81 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "0889abea-6ab4-4e28-8fb9-57c179688ea9")
+(property "Reference" "#PWR" (at 160 241.27 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "GND" (at 160 246.35 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "a81a3d15-fad1-4371-aa6a-225a666d6a23"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(symbol (lib_id "thriller:C") (at 172 240 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "3df73f78-9674-42e9-b77f-426012f2130e")
+(property "Reference" "C252" (at 172 237.46 0) (effects (font (size 1.27 1.27))))
+
+(property "Value" "100n" (at 172 242.54 0) (effects (font (size 1.27 1.27))))
+
+(property "Footprint" "Capacitor_SMD:C_0402_1005Metric" (at 172 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Description" "Capacitor 100 nF 16 V X7R 0402" (at 172 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "LCSC" "C1525" (at 172 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(pin "1" (uuid "7ce2d9bc-9cbb-4e49-87a5-a78637681d17"))
+
+(pin "2" (uuid "002e6fc4-9fc3-4006-b8a1-5acdf6f7ab87"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "C252") (unit 1)))))
+
+(symbol (lib_id "thriller:+1V0") (at 172 236.19 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "84f099e7-6c4f-45cc-8fd5-e1871e128924")
+(property "Reference" "#PWR" (at 172 233.65 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "+1V0" (at 172 238.73 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "d1ffafba-abdf-47cc-996a-683aee34709b"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(symbol (lib_id "thriller:GND") (at 172 243.81 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "cfc06842-0f2f-4a19-9f41-e72c272b8d69")
+(property "Reference" "#PWR" (at 172 241.27 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "GND" (at 172 246.35 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "32c6062a-d2a9-455e-b1e0-0dd0dd8ae77d"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(symbol (lib_id "thriller:C") (at 184 240 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "ba90ffa8-b7bf-4d0c-ab67-b97afbc9ec95")
+(property "Reference" "C253" (at 184 237.46 0) (effects (font (size 1.27 1.27))))
+
+(property "Value" "100n" (at 184 242.54 0) (effects (font (size 1.27 1.27))))
+
+(property "Footprint" "Capacitor_SMD:C_0402_1005Metric" (at 184 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Description" "Capacitor 100 nF 16 V X7R 0402" (at 184 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "LCSC" "C1525" (at 184 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(pin "1" (uuid "e6ebd6bc-b02d-4279-96bd-0be3cd1c18a5"))
+
+(pin "2" (uuid "4a9ee690-608b-4811-b275-41b5846cdaee"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "C253") (unit 1)))))
+
+(symbol (lib_id "thriller:+1V0") (at 184 236.19 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "4ebfaf82-fefa-4f5b-968b-f22b37787a7d")
+(property "Reference" "#PWR" (at 184 233.65 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "+1V0" (at 184 238.73 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "f5f18c79-861d-49e5-b61d-569b3ed8353d"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(symbol (lib_id "thriller:GND") (at 184 243.81 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "2408ac11-7e1a-4e5d-abb1-0f47d61d2ad0")
+(property "Reference" "#PWR" (at 184 241.27 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "GND" (at 184 246.35 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "448ada91-6b82-46f6-918b-db88dd964ff8"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(symbol (lib_id "thriller:C") (at 196 240 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "252ba956-0d1a-4ccc-92a9-97af4303a92d")
+(property "Reference" "C254" (at 196 237.46 0) (effects (font (size 1.27 1.27))))
+
+(property "Value" "100n" (at 196 242.54 0) (effects (font (size 1.27 1.27))))
+
+(property "Footprint" "Capacitor_SMD:C_0402_1005Metric" (at 196 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Description" "Capacitor 100 nF 16 V X7R 0402" (at 196 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "LCSC" "C1525" (at 196 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(pin "1" (uuid "04a5646f-f343-42a4-bdb8-0b69c2c93d0b"))
+
+(pin "2" (uuid "cd96ac66-9bc9-481a-b38d-d00cdf0d4621"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "C254") (unit 1)))))
+
+(symbol (lib_id "thriller:+1V0") (at 196 236.19 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "4ae7b36f-37b5-4504-91dd-a41b3fb1fa20")
+(property "Reference" "#PWR" (at 196 233.65 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "+1V0" (at 196 238.73 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "d437d155-3ee8-4822-a26a-45c3ca06b15b"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(symbol (lib_id "thriller:GND") (at 196 243.81 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "1453836a-92cb-442b-8d2f-8ba37523a36c")
+(property "Reference" "#PWR" (at 196 241.27 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "GND" (at 196 246.35 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "673ab8d9-b6bc-43d3-b804-26314fabcbb8"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(symbol (lib_id "thriller:C") (at 208 240 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "88561809-a9ad-495f-893a-eeb84559b22f")
+(property "Reference" "C255" (at 208 237.46 0) (effects (font (size 1.27 1.27))))
+
+(property "Value" "4u7" (at 208 242.54 0) (effects (font (size 1.27 1.27))))
+
+(property "Footprint" "Capacitor_SMD:C_0603_1608Metric" (at 208 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Description" "Capacitor 4.7 uF 10 V X5R 0603" (at 208 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "LCSC" "C19666" (at 208 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(pin "1" (uuid "53427a7d-9517-401c-b8f6-c40f213f8dfb"))
+
+(pin "2" (uuid "8e26859f-bb7f-4d23-8d56-9781c1beead5"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "C255") (unit 1)))))
+
+(symbol (lib_id "thriller:+1V8") (at 208 236.19 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "9078075c-4319-4d67-b744-6bf554780e82")
+(property "Reference" "#PWR" (at 208 233.65 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "+1V8" (at 208 238.73 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "3d9231b2-cd33-411c-9cd5-0df7cb6d7dae"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(symbol (lib_id "thriller:GND") (at 208 243.81 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "ee0d5a1c-24c8-4fb5-bf9f-177a77670b86")
+(property "Reference" "#PWR" (at 208 241.27 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "GND" (at 208 246.35 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "03ad9709-9c97-4f0d-b390-3fba128b6443"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(symbol (lib_id "thriller:C") (at 220 240 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "bb6896d9-dad4-4d7e-82dd-4f4c44421263")
+(property "Reference" "C256" (at 220 237.46 0) (effects (font (size 1.27 1.27))))
+
+(property "Value" "4u7" (at 220 242.54 0) (effects (font (size 1.27 1.27))))
+
+(property "Footprint" "Capacitor_SMD:C_0603_1608Metric" (at 220 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Description" "Capacitor 4.7 uF 10 V X5R 0603" (at 220 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "LCSC" "C19666" (at 220 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(pin "1" (uuid "32b209a4-ee23-4701-ada0-0431ae3cb33b"))
+
+(pin "2" (uuid "ac099ac5-4c0a-4eca-94a6-5c955dda5db2"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "C256") (unit 1)))))
+
+(symbol (lib_id "thriller:+1V8") (at 220 236.19 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "b4d24db5-25bf-49f7-bde5-dcbc7c1cdd57")
+(property "Reference" "#PWR" (at 220 233.65 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "+1V8" (at 220 238.73 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "6799e533-929e-459b-9730-6c1a23ece778"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(symbol (lib_id "thriller:GND") (at 220 243.81 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "79c29b53-b7a9-4d4d-a961-6b3ae1d37aa6")
+(property "Reference" "#PWR" (at 220 241.27 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "GND" (at 220 246.35 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "747db4f2-34ef-4afd-98a4-0b23079ce9a7"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(symbol (lib_id "thriller:C") (at 232 240 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "4285a9ac-10f0-473e-bda5-f4dee48a9619")
+(property "Reference" "C257" (at 232 237.46 0) (effects (font (size 1.27 1.27))))
+
+(property "Value" "470n" (at 232 242.54 0) (effects (font (size 1.27 1.27))))
+
+(property "Footprint" "Capacitor_SMD:C_0402_1005Metric" (at 232 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Description" "Capacitor 470 nF 10 V X5R/X7R 0402 (UG040012 Table 2-6)" (at 232 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "LCSC" "" (at 232 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(pin "1" (uuid "e5c27de3-797c-4633-a265-009bdf6e2621"))
+
+(pin "2" (uuid "da5ee27f-377b-46cd-bbc6-c5097f561d73"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "C257") (unit 1)))))
+
+(symbol (lib_id "thriller:+1V8") (at 232 236.19 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "afc9ce1b-cb22-4598-809a-510816cdb284")
+(property "Reference" "#PWR" (at 232 233.65 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "+1V8" (at 232 238.73 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "4c6e971b-231c-4c23-b2e3-0cc7fde7263a"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(symbol (lib_id "thriller:GND") (at 232 243.81 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "d43f5b07-bbfc-4b66-bcf5-aa81b4e6b0e6")
+(property "Reference" "#PWR" (at 232 241.27 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "GND" (at 232 246.35 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "dafe22b4-7e45-4361-944e-9e285ca7b99b"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(symbol (lib_id "thriller:C") (at 244 240 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "12e6049f-d6ae-434d-bebd-d6c6ce0e2359")
+(property "Reference" "C258" (at 244 237.46 0) (effects (font (size 1.27 1.27))))
+
+(property "Value" "470n" (at 244 242.54 0) (effects (font (size 1.27 1.27))))
+
+(property "Footprint" "Capacitor_SMD:C_0402_1005Metric" (at 244 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Description" "Capacitor 470 nF 10 V X5R/X7R 0402 (UG040012 Table 2-6)" (at 244 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "LCSC" "" (at 244 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(pin "1" (uuid "e67ec72b-d4e9-4410-bb4e-88d442812ab2"))
+
+(pin "2" (uuid "02f6af23-aa1d-410a-98c8-3ee4c5b86519"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "C258") (unit 1)))))
+
+(symbol (lib_id "thriller:+1V8") (at 244 236.19 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "64f0bd18-5bbb-4964-8c19-f5b9f053c4ed")
+(property "Reference" "#PWR" (at 244 233.65 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "+1V8" (at 244 238.73 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "f00f412e-e631-43e2-811e-a6c1d08c53b4"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(symbol (lib_id "thriller:GND") (at 244 243.81 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "6469a923-8b4c-48d4-bbdf-ed0e5a01d274")
+(property "Reference" "#PWR" (at 244 241.27 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "GND" (at 244 246.35 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "b557d45e-ac01-4899-a40d-509b701a8f17"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(symbol (lib_id "thriller:C") (at 256 240 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "13d45035-3735-48ef-ab03-1ee97df15a60")
+(property "Reference" "C259" (at 256 237.46 0) (effects (font (size 1.27 1.27))))
+
+(property "Value" "100n" (at 256 242.54 0) (effects (font (size 1.27 1.27))))
+
+(property "Footprint" "Capacitor_SMD:C_0402_1005Metric" (at 256 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Description" "Capacitor 100 nF 16 V X7R 0402" (at 256 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "LCSC" "C1525" (at 256 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(pin "1" (uuid "0649734d-dc74-4ae0-9ed1-10f72346207e"))
+
+(pin "2" (uuid "af9e7acd-db1a-45cc-a440-a02f1935e2e7"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "C259") (unit 1)))))
+
+(symbol (lib_id "thriller:+1V8") (at 256 236.19 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "cf45fdf5-4b6d-41b1-b862-f23772e13660")
+(property "Reference" "#PWR" (at 256 233.65 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "+1V8" (at 256 238.73 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "06c8a716-5446-44a7-a347-e2da1046dc61"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(symbol (lib_id "thriller:GND") (at 256 243.81 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "105d190a-88d3-4cf7-9a8b-37344639de24")
+(property "Reference" "#PWR" (at 256 241.27 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "GND" (at 256 246.35 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "e6cb753e-39ee-439b-aea9-44139e1b4ec4"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(symbol (lib_id "thriller:C") (at 268 240 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "f6607db7-9fe5-4daf-93b4-92a2551f77e2")
+(property "Reference" "C260" (at 268 237.46 0) (effects (font (size 1.27 1.27))))
+
+(property "Value" "100n" (at 268 242.54 0) (effects (font (size 1.27 1.27))))
+
+(property "Footprint" "Capacitor_SMD:C_0402_1005Metric" (at 268 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Description" "Capacitor 100 nF 16 V X7R 0402" (at 268 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "LCSC" "C1525" (at 268 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(pin "1" (uuid "82fefb24-cc35-442a-8c37-53488815939d"))
+
+(pin "2" (uuid "42e96d6b-79cc-4f09-abab-15d81bc1984b"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "C260") (unit 1)))))
+
+(symbol (lib_id "thriller:+1V8") (at 268 236.19 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "f1eea60f-8536-4fa3-aba4-25fef362ed3e")
+(property "Reference" "#PWR" (at 268 233.65 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "+1V8" (at 268 238.73 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "b17437e0-5f1c-40a2-b0c8-ab4ab78ecc14"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(symbol (lib_id "thriller:GND") (at 268 243.81 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "98ec3820-f3d9-445d-a15d-fd9b6d31294a")
+(property "Reference" "#PWR" (at 268 241.27 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "GND" (at 268 246.35 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "be35a98b-ef62-4e5f-a6a7-9fbdeba6b056"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(symbol (lib_id "thriller:C") (at 280 240 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "07662f1a-4689-4a2a-950e-00523611c923")
+(property "Reference" "C261" (at 280 237.46 0) (effects (font (size 1.27 1.27))))
+
+(property "Value" "100n" (at 280 242.54 0) (effects (font (size 1.27 1.27))))
+
+(property "Footprint" "Capacitor_SMD:C_0402_1005Metric" (at 280 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Description" "Capacitor 100 nF 16 V X7R 0402" (at 280 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "LCSC" "C1525" (at 280 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(pin "1" (uuid "ef44b075-df38-4051-a579-ef1acbe0aebc"))
+
+(pin "2" (uuid "461ac0f4-9b79-44ce-b6f8-7419d2f4db3a"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "C261") (unit 1)))))
+
+(symbol (lib_id "thriller:+1V8") (at 280 236.19 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "80c66dec-5adc-4953-b2e8-1b1ad7c3acde")
+(property "Reference" "#PWR" (at 280 233.65 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "+1V8" (at 280 238.73 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "8600fd81-d773-4d36-91b8-b49452fdc27c"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(symbol (lib_id "thriller:GND") (at 280 243.81 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "db74aa9a-7cb0-4521-89a9-321c20f994f0")
+(property "Reference" "#PWR" (at 280 241.27 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "GND" (at 280 246.35 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "ab55c396-4d5e-4b52-a4af-4937ec26f66a"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/fc6464a2-c6b7-5735-a1cf-fb39f96e9573" (reference "#PWR") (unit 1)))))
+
+(text "Configuration: MODE[2:0] = 001 (master SPI) strapped on the Base sheet; VCCIOCFG = VCCIOL5 = 3.3 V; SCBV tied to VCCIOCFG. JTAG goes to J1 (fixture carrier only; eFuse-locked after enrollment). VCC/VCC_DRM 1.0 V, VCCA 1.8 V, VCCB and VCCADC filtered from 1.8 V on the Base sheet. Core/aux decoupling below (UG040012 tables 2-3/2-6 scaled to the 324): 1V0: 100u + 3 x 4u7 + 4 x 470n + 6 x 100n; 1V8: 2 x 4u7 + 2 x 470n + 3 x 100n; placed at the balls. Check against the table before layout." (exclude_from_sim no) (at 20 20 0) (effects (font (size 1.5 1.5)) (justify left top)) (uuid "0b7514a0-cdfe-469f-aa6e-a54552039fd3")))

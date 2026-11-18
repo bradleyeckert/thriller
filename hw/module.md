@@ -70,7 +70,7 @@ grades 1 to 2 W/mK), so the regulators rely on the ground planes and the heatsin
 ## The 160 contacts
 
 The pinout is a **contract**: it is frozen before either module or carrier is laid out, every FPGA family's module presents the same one, and a change is a carrier revision. Counts by
-group (individual pin numbers follow in `module-pinout.csv`; one connector carries power, the UART, JTAG, the card, the MDI pairs and the control lines, the other the audio, display, sensor,
+group (contact numbers are in [`module-pinout.csv`](module-pinout.csv), generated from the schematic by `fpga/logos2/KiCAD/tools/pinout_csv.py` together with the FPGA ball each net lands on; one connector carries power, the UART, JTAG, the card, the MDI pairs and the control lines, the other the audio, display, sensor,
 clock and GPIO lines, so a minimal carrier can mate only the first):
 
 | Group | Signals | Class | Notes |
@@ -82,14 +82,14 @@ clock and GPIO lines, so a minimal carrier can mate only the first):
 | UART: TX, RX | 2 | Ciphertext frames; plaintext status in recovery | The host UART, on the module (the boot ROM needs it) |
 | JTAG: TCK, TMS, TDI, TDO | 4 | **Fixture only** | Connected on the fixture carrier; unconnected on production carriers; dead after the eFuse lock in any case |
 | Ethernet MDI: TX±, RX±, two LEDs | 6 | Ciphertext (and the PHY's link) | The PHY is on the module, so RMII never leaves it and the network policy's reset is internal |
-| I2S × 2: BCLK, LRCK, DIN, DOUT; MCLK; CODEC I2C | 11 | **Plaintext** | Accepted as before (R38), now with the connectors inside the device's seal |
+| I2S × 2, each with its MCLK and CODEC I2C: 7 per CODEC | 14 | **Plaintext** | Accepted as before (R38), now with the connectors inside the device's seal |
 | LCD SPI: SCK, MOSI, DC, CS, RST, backlight; touch I2C and IRQ | 9 | Plaintext | Supervisor and application domain |
 | Speaker PWM | 1 | Plaintext | |
 | Sensor link: TX, RX, power enable, detect | 4 | MAC'd frames | |
 | Application clocks: SI5351A outputs, 10 MHz reference | 3 | Clock, untrusted | Enter the supervisor and application domains only; never the loader domain (Clocking, below) |
 | Pushbutton, enclosure switch, seal loop (2), carrier identity (1-wire or I2C EEPROM) | 5 | Control | Tamper inputs into the security block; the seal loop opens when the application device is opened or the module is pulled |
 | Carrier GPIO | 32 | Application | For carrier variants, no module change |
-| Reserved | the remainder (about 20) | — | Unconnected on both sides until a pinout revision assigns them |
+| Reserved | 22 (J1 51 and 71 to 80, J2 36 to 40 and 75 to 80) | — | Unconnected on both sides until a pinout revision assigns them |
 
 Rules:
 
@@ -148,7 +148,7 @@ so a potting reject costs a board and no key material), stock, install, seal, co
 
 ## Open items
 
-- H11: freeze the pinout (`module-pinout.csv`) across the two DF40 connectors, with the power-and-control connector sufficient for a minimal carrier.
+- H11: freeze the pinout (`module-pinout.csv`, first cut drawn in `fpga/logos2/KiCAD/thriller`) across the two DF40 connectors, with the power-and-control connector (J1) sufficient for a minimal carrier.
 - H12: potting compound, underfill, heatsink bond and the thermal check; rail and temperature monitors for EFP/EFT; whether the Logos2 die has its own sensors.
 - H13: carrier authenticator, or the three removal signals alone.
 - The DF40 receptacle variant on the carrier sets the stack height, and with it the potting allowed on the carrier-facing side; the heatsink goes on the other side.

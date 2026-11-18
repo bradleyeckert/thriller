@@ -1,10 +1,13 @@
 # Hardware
 
-**The module strategy is in [`module.md`](module.md)** and the potting decision in [`potting.md`](potting.md)**:** the chipset on a potted 20 × 40 mm mezzanine card with two DF40C-80DP connectors, everything else on a carrier. The KiCad project below predates that split and
-draws one board; it is to be redrawn as a `module/` and a `carrier/` project against the pinout contract.
+**The module strategy is in [`module.md`](module.md)**, the potting decision in [`potting.md`](potting.md), and the pinout contract in [`module-pinout.csv`](module-pinout.csv): the chipset on a potted
+20 × 40 mm mezzanine card with two DF40C-80DP connectors, everything else on a carrier.
 
-KiCad project for the `thriller` prototype board: Pango PG2L50H-6IFBG484, ST33KTPM2X TPM, QSPI NOR flash, ESP-PSRAM64H, YSN8130E RTC, LAN8742A, 2× NAU88C22, MicroSD, LCD, sensor and host connectors.
-Built for JLCPCB assembly with LCSC-sourced parts.
+**The module schematic is `fpga/logos2/KiCAD/thriller/`** (its README lists the sheets, the bank assignment and the items to check before layout). It was derived from the one-board
+prototype project by script, so the carrier parts came off, the two DF40 connectors went on, and the FPGA became the PG2L50H-6IMBG324.
+
+The KiCad files in this directory are the earlier one-board sketch (placeholder sub-sheets, PG2L50H-6IFBG484) kept as the starting point for the **carrier** project: everything it draws that the
+module schematic no longer has (CODECs and jacks, LCD and touch, MicroSD, RJ45, USB-C and the UART bridge, sensor connector, SI5351A, buttons, cells) is carrier material.
 
 | File | Contents |
 |---|---|
@@ -21,7 +24,7 @@ Built for JLCPCB assembly with LCSC-sourced parts.
 | `display_ui.kicad_sch` | LCD, buttons, LEDs, enclosure switch |
 | `sensor_host.kicad_sch` | Sensor connector and link interface, USB-C and USB-UART |
 
-The FPGA symbol is in `../fpga/logos2/KiCAD/`. The sub-sheets are placeholders with a one-line description each; the sheet split is a first guess.
+The FPGA symbols are in `../fpga/logos2/KiCAD/`. The sub-sheets here are placeholders with a one-line description each.
 
 The files were written in the KiCad 9 schematic format (version 20250114); KiCad 10 opens them and converts on save.
 

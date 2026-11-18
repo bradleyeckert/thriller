@@ -438,12 +438,12 @@
       "External Interfaces"
     ],
     [
-      "fa6cf950-313d-5b8e-834c-4cb092ed4e9e",
-      "Audio"
+      "fc6464a2-c6b7-5735-a1cf-fb39f96e9573",
+      "FPGA config and power"
     ],
     [
-      "b0d04ac2-bc38-5fb7-9862-bbbc12141362",
-      "Display and UI"
+      "f6c83907-71bb-54b9-bca2-dcd1c9a18fda",
+      "Module connectors J1, J2"
     ]
   ],
   "text_variables": {}

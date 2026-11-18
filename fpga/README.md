@@ -6,7 +6,7 @@ and is also the ASIC design. Each family folder holds its notes, its build and k
 | Family | Folder | Status |
 |---|---|---|
 | Efinix Titanium (Ti60) | [`ti60/`](ti60/README.md) | **Known good: fallback.** Meets items 1 to 5 (RSA-4096 authentication, BRAM Initial Content Updater) |
-| Pango Logos2 (PG2L50H-6IFBG484) | [`logos2/`](logos2/README.md) | **Known good: target.** Items 1 to 4 met; item 5 pending the DRM INIT test (F1) |
+| Pango Logos2 (PG2L50H-6IMBG324) | [`logos2/`](logos2/README.md) | **Known good: target.** Items 1 to 4 met; item 5 pending the DRM INIT test (F1) |
 | Microchip PolarFire | [`polarfire/`](polarfire/README.md) | Candidate |
 | Lattice CrossLink-NX (LIFCL) | [`lifcl/`](lifcl/README.md) | Candidate |
 
