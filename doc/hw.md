@@ -431,7 +431,7 @@ stands in for the server's time beacons (`doc/acquisition.md`, When a recording 
   (`doc/fpga.md`, TRNG).
 - **Local time.** For the display, for log entries (marked as local time, distinct from beacon-anchored time), and for interpolating between beacons when the device has been powered down,
   where the sample count cannot run; the host treats that interpolation as an estimate inside the beacon bracket, never as evidence.
-- **Removal indicator.** The RTC's backup cells are on the carrier, so pulling the module from its socket drops `VBAT` and sets the RTC's power-loss flag. The supervisor reads it at boot and the
+- **Removal indicator.** The RTC's backup cells are on the carrier, so unplugging the module from its carrier drops `VBAT` and sets the RTC's power-loss flag. The supervisor reads it at boot and the
   module records *backup lost* in the boot record, the status block and the attestation report until the server acknowledges it (`hw/module.md`, R51).
 - **Scheduling discipline.** The supervisor never sets an alarm inside a recording it has started, and flushes the stream buffer before any planned power-down (the module refuses to drop power-hold while a segment is open); an alarm that arrives anyway
   (a hostile or mis-set RTC) ends the segment the way a power cut does, visibly to the host (R49).
@@ -443,7 +443,7 @@ the configuration engine's program pin: a wake is a power cycle, which is cleane
 ## Clocks, resets and errors
 
 - **One core clock domain** for all three cores and all security logic, from the module's own 25 MHz oscillator through the PLL (`hw/module.md`, Clocking). The mailbox needs no clock-domain crossing.
-- **Clocks from the carrier** (the SI5351A outputs, the 10 MHz reference) enter the supervisor and application domains only, through the clock monitors; nothing in the loader domain is clocked from a finger, and no core can reprogram the module's clock source.
+- **Clocks from the carrier** (the SI5351A outputs, the 10 MHz reference) enter the supervisor and application domains only, through the clock monitors; nothing in the loader domain is clocked from a connector contact, and no core can reprogram the module's clock source.
 - **QSPI** is clocked from the core clock (with DDR outputs if a faster flash clock is needed).
 - **The TRNG's ring oscillators** are asynchronous by design and pass through a synchronizer into the health tests.
 - **Clock checker:** compares the core clock with the oscillator to detect clock glitching; **supply monitor:** an external supervisor's output is an input to the security block where the family has no detectors.

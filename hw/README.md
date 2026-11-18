@@ -1,6 +1,6 @@
 # Hardware
 
-**The module strategy is in [`module.md`](module.md):** the chipset on a potted 260-pin plug-in card, everything else on a carrier. The KiCad project below predates that split and
+**The module strategy is in [`module.md`](module.md):** the chipset on a potted 20 × 40 mm mezzanine card with two DF40C-80DP connectors, everything else on a carrier. The KiCad project below predates that split and
 draws one board; it is to be redrawn as a `module/` and a `carrier/` project against the pinout contract.
 
 KiCad project for the `thriller` prototype board: Pango PG2L50H-6IFBG484, ST33KTPM2X TPM, QSPI NOR flash, ESP-PSRAM64H, YSN8130E RTC, LAN8742A, 2× NAU88C22, MicroSD, LCD, sensor and host connectors.

@@ -1,6 +1,6 @@
 # Pango Logos2 (PG2L50H)
 
-**Part under consideration:** PG2L50H-6IFBG484 (50K-class logic, speed grade 6, industrial temperature, 484-ball BGA).
+**Part:** PG2L50H-6IMBG324 (50K-class logic, speed grade 6, industrial temperature, 324-ball 0.8 mm BGA, 210 user I/O, no HSST; `BGA.md` for the breakout). The 484-ball PG2L50H-6IFBG484 was the earlier choice; both symbols are in `KiCAD/FPGA_Pango_Logos2.kicad_sym`.
 **Status:** current choice, with the Efinix Ti60 as fallback (`fpga/ti60/`). Its bitstream security meets the hard requirements of the wish list. Its "DPA protection" turned out to mean authentication before decryption of the bitstream, not a hardened cipher the fabric can use,
 so the design's symmetric cryptography runs in a masked Ascon core of our own (`doc/hw.md`), as it would on any family. The deciding unknowns are the build flow (item 5, F1) and the master SPI multi-boot behavior (item 4, F3).
 

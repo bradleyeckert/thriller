@@ -39,7 +39,7 @@ To support DSP applications, audio CODECs are planned for.
 | `doc/network.md` | Network security posture: why the device cannot be a network attack vector, for IT departments and the FDA |
 | `doc/fips.md` | FIPS 140-3 as the long-term target: designing for few filings, module boundary, approved algorithms, DRBG, self-tests, roles, zeroization, and what it changes now |
 | `doc/ics55.md` | ASIC migration to the ICS55 55 nm process: the PUF behind the key-source interface |
-| `hw/module.md` | The plug-in module and its carrier: what is on which, what is potted, the 260-pin contract, clocking, removal detection, the two carriers |
+| `hw/module.md` | The mezzanine module and its carrier: what is on which, what is potted, the 160-contact pinout contract, clocking, removal detection, the two carriers |
 | `doc/questions.md` | Every open question in one matrix, and the decisions taken |
 
 ## Module Chipset
@@ -61,7 +61,7 @@ To support DSP applications, audio CODECs are planned for.
   implemented in hardware; there is no network stack anywhere in the device (see Network). An untrusted edge proxy on site relays the datagrams to the server over TLS where IT requires port 443.
 - **25 MHz oscillator** clocks both PHY and FPGA
 - Voltage regulators, bypass caps, etc.
-- SODIMM-like PCBA form factor: 69.6 x 45 mm with 260 fingers. Same as Jetson Nano.
+- Mezzanine module, 20 mm wide by about 40 mm, with two DF40C-80DP-0.4V(51) connectors (160 contacts) to the carrier (`hw/module.md`).
 
 ## Application peripherals
 
