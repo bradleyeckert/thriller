@@ -378,22 +378,22 @@
 
 (text "Notes\n1. LAN8742A (LAN8720A fits the same footprint). REF_CLK out mode: LED2/nINTSEL pulled low, so the PHY\n   makes the 50 MHz RMII clock from the 25 MHz module oscillator on XTAL1/CLKIN (check REF_CLK out mode with an external clock in the LAN8742A data sheet) rather than a crystal and nINT is not available.\n2. Straps left at their internal defaults: MODE[2:0] = 111 (auto-negotiate, all modes), PHYAD0 = 0,\n   REGOFF = 0 (internal 1.2 V regulator on, VDDCR is its output).\n3. ETH_RST_N has a pull-down: the PHY stays in reset until the loader releases it under the network\n   policy, and during FPGA configuration.\n4. LEDs are active high in this strap setting. Check the HR911105A LED polarity against its data sheet.\n5. A medical product needs a magnetics / isolation grade to IEC 60601-1 (open item A6); PoE is not provided.\n6. Crystal load capacitors (22p) to be matched to the crystal chosen." (exclude_from_sim no) (at 17.78 162.56 0) (effects (font (size 1.27 1.27)) (justify left bottom)) (uuid "4c7c5fa6-8b7b-5ff1-8a95-b615757c4279"))
 
-(global_label "ETH_MDIO" (shape passive) (at 85.09 76.2 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "72b14cb0-5a2d-5db9-bd8b-48b269d68b52")
+(global_label "ETH_MDIO" (shape bidirectional) (at 85.09 76.2 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "72b14cb0-5a2d-5db9-bd8b-48b269d68b52")
 (property "Intersheetrefs" "${INTERSHEET_REFS}" (at 85.09 76.2 0) (effects (font (size 1.27 1.27)) (justify left) (hide yes))))
 
-(global_label "ETH_MDC" (shape passive) (at 85.09 78.74 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "4c6db2c9-6539-5862-afb8-2b4d2ba99f51")
+(global_label "ETH_MDC" (shape input) (at 85.09 78.74 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "4c6db2c9-6539-5862-afb8-2b4d2ba99f51")
 (property "Intersheetrefs" "${INTERSHEET_REFS}" (at 85.09 78.74 0) (effects (font (size 1.27 1.27)) (justify left) (hide yes))))
 
-(global_label "ETH_RST_N" (shape passive) (at 85.09 81.28 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "62e32eff-be72-5bcc-a858-65db60a01c00")
+(global_label "ETH_RST_N" (shape input) (at 85.09 81.28 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "62e32eff-be72-5bcc-a858-65db60a01c00")
 (property "Intersheetrefs" "${INTERSHEET_REFS}" (at 85.09 81.28 0) (effects (font (size 1.27 1.27)) (justify left) (hide yes))))
 
-(global_label "ETH_TXEN" (shape passive) (at 85.09 86.36 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "0f72761e-8d0a-5e1f-bd77-701006b4c40e")
+(global_label "ETH_TXEN" (shape input) (at 85.09 86.36 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "0f72761e-8d0a-5e1f-bd77-701006b4c40e")
 (property "Intersheetrefs" "${INTERSHEET_REFS}" (at 85.09 86.36 0) (effects (font (size 1.27 1.27)) (justify left) (hide yes))))
 
-(global_label "ETH_TXD0" (shape passive) (at 85.09 88.9 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "8f192d30-5efa-57bd-a6fe-64c0a92b380f")
+(global_label "ETH_TXD0" (shape input) (at 85.09 88.9 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "8f192d30-5efa-57bd-a6fe-64c0a92b380f")
 (property "Intersheetrefs" "${INTERSHEET_REFS}" (at 85.09 88.9 0) (effects (font (size 1.27 1.27)) (justify left) (hide yes))))
 
-(global_label "ETH_TXD1" (shape passive) (at 85.09 91.44 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "42da3741-cdf8-5575-aaca-c20ea136907e")
+(global_label "ETH_TXD1" (shape input) (at 85.09 91.44 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "42da3741-cdf8-5575-aaca-c20ea136907e")
 (property "Intersheetrefs" "${INTERSHEET_REFS}" (at 85.09 91.44 0) (effects (font (size 1.27 1.27)) (justify left) (hide yes))))
 
 (label "PHY_RXD0" (at 85.09 96.52 180) (effects (font (size 1.27 1.27)) (justify right bottom)) (uuid "0b1e2712-00a2-5dab-8233-12e483c6aa80"))
@@ -414,27 +414,27 @@
 
 (label "PHY_RXD0" (at 33.02 30.48 180) (effects (font (size 1.27 1.27)) (justify right bottom)) (uuid "8d5344cd-1a93-504a-b0b3-624f9ed20361"))
 
-(global_label "ETH_RXD0" (shape passive) (at 43.18 30.48 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "05e4dbe3-2818-5371-bc14-bf16743ad4ff")
+(global_label "ETH_RXD0" (shape output) (at 43.18 30.48 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "05e4dbe3-2818-5371-bc14-bf16743ad4ff")
 (property "Intersheetrefs" "${INTERSHEET_REFS}" (at 43.18 30.48 0) (effects (font (size 1.27 1.27)) (justify left) (hide yes))))
 
 (label "PHY_RXD1" (at 33.02 35.56 180) (effects (font (size 1.27 1.27)) (justify right bottom)) (uuid "b29b3685-ec75-5ce4-b2e0-631d06916423"))
 
-(global_label "ETH_RXD1" (shape passive) (at 43.18 35.56 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "283507bf-a88e-522b-a4d5-cb7ba2c01025")
+(global_label "ETH_RXD1" (shape output) (at 43.18 35.56 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "283507bf-a88e-522b-a4d5-cb7ba2c01025")
 (property "Intersheetrefs" "${INTERSHEET_REFS}" (at 43.18 35.56 0) (effects (font (size 1.27 1.27)) (justify left) (hide yes))))
 
 (label "PHY_CRS_DV" (at 33.02 40.64 180) (effects (font (size 1.27 1.27)) (justify right bottom)) (uuid "ae1c2983-da5a-5efa-b7a0-bf6b826031f2"))
 
-(global_label "ETH_CRS_DV" (shape passive) (at 43.18 40.64 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "e4f28725-b952-5aa5-8ec6-c4f8be004c06")
+(global_label "ETH_CRS_DV" (shape output) (at 43.18 40.64 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "e4f28725-b952-5aa5-8ec6-c4f8be004c06")
 (property "Intersheetrefs" "${INTERSHEET_REFS}" (at 43.18 40.64 0) (effects (font (size 1.27 1.27)) (justify left) (hide yes))))
 
 (label "PHY_RXER" (at 33.02 45.72 180) (effects (font (size 1.27 1.27)) (justify right bottom)) (uuid "7b258aad-f8ad-5e70-b3b9-87c5836df81d"))
 
-(global_label "ETH_RXER" (shape passive) (at 43.18 45.72 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "5239f346-28a8-591e-b9f5-2d7a95ba82a1")
+(global_label "ETH_RXER" (shape output) (at 43.18 45.72 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "5239f346-28a8-591e-b9f5-2d7a95ba82a1")
 (property "Intersheetrefs" "${INTERSHEET_REFS}" (at 43.18 45.72 0) (effects (font (size 1.27 1.27)) (justify left) (hide yes))))
 
 (label "PHY_REFCLK" (at 33.02 50.8 180) (effects (font (size 1.27 1.27)) (justify right bottom)) (uuid "93e33c70-2e3c-5d73-9af5-1cab3d626be6"))
 
-(global_label "ETH_REFCLK" (shape passive) (at 43.18 50.8 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "b99b5d59-0a7f-52ff-a3a3-88b54eff50c2")
+(global_label "ETH_REFCLK" (shape output) (at 43.18 50.8 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "b99b5d59-0a7f-52ff-a3a3-88b54eff50c2")
 (property "Intersheetrefs" "${INTERSHEET_REFS}" (at 43.18 50.8 0) (effects (font (size 1.27 1.27)) (justify left) (hide yes))))
 
 (label "PHY_VDDCR" (at 33.02 83.82 180) (effects (font (size 1.27 1.27)) (justify right bottom)) (uuid "0e635f7e-14e6-5ff8-9ffe-979bb1e83931"))
@@ -443,10 +443,10 @@
 
 (label "PHY_RBIAS" (at 33.02 93.98 180) (effects (font (size 1.27 1.27)) (justify right bottom)) (uuid "ec506ead-5985-528c-8363-f4d0c1725fd1"))
 
-(global_label "ETH_RST_N" (shape passive) (at 33.02 99.06 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "7a15a8f1-3c30-5d6d-a3a9-d3cf4a5e2f8b")
+(global_label "ETH_RST_N" (shape input) (at 33.02 99.06 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "7a15a8f1-3c30-5d6d-a3a9-d3cf4a5e2f8b")
 (property "Intersheetrefs" "${INTERSHEET_REFS}" (at 33.02 99.06 0) (effects (font (size 1.27 1.27)) (justify left) (hide yes))))
 
-(global_label "ETH_MDIO" (shape passive) (at 160.02 27.94 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "b2ed386f-a1bc-5950-8200-e69c303a23c2")
+(global_label "ETH_MDIO" (shape bidirectional) (at 160.02 27.94 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "b2ed386f-a1bc-5950-8200-e69c303a23c2")
 (property "Intersheetrefs" "${INTERSHEET_REFS}" (at 160.02 27.94 0) (effects (font (size 1.27 1.27)) (justify left) (hide yes))))
 
 (label "VDDA_PHY" (at 160.02 33.02 180) (effects (font (size 1.27 1.27)) (justify right bottom)) (uuid "2e7b8ddd-4cb4-59d7-827c-3527b2467387"))
@@ -1120,29 +1120,29 @@
 (project "thriller"
 (path "/02a4128e-5284-4df4-bd95-50d9619a72c4/33eda6da-34ec-54c6-aba0-63d9912705aa" (reference "R76") (unit 1)))))
 (embedded_fonts no)
-(global_label "SYS_CLK" (shape passive) (at 85.09 114.3 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "897c9087-8025-5feb-8ab2-27744a84c7e3"))
+(global_label "SYS_CLK" (shape output) (at 85.09 114.3 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "897c9087-8025-5feb-8ab2-27744a84c7e3"))
 
-(global_label "ETH_TXP" (shape passive) (at 128.27 76.2 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "85ba8923-4cd3-53e1-8b84-471c36ba3ae6"))
+(global_label "ETH_TXP" (shape output) (at 128.27 76.2 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "85ba8923-4cd3-53e1-8b84-471c36ba3ae6"))
 
-(global_label "ETH_TXN" (shape passive) (at 128.27 78.74 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "3f35ac8c-cf39-5087-a30d-dd7d2d9ffb36"))
+(global_label "ETH_TXN" (shape output) (at 128.27 78.74 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "3f35ac8c-cf39-5087-a30d-dd7d2d9ffb36"))
 
-(global_label "ETH_RXP" (shape passive) (at 128.27 83.82 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "b18e211e-e269-5efd-93ce-2538baba09f6"))
+(global_label "ETH_RXP" (shape input) (at 128.27 83.82 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "b18e211e-e269-5efd-93ce-2538baba09f6"))
 
-(global_label "ETH_RXN" (shape passive) (at 128.27 86.36 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "80b6e783-a91b-57f2-934d-3278ef4ee44d"))
+(global_label "ETH_RXN" (shape input) (at 128.27 86.36 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "80b6e783-a91b-57f2-934d-3278ef4ee44d"))
 
-(global_label "ETH_LED1" (shape passive) (at 128.27 96.52 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "c9c8a838-4266-52cf-a8e9-cf7645a39ee6"))
+(global_label "ETH_LED1" (shape output) (at 128.27 96.52 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "c9c8a838-4266-52cf-a8e9-cf7645a39ee6"))
 
-(global_label "ETH_LED2" (shape passive) (at 128.27 99.06 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "146524f5-71e9-5397-b03a-057de2970866"))
+(global_label "ETH_LED2" (shape output) (at 128.27 99.06 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "146524f5-71e9-5397-b03a-057de2970866"))
 
-(global_label "ETH_LED2" (shape passive) (at 33.02 104.14 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "fc42b704-5c13-57e2-a622-2b2c6252f0b6"))
+(global_label "ETH_LED2" (shape output) (at 33.02 104.14 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "fc42b704-5c13-57e2-a622-2b2c6252f0b6"))
 
-(global_label "ETH_TXP" (shape passive) (at 160.02 96.52 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "712f19c5-4488-5980-a73f-a79383eb4091"))
+(global_label "ETH_TXP" (shape output) (at 160.02 96.52 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "712f19c5-4488-5980-a73f-a79383eb4091"))
 
-(global_label "ETH_TXN" (shape passive) (at 160.02 101.6 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "ae20053d-e244-5c8d-88e7-e84f5ee76ec0"))
+(global_label "ETH_TXN" (shape output) (at 160.02 101.6 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "ae20053d-e244-5c8d-88e7-e84f5ee76ec0"))
 
-(global_label "ETH_RXP" (shape passive) (at 160.02 106.68 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "783825d8-b755-564e-ae77-bb8d45df661e"))
+(global_label "ETH_RXP" (shape input) (at 160.02 106.68 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "783825d8-b755-564e-ae77-bb8d45df661e"))
 
-(global_label "ETH_RXN" (shape passive) (at 160.02 111.76 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "0f9c1921-2a83-5e11-a6c2-2c3e0ac1459c"))
+(global_label "ETH_RXN" (shape input) (at 160.02 111.76 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "0f9c1921-2a83-5e11-a6c2-2c3e0ac1459c"))
 
 (no_connect (at 87.63 116.84) (uuid "a8f8c007-3703-5bf9-a244-4963e2925fc4"))
 

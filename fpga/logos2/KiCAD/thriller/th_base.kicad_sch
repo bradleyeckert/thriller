@@ -744,44 +744,44 @@
 
 (label "OSC_EN" (at 101.6 118.11 180) (effects (font (size 1.27 1.27)) (justify right bottom)) (uuid "09254bde-5e0d-57d7-9427-743edabdbceb"))
 
-(global_label "SYS_CLK" (shape passive) (at 147.32 114.3 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "cf398b27-ffca-59ae-b7c6-c542b96c1a4d")
+(global_label "SYS_CLK" (shape output) (at 147.32 114.3 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "cf398b27-ffca-59ae-b7c6-c542b96c1a4d")
 (property "Intersheetrefs" "${INTERSHEET_REFS}" (at 147.32 114.3 0) (effects (font (size 1.27 1.27)) (justify left) (hide yes))))
 
-(global_label "FLASH_CS_N" (shape passive) (at 224.79 39.37 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "631623fe-cf58-58ca-b8cc-2321e0231d23")
+(global_label "FLASH_CS_N" (shape input) (at 224.79 39.37 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "631623fe-cf58-58ca-b8cc-2321e0231d23")
 (property "Intersheetrefs" "${INTERSHEET_REFS}" (at 224.79 39.37 0) (effects (font (size 1.27 1.27)) (justify left) (hide yes))))
 
 (label "FLASH_CLK" (at 224.79 41.91 180) (effects (font (size 1.27 1.27)) (justify right bottom)) (uuid "b5b831b9-d80b-51cb-bb38-92e30f9d3103"))
 
-(global_label "FLASH_D0" (shape passive) (at 224.79 44.45 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "9906d768-0547-55be-85e3-e0d4a2a21c1c")
+(global_label "FLASH_D0" (shape bidirectional) (at 224.79 44.45 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "9906d768-0547-55be-85e3-e0d4a2a21c1c")
 (property "Intersheetrefs" "${INTERSHEET_REFS}" (at 224.79 44.45 0) (effects (font (size 1.27 1.27)) (justify left) (hide yes))))
 
-(global_label "FLASH_D1" (shape passive) (at 224.79 46.99 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "16474925-9f34-5d8c-8013-64078c303d77")
+(global_label "FLASH_D1" (shape bidirectional) (at 224.79 46.99 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "16474925-9f34-5d8c-8013-64078c303d77")
 (property "Intersheetrefs" "${INTERSHEET_REFS}" (at 224.79 46.99 0) (effects (font (size 1.27 1.27)) (justify left) (hide yes))))
 
-(global_label "FLASH_D2" (shape passive) (at 224.79 49.53 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "61e35bcd-9084-5da4-8a9b-f4899f448aa5")
+(global_label "FLASH_D2" (shape bidirectional) (at 224.79 49.53 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "61e35bcd-9084-5da4-8a9b-f4899f448aa5")
 (property "Intersheetrefs" "${INTERSHEET_REFS}" (at 224.79 49.53 0) (effects (font (size 1.27 1.27)) (justify left) (hide yes))))
 
-(global_label "FLASH_D3" (shape passive) (at 224.79 52.07 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "529a454c-c3a5-5943-866a-3147bffaa9ba")
+(global_label "FLASH_D3" (shape bidirectional) (at 224.79 52.07 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "529a454c-c3a5-5943-866a-3147bffaa9ba")
 (property "Intersheetrefs" "${INTERSHEET_REFS}" (at 224.79 52.07 0) (effects (font (size 1.27 1.27)) (justify left) (hide yes))))
 
-(global_label "FLASH_CS_N" (shape passive) (at 279.4 50.8 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "4945318c-f7b1-52ab-984a-181e78ece808")
+(global_label "FLASH_CS_N" (shape input) (at 279.4 50.8 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "4945318c-f7b1-52ab-984a-181e78ece808")
 (property "Intersheetrefs" "${INTERSHEET_REFS}" (at 279.4 50.8 0) (effects (font (size 1.27 1.27)) (justify left) (hide yes))))
 
-(global_label "FLASH_D2" (shape passive) (at 279.4 55.88 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "16477db7-410d-543f-8e39-19cd80f98335")
+(global_label "FLASH_D2" (shape bidirectional) (at 279.4 55.88 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "16477db7-410d-543f-8e39-19cd80f98335")
 (property "Intersheetrefs" "${INTERSHEET_REFS}" (at 279.4 55.88 0) (effects (font (size 1.27 1.27)) (justify left) (hide yes))))
 
-(global_label "FLASH_D3" (shape passive) (at 279.4 60.96 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "79517acd-d96f-52a8-9efd-fb8e41c73f6e")
+(global_label "FLASH_D3" (shape bidirectional) (at 279.4 60.96 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "79517acd-d96f-52a8-9efd-fb8e41c73f6e")
 (property "Intersheetrefs" "${INTERSHEET_REFS}" (at 279.4 60.96 0) (effects (font (size 1.27 1.27)) (justify left) (hide yes))))
 
-(global_label "IO_STATUS_C" (shape passive) (at 279.4 66.04 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "56398e1b-da2d-585c-8b9c-001d51db7a39")
+(global_label "IO_STATUS_C" (shape output) (at 279.4 66.04 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "56398e1b-da2d-585c-8b9c-001d51db7a39")
 (property "Intersheetrefs" "${INTERSHEET_REFS}" (at 279.4 66.04 0) (effects (font (size 1.27 1.27)) (justify left) (hide yes))))
 
-(global_label "IO_STATUS_C" (shape passive) (at 279.4 76.2 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "dbdddc59-4134-5120-8c26-34678fad4775")
+(global_label "IO_STATUS_C" (shape output) (at 279.4 76.2 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "dbdddc59-4134-5120-8c26-34678fad4775")
 (property "Intersheetrefs" "${INTERSHEET_REFS}" (at 279.4 76.2 0) (effects (font (size 1.27 1.27)) (justify left) (hide yes))))
 
 (label "FLASH_CLK" (at 241.3 71.12 0) (effects (font (size 1.27 1.27)) (justify left bottom)) (uuid "32ec8d3f-d328-5090-9683-ff6472cdd0af"))
 
-(global_label "FLASH_CLK_USR" (shape passive) (at 231.14 76.2 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "b7f19e79-d0f1-5b6c-b41c-ae544f671592")
+(global_label "FLASH_CLK_USR" (shape input) (at 231.14 76.2 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "b7f19e79-d0f1-5b6c-b41c-ae544f671592")
 (property "Intersheetrefs" "${INTERSHEET_REFS}" (at 231.14 76.2 0) (effects (font (size 1.27 1.27)) (justify left) (hide yes))))
 
 (label "FLASH_CLK" (at 241.3 76.2 0) (effects (font (size 1.27 1.27)) (justify left bottom)) (uuid "78047028-aa20-5941-871a-ca785eaf7302"))
@@ -790,7 +790,7 @@
 
 (label "RTC_SDA_AO" (at 224.79 167.64 180) (effects (font (size 1.27 1.27)) (justify right bottom)) (uuid "49f5a875-e66d-561c-b440-cb60e55bae6a"))
 
-(global_label "RTC_INT_N_AO" (shape passive) (at 224.79 170.18 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "7f52670c-5a0c-5b38-976a-c234c6dd9f63")
+(global_label "RTC_INT_N_AO" (shape output) (at 224.79 170.18 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "7f52670c-5a0c-5b38-976a-c234c6dd9f63")
 (property "Intersheetrefs" "${INTERSHEET_REFS}" (at 224.79 170.18 0) (effects (font (size 1.27 1.27)) (justify left) (hide yes))))
 
 (label "RTC_VOUT" (at 252.73 170.18 0) (effects (font (size 1.27 1.27)) (justify left bottom)) (uuid "d0edb5cb-321a-56ec-b6b6-be01766b43d2"))
@@ -805,40 +805,40 @@
 
 (label "RTC_SCL_AO" (at 334.01 44.45 0) (effects (font (size 1.27 1.27)) (justify left bottom)) (uuid "14767120-7901-5ee8-95b1-28194929354d"))
 
-(global_label "RTC_SCL" (shape passive) (at 334.01 54.61 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "1a48d9f3-8bc8-52fe-9540-ec49f0f74b5f")
+(global_label "RTC_SCL" (shape input) (at 334.01 54.61 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "1a48d9f3-8bc8-52fe-9540-ec49f0f74b5f")
 (property "Intersheetrefs" "${INTERSHEET_REFS}" (at 334.01 54.61 0) (effects (font (size 1.27 1.27)) (justify left) (hide yes))))
 
 (label "RTC_SDA_AO" (at 377.19 44.45 0) (effects (font (size 1.27 1.27)) (justify left bottom)) (uuid "7c5b6d14-5eb1-5374-937f-5c9db7c488b5"))
 
-(global_label "RTC_SDA" (shape passive) (at 377.19 54.61 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "d3782048-2d52-5727-bdb3-f42385fabc4e")
+(global_label "RTC_SDA" (shape bidirectional) (at 377.19 54.61 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "d3782048-2d52-5727-bdb3-f42385fabc4e")
 (property "Intersheetrefs" "${INTERSHEET_REFS}" (at 377.19 54.61 0) (effects (font (size 1.27 1.27)) (justify left) (hide yes))))
 
-(global_label "RTC_INT_N_AO" (shape passive) (at 334.01 63.5 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "5fec2722-3b45-52e3-bb0f-11f176184901")
+(global_label "RTC_INT_N_AO" (shape output) (at 334.01 63.5 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "5fec2722-3b45-52e3-bb0f-11f176184901")
 (property "Intersheetrefs" "${INTERSHEET_REFS}" (at 334.01 63.5 0) (effects (font (size 1.27 1.27)) (justify left) (hide yes))))
 
-(global_label "RTC_INT_N" (shape passive) (at 334.01 73.66 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "5a162570-41eb-581f-9400-d8c1d4ca29e3")
+(global_label "RTC_INT_N" (shape output) (at 334.01 73.66 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "5a162570-41eb-581f-9400-d8c1d4ca29e3")
 (property "Intersheetrefs" "${INTERSHEET_REFS}" (at 334.01 73.66 0) (effects (font (size 1.27 1.27)) (justify left) (hide yes))))
 
-(global_label "PB_N_AO" (shape passive) (at 377.19 63.5 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "0948f582-a749-5158-97a3-7b0d72e34f36")
+(global_label "PB_N_AO" (shape input) (at 377.19 63.5 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "0948f582-a749-5158-97a3-7b0d72e34f36")
 (property "Intersheetrefs" "${INTERSHEET_REFS}" (at 377.19 63.5 0) (effects (font (size 1.27 1.27)) (justify left) (hide yes))))
 
-(global_label "PB_N" (shape passive) (at 377.19 73.66 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "cf93d682-5b58-5cf2-8a33-2a8ab7c6ad7f")
+(global_label "PB_N" (shape output) (at 377.19 73.66 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "cf93d682-5b58-5cf2-8a33-2a8ab7c6ad7f")
 (property "Intersheetrefs" "${INTERSHEET_REFS}" (at 377.19 73.66 0) (effects (font (size 1.27 1.27)) (justify left) (hide yes))))
 
 (label "RTC_SCL_AO" (at 332.74 101.6 180) (effects (font (size 1.27 1.27)) (justify right bottom)) (uuid "e96b6871-fa23-5ac0-9dd1-2290d7e8e2b9"))
 
 (label "RTC_SDA_AO" (at 332.74 106.68 180) (effects (font (size 1.27 1.27)) (justify right bottom)) (uuid "49aafc9b-3702-53e3-bf02-35fa1f7d0ffe"))
 
-(global_label "RTC_SCL" (shape passive) (at 375.92 101.6 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "37926362-f63c-53f7-abb6-cdb3bcd1435a")
+(global_label "RTC_SCL" (shape input) (at 375.92 101.6 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "37926362-f63c-53f7-abb6-cdb3bcd1435a")
 (property "Intersheetrefs" "${INTERSHEET_REFS}" (at 375.92 101.6 0) (effects (font (size 1.27 1.27)) (justify left) (hide yes))))
 
-(global_label "RTC_SDA" (shape passive) (at 375.92 106.68 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "b219ed03-b4ce-5741-90e2-b891f122cf5f")
+(global_label "RTC_SDA" (shape bidirectional) (at 375.92 106.68 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "b219ed03-b4ce-5741-90e2-b891f122cf5f")
 (property "Intersheetrefs" "${INTERSHEET_REFS}" (at 375.92 106.68 0) (effects (font (size 1.27 1.27)) (justify left) (hide yes))))
 
-(global_label "RTC_INT_N" (shape passive) (at 375.92 111.76 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "c01b3794-1c08-531a-a555-fd2fed5049fa")
+(global_label "RTC_INT_N" (shape output) (at 375.92 111.76 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "c01b3794-1c08-531a-a555-fd2fed5049fa")
 (property "Intersheetrefs" "${INTERSHEET_REFS}" (at 375.92 111.76 0) (effects (font (size 1.27 1.27)) (justify left) (hide yes))))
 
-(global_label "PB_N" (shape passive) (at 375.92 116.84 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "e801362e-e347-5e42-851a-8287de7d3f84")
+(global_label "PB_N" (shape output) (at 375.92 116.84 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "e801362e-e347-5e42-851a-8287de7d3f84")
 (property "Intersheetrefs" "${INTERSHEET_REFS}" (at 375.92 116.84 0) (effects (font (size 1.27 1.27)) (justify left) (hide yes))))
 
 (symbol (lib_id "thriller:C") (at 137.16 27.94 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "71600179-8a79-54f6-8f89-91e5de303efb")
@@ -2424,45 +2424,45 @@
 (project "thriller"
 (path "/02a4128e-5284-4df4-bd95-50d9619a72c4/7c95428e-e923-4d38-91d5-bfe862deab42" (reference "#PWR") (unit 1)))))
 (embedded_fonts no)
-(global_label "VCCB" (shape passive) (at 147.32 45.72 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "7bc37c6c-fb6a-5d10-aeba-9477c1b28005"))
+(global_label "VCCB" (shape output) (at 147.32 45.72 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "7bc37c6c-fb6a-5d10-aeba-9477c1b28005"))
 
-(global_label "VCCADC" (shape passive) (at 147.32 50.8 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "7b1a426f-048b-5b63-80e9-8ab07fa85899"))
+(global_label "VCCADC" (shape output) (at 147.32 50.8 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "7b1a426f-048b-5b63-80e9-8ab07fa85899"))
 
-(global_label "VCCADC" (shape passive) (at 147.32 60.96 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "57ffb3c3-d5dd-563c-bc93-b3cc9da5db07"))
+(global_label "VCCADC" (shape output) (at 147.32 60.96 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "57ffb3c3-d5dd-563c-bc93-b3cc9da5db07"))
 
-(global_label "VCCADC" (shape passive) (at 147.32 66.04 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "1e62b5cd-ee7c-560b-a946-c6186e1c5382"))
+(global_label "VCCADC" (shape output) (at 147.32 66.04 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "1e62b5cd-ee7c-560b-a946-c6186e1c5382"))
 
-(global_label "ADC_5V_MON" (shape passive) (at 147.32 81.28 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "32f76f76-b3df-58a0-a776-78998b8ec67d"))
+(global_label "ADC_5V_MON" (shape output) (at 147.32 81.28 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "32f76f76-b3df-58a0-a776-78998b8ec67d"))
 
-(global_label "ADC_5V_MON" (shape passive) (at 147.32 91.44 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "60111cd6-37c7-5f74-ab6e-4b989883e436"))
+(global_label "ADC_5V_MON" (shape output) (at 147.32 91.44 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "60111cd6-37c7-5f74-ab6e-4b989883e436"))
 
-(global_label "ADC_5V_MON" (shape passive) (at 147.32 96.52 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "27964599-1f0e-5e5e-8dc0-a6c1e857f4f4"))
+(global_label "ADC_5V_MON" (shape output) (at 147.32 96.52 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "27964599-1f0e-5e5e-8dc0-a6c1e857f4f4"))
 
-(global_label "CFG_MODE0" (shape passive) (at 180.34 27.94 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "1021bdba-a555-5a7b-ae87-8fc997ddbef9"))
+(global_label "CFG_MODE0" (shape output) (at 180.34 27.94 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "1021bdba-a555-5a7b-ae87-8fc997ddbef9"))
 
-(global_label "FPGA_RST_N" (shape passive) (at 180.34 38.1 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "96fb382c-cc22-5466-b063-d883a062e849"))
+(global_label "FPGA_RST_N" (shape output) (at 180.34 38.1 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "96fb382c-cc22-5466-b063-d883a062e849"))
 
-(global_label "CFG_INIT_N" (shape passive) (at 180.34 43.18 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "01526534-f8e5-5594-986f-9631819cf2ae"))
+(global_label "CFG_INIT_N" (shape bidirectional) (at 180.34 43.18 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "01526534-f8e5-5594-986f-9631819cf2ae"))
 
-(global_label "CFG_DONE" (shape passive) (at 180.34 48.26 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "ddb11eec-dc5d-53f6-93c9-78e04370087e"))
+(global_label "CFG_DONE" (shape input) (at 180.34 48.26 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "ddb11eec-dc5d-53f6-93c9-78e04370087e"))
 
-(global_label "CFG_MODE1" (shape passive) (at 180.34 81.28 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "23d21cf4-4ede-507e-a542-d67f9ec945ef"))
+(global_label "CFG_MODE1" (shape output) (at 180.34 81.28 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "23d21cf4-4ede-507e-a542-d67f9ec945ef"))
 
-(global_label "CFG_MODE2" (shape passive) (at 180.34 86.36 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "8e65488f-6ded-5b31-ae01-79ec0595995d"))
+(global_label "CFG_MODE2" (shape output) (at 180.34 86.36 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "8e65488f-6ded-5b31-ae01-79ec0595995d"))
 
-(global_label "CFG_CLK" (shape passive) (at 231.14 71.12 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "fe4ef526-7b38-53fa-b87a-632b606bcbff"))
+(global_label "CFG_CLK" (shape input) (at 231.14 71.12 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "fe4ef526-7b38-53fa-b87a-632b606bcbff"))
 
-(global_label "JTAG_TMS" (shape passive) (at 180.34 53.34 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "1dac2ab6-77af-5fcf-95da-dad80ba4f969"))
+(global_label "JTAG_TMS" (shape output) (at 180.34 53.34 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "1dac2ab6-77af-5fcf-95da-dad80ba4f969"))
 
-(global_label "JTAG_TDI" (shape passive) (at 180.34 58.42 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "4314293e-0288-596c-b9c1-f320acb39204"))
+(global_label "JTAG_TDI" (shape output) (at 180.34 58.42 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "4314293e-0288-596c-b9c1-f320acb39204"))
 
-(global_label "JTAG_TCK" (shape passive) (at 180.34 91.44 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "16095507-bb3e-5e6d-88f0-e9835f0febbf"))
+(global_label "JTAG_TCK" (shape output) (at 180.34 91.44 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "16095507-bb3e-5e6d-88f0-e9835f0febbf"))
 
-(global_label "SYS_CLK" (shape passive) (at 121.92 118.11 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "f29cdd54-3621-5469-8f3d-560cad1ea346"))
+(global_label "SYS_CLK" (shape output) (at 121.92 118.11 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "f29cdd54-3621-5469-8f3d-560cad1ea346"))
 
-(global_label "SYS_CLK" (shape passive) (at 137.16 114.3 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "475217e9-987b-5411-92d2-869c8320f866"))
+(global_label "SYS_CLK" (shape output) (at 137.16 114.3 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "475217e9-987b-5411-92d2-869c8320f866"))
 
-(global_label "VBAT_CELL" (shape passive) (at 276.86 193.04 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "b7ed7bcb-3415-52d2-be08-9cea611dc924"))
+(global_label "VBAT_CELL" (shape input) (at 276.86 193.04 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "b7ed7bcb-3415-52d2-be08-9cea611dc924"))
 
 (symbol (lib_id "thriller:ST33KTPM2X") (at 330 240 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "6bd7ee63-3f33-5055-bb5e-6dd36165eb59")
 (property "Reference" "U7" (at 330 237.46 0) (effects (font (size 1.27 1.27))))
@@ -2553,11 +2553,11 @@
 
 (wire (pts (xy 312.22 234.92) (xy 307.14 234.92)) (stroke (width 0) (type default)) (uuid "f7e1db32-93ce-5cf6-abef-0d0733b4b912"))
 
-(global_label "TPM_RST_N" (shape passive) (at 307.14 234.92 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "c81148b3-6e02-531f-8f01-502e0ea05504"))
+(global_label "TPM_RST_N" (shape input) (at 307.14 234.92 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "c81148b3-6e02-531f-8f01-502e0ea05504"))
 
 (wire (pts (xy 312.22 237.46) (xy 307.14 237.46)) (stroke (width 0) (type default)) (uuid "492c562d-eef5-5949-a9ea-d98241c308e0"))
 
-(global_label "TPM_PIRQ_N" (shape passive) (at 307.14 237.46 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "ea799384-2bff-56ad-b834-68101bdaebca"))
+(global_label "TPM_PIRQ_N" (shape output) (at 307.14 237.46 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "ea799384-2bff-56ad-b834-68101bdaebca"))
 
 (no_connect (at 312.22 242.54) (uuid "b4720dce-423d-5408-a2cf-4f781b976acc"))
 
@@ -2571,7 +2571,7 @@
 
 (wire (pts (xy 347.78 234.92) (xy 352.86 234.92)) (stroke (width 0) (type default)) (uuid "b97b75af-5d17-5bf7-b9e4-55d3a14d0565"))
 
-(global_label "TPM_CS_N" (shape passive) (at 352.86 234.92 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "213f464a-a17f-589a-a875-615d70ce85e7"))
+(global_label "TPM_CS_N" (shape input) (at 352.86 234.92 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "213f464a-a17f-589a-a875-615d70ce85e7"))
 
 (wire (pts (xy 347.78 237.46) (xy 352.86 237.46)) (stroke (width 0) (type default)) (uuid "ab4597ab-92e1-5062-9807-b3da9ce2678e"))
 
@@ -2757,7 +2757,7 @@
 (project "thriller"
 (path "/02a4128e-5284-4df4-bd95-50d9619a72c4/7c95428e-e923-4d38-91d5-bfe862deab42" (reference "R101") (unit 1)))))
 
-(global_label "TPM_CLK" (shape passive) (at 360.48 232.38 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "37f5daf3-15e7-5a83-89d2-f96f40e92cb7"))
+(global_label "TPM_CLK" (shape input) (at 360.48 232.38 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "37f5daf3-15e7-5a83-89d2-f96f40e92cb7"))
 
 (symbol (lib_id "thriller:R") (at 356.67 237.46 90) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "117dabeb-a501-57ae-b498-c7599d436187")
 (property "Reference" "R102" (at 356.67 234.92 0) (effects (font (size 1.27 1.27))))
@@ -2778,7 +2778,7 @@
 (project "thriller"
 (path "/02a4128e-5284-4df4-bd95-50d9619a72c4/7c95428e-e923-4d38-91d5-bfe862deab42" (reference "R102") (unit 1)))))
 
-(global_label "TPM_MOSI" (shape passive) (at 360.48 237.46 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "53af4a17-b47d-5dc8-9b71-ce49b88515a6"))
+(global_label "TPM_MOSI" (shape input) (at 360.48 237.46 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "53af4a17-b47d-5dc8-9b71-ce49b88515a6"))
 
 (symbol (lib_id "thriller:R") (at 356.67 240 90) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "59c5818c-e55d-52f2-947f-e731c229437b")
 (property "Reference" "R103" (at 356.67 237.46 0) (effects (font (size 1.27 1.27))))
@@ -2799,7 +2799,7 @@
 (project "thriller"
 (path "/02a4128e-5284-4df4-bd95-50d9619a72c4/7c95428e-e923-4d38-91d5-bfe862deab42" (reference "R103") (unit 1)))))
 
-(global_label "TPM_MISO" (shape passive) (at 360.48 240 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "1d9fde32-3cd9-5180-91b7-2abd71da6856"))
+(global_label "TPM_MISO" (shape output) (at 360.48 240 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "1d9fde32-3cd9-5180-91b7-2abd71da6856"))
 
 (symbol (lib_id "thriller:R") (at 368 252.7 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "f7f92027-f8a8-5fd7-83c1-10b6f158bd8f")
 (property "Reference" "R104" (at 368 250.16 0) (effects (font (size 1.27 1.27))))
@@ -2820,7 +2820,7 @@
 (project "thriller"
 (path "/02a4128e-5284-4df4-bd95-50d9619a72c4/7c95428e-e923-4d38-91d5-bfe862deab42" (reference "R104") (unit 1)))))
 
-(global_label "TPM_RST_N" (shape passive) (at 368 248.89 90) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "088ae15f-8fd6-5962-b696-6772fd78e538"))
+(global_label "TPM_RST_N" (shape input) (at 368 248.89 90) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "088ae15f-8fd6-5962-b696-6772fd78e538"))
 
 (symbol (lib_id "thriller:GND") (at 368 256.51 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "a9604870-9916-51a1-b575-fb188bf3ef02")
 (property "Reference" "#PWR" (at 368 253.97 0) (effects (font (size 1.27 1.27)) (hide yes)))
@@ -2863,7 +2863,7 @@
 (project "thriller"
 (path "/02a4128e-5284-4df4-bd95-50d9619a72c4/7c95428e-e923-4d38-91d5-bfe862deab42" (reference "#PWR") (unit 1)))))
 
-(global_label "TPM_PIRQ_N" (shape passive) (at 378 256.51 270) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "709a6f63-407e-5ae4-a63b-919499d37850"))
+(global_label "TPM_PIRQ_N" (shape output) (at 378 256.51 270) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "709a6f63-407e-5ae4-a63b-919499d37850"))
 
 (symbol (lib_id "thriller:C") (at 388 252.7 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "91b3c4cd-6f56-59cf-b991-3d0faf17827e")
 (property "Reference" "C273" (at 388 250.16 0) (effects (font (size 1.27 1.27))))
@@ -2884,7 +2884,7 @@
 (project "thriller"
 (path "/02a4128e-5284-4df4-bd95-50d9619a72c4/7c95428e-e923-4d38-91d5-bfe862deab42" (reference "C273") (unit 1)))))
 
-(global_label "TPM_CS_N" (shape passive) (at 388 248.89 90) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "3dfddbd1-0790-55ba-9975-e472f849099e"))
+(global_label "TPM_CS_N" (shape input) (at 388 248.89 90) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "3dfddbd1-0790-55ba-9975-e472f849099e"))
 
 (symbol (lib_id "thriller:GND") (at 388 256.51 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "bc62c7cc-9851-5542-952f-710f420de04d")
 (property "Reference" "#PWR" (at 388 253.97 0) (effects (font (size 1.27 1.27)) (hide yes)))

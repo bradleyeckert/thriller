@@ -53,5 +53,6 @@ The loader domain's pins (flash, TPM, PSRAM, RTC, the clock) are all on L5 so th
 |---|---|
 | `ksch.py` | Minimal KiCad 9 schematic s-expression toolkit: parse, serialize, pin geometry, net connectivity |
 | `rework_module.py` | The one-board → module transformation. **Not idempotent**: it runs on the one-board revision of `thriller/` (`git checkout f718401^ -- thriller`, then delete `th_conn`/`th_fpga`), from this directory, and is reproducible (deterministic UUIDs). It is kept as the record of what changed and why; from here on, edit the schematic in KiCad |
+| `label_shapes.py` | Sets every global label's shape (input/output/bidirectional, the direction relative to the sheet it is on, from a per-net table of what the parts do) and 45 mil text. Idempotent; run after `rework_module.py` |
 | `pinout_csv.py` | Writes `hw/module-pinout.csv` and `../pinout324-assignment.csv` from the assignments in `rework_module.py` |
 | `render_sch.py` | Rough SVG/PNG preview of a sheet for checking generated geometry without KiCad |

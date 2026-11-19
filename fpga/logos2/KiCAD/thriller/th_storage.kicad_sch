@@ -158,27 +158,27 @@
 
 (text "Own QSPI bus, separate from the flash. Ciphertext only.\nCE pull-up keeps the part deselected during configuration." (exclude_from_sim no) (at 78.74 78.74 0) (effects (font (size 1.27 1.27)) (justify left bottom)) (uuid "bd916f4b-a495-5653-9033-e81e9ced186d"))
 
-(global_label "PSRAM_CS_N" (shape passive) (at 41.91 39.37 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "ae8b4bf2-946f-5fa6-95d1-d11b679301dc")
+(global_label "PSRAM_CS_N" (shape input) (at 41.91 39.37 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "ae8b4bf2-946f-5fa6-95d1-d11b679301dc")
 (property "Intersheetrefs" "${INTERSHEET_REFS}" (at 41.91 39.37 0) (effects (font (size 1.27 1.27)) (justify left) (hide yes))))
 
 (label "PSRAM_CLK_R" (at 41.91 41.91 180) (effects (font (size 1.27 1.27)) (justify right bottom)) (uuid "8ed2df6a-72d1-5366-a0ac-1ceaef25e674"))
 
-(global_label "PSRAM_D0" (shape passive) (at 41.91 44.45 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "4b676dbd-e60e-52d0-8311-1b1afd84b6dc")
+(global_label "PSRAM_D0" (shape bidirectional) (at 41.91 44.45 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "4b676dbd-e60e-52d0-8311-1b1afd84b6dc")
 (property "Intersheetrefs" "${INTERSHEET_REFS}" (at 41.91 44.45 0) (effects (font (size 1.27 1.27)) (justify left) (hide yes))))
 
-(global_label "PSRAM_D1" (shape passive) (at 41.91 46.99 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "8ec434f5-4997-5a90-8c3a-2b335f29dd0b")
+(global_label "PSRAM_D1" (shape bidirectional) (at 41.91 46.99 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "8ec434f5-4997-5a90-8c3a-2b335f29dd0b")
 (property "Intersheetrefs" "${INTERSHEET_REFS}" (at 41.91 46.99 0) (effects (font (size 1.27 1.27)) (justify left) (hide yes))))
 
-(global_label "PSRAM_D2" (shape passive) (at 41.91 49.53 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "1becd6cc-2a57-5dcd-96ac-ffc79a325a2c")
+(global_label "PSRAM_D2" (shape bidirectional) (at 41.91 49.53 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "1becd6cc-2a57-5dcd-96ac-ffc79a325a2c")
 (property "Intersheetrefs" "${INTERSHEET_REFS}" (at 41.91 49.53 0) (effects (font (size 1.27 1.27)) (justify left) (hide yes))))
 
-(global_label "PSRAM_D3" (shape passive) (at 41.91 52.07 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "4865cf62-d52c-5d3d-a7ee-687184c02685")
+(global_label "PSRAM_D3" (shape bidirectional) (at 41.91 52.07 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "4865cf62-d52c-5d3d-a7ee-687184c02685")
 (property "Intersheetrefs" "${INTERSHEET_REFS}" (at 41.91 52.07 0) (effects (font (size 1.27 1.27)) (justify left) (hide yes))))
 
-(global_label "PSRAM_CS_N" (shape passive) (at 124.46 33.02 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "ba7c9d1c-be5b-5695-9daf-91638f6e45cf")
+(global_label "PSRAM_CS_N" (shape input) (at 124.46 33.02 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "ba7c9d1c-be5b-5695-9daf-91638f6e45cf")
 (property "Intersheetrefs" "${INTERSHEET_REFS}" (at 124.46 33.02 0) (effects (font (size 1.27 1.27)) (justify left) (hide yes))))
 
-(global_label "PSRAM_CLK" (shape passive) (at 50.8 71.12 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "e2e1425f-7089-5007-9c74-1ac7e44e58c9")
+(global_label "PSRAM_CLK" (shape input) (at 50.8 71.12 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "e2e1425f-7089-5007-9c74-1ac7e44e58c9")
 (property "Intersheetrefs" "${INTERSHEET_REFS}" (at 50.8 71.12 0) (effects (font (size 1.27 1.27)) (justify left) (hide yes))))
 
 (label "PSRAM_CLK_R" (at 60.96 71.12 0) (effects (font (size 1.27 1.27)) (justify left bottom)) (uuid "9882987b-45ab-5d02-947e-06cde20db8f2"))

@@ -517,27 +517,27 @@
 
 (wire (pts (xy 77.3 100.47) (xy 72.22 100.47)) (stroke (width 0) (type default)) (uuid "0669b923-d35d-5ad3-b41e-4238e18f7ce9"))
 
-(global_label "+5V_IN" (shape passive) (at 72.22 100.47 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "ea0e03ae-cced-5f2c-9704-70c191834396"))
+(global_label "+5V_IN" (shape output) (at 72.22 100.47 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "ea0e03ae-cced-5f2c-9704-70c191834396"))
 
 (wire (pts (xy 102.7 100.47) (xy 107.78 100.47)) (stroke (width 0) (type default)) (uuid "16f6d3e6-6f4c-598f-8d59-f0852116d23d"))
 
-(global_label "+5V_IN" (shape passive) (at 107.78 100.47 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "67366e15-3898-5be8-965a-aba8aab50a3a"))
+(global_label "+5V_IN" (shape output) (at 107.78 100.47 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "67366e15-3898-5be8-965a-aba8aab50a3a"))
 
 (wire (pts (xy 77.3 103.01) (xy 72.22 103.01)) (stroke (width 0) (type default)) (uuid "d2ed4fa3-1936-5a86-9f84-7058260c3082"))
 
-(global_label "+5V_IN" (shape passive) (at 72.22 103.01 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "0fafdd42-c760-5df2-bf68-46e35e303b2d"))
+(global_label "+5V_IN" (shape output) (at 72.22 103.01 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "0fafdd42-c760-5df2-bf68-46e35e303b2d"))
 
 (wire (pts (xy 102.7 103.01) (xy 107.78 103.01)) (stroke (width 0) (type default)) (uuid "73738d1b-3c51-5051-ad8d-3326fb00f026"))
 
-(global_label "+5V_IN" (shape passive) (at 107.78 103.01 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "2770fbe8-bcd5-55c5-a375-f49242773826"))
+(global_label "+5V_IN" (shape output) (at 107.78 103.01 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "2770fbe8-bcd5-55c5-a375-f49242773826"))
 
 (wire (pts (xy 77.3 105.55) (xy 72.22 105.55)) (stroke (width 0) (type default)) (uuid "9f985fcc-bffb-5108-a56c-617a4cfdce5e"))
 
-(global_label "+5V_IN" (shape passive) (at 72.22 105.55 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "3a8e339b-eb9e-5aa8-9238-5e9c08e4ff4d"))
+(global_label "+5V_IN" (shape output) (at 72.22 105.55 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "3a8e339b-eb9e-5aa8-9238-5e9c08e4ff4d"))
 
 (wire (pts (xy 102.7 105.55) (xy 107.78 105.55)) (stroke (width 0) (type default)) (uuid "b6133964-28ea-5d65-bf78-5ddbad837bc3"))
 
-(global_label "+5V_IN" (shape passive) (at 107.78 105.55 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "0f0f2efb-e546-535c-84de-339f66c367ae"))
+(global_label "+5V_IN" (shape output) (at 107.78 105.55 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "0f0f2efb-e546-535c-84de-339f66c367ae"))
 
 (wire (pts (xy 77.3 108.09) (xy 72.22 108.09)) (stroke (width 0) (type default)) (uuid "1633a377-e027-59fd-9368-683bfe15b866"))
 
@@ -545,51 +545,51 @@
 
 (wire (pts (xy 77.3 110.63) (xy 72.22 110.63)) (stroke (width 0) (type default)) (uuid "347b63ec-89ec-543b-b4bc-866260dfa21b"))
 
-(global_label "HOST_UART_TX" (shape passive) (at 72.22 110.63 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "19376e3a-8ff6-518e-abd0-89921bf6626e"))
+(global_label "HOST_UART_TX" (shape input) (at 72.22 110.63 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "19376e3a-8ff6-518e-abd0-89921bf6626e"))
 
 (wire (pts (xy 102.7 110.63) (xy 107.78 110.63)) (stroke (width 0) (type default)) (uuid "43ee6c57-39f5-51bc-87b4-a8ffd687503e"))
 
-(global_label "PB_N_AO" (shape passive) (at 107.78 110.63 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "b9e47d7e-f0d5-523f-9a2a-9f8ac757b7b3"))
+(global_label "PB_N_AO" (shape output) (at 107.78 110.63 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "b9e47d7e-f0d5-523f-9a2a-9f8ac757b7b3"))
 
 (wire (pts (xy 77.3 113.17) (xy 72.22 113.17)) (stroke (width 0) (type default)) (uuid "1c012efb-ee12-5bc1-ad1c-7656399b5dc5"))
 
-(global_label "HOST_UART_RX" (shape passive) (at 72.22 113.17 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "5437fe00-c740-5fe3-bc19-8636a26a3d41"))
+(global_label "HOST_UART_RX" (shape output) (at 72.22 113.17 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "5437fe00-c740-5fe3-bc19-8636a26a3d41"))
 
 (wire (pts (xy 102.7 113.17) (xy 107.78 113.17)) (stroke (width 0) (type default)) (uuid "61fc331d-3000-5ef3-8a29-b144f90bcb33"))
 
-(global_label "TAMPER_N" (shape passive) (at 107.78 113.17 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "b3d9e6ce-bccd-5c50-a251-7fa956d6846b"))
+(global_label "TAMPER_N" (shape output) (at 107.78 113.17 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "b3d9e6ce-bccd-5c50-a251-7fa956d6846b"))
 
 (wire (pts (xy 77.3 115.71) (xy 72.22 115.71)) (stroke (width 0) (type default)) (uuid "6cd3f404-f3cc-58c2-9d79-a01163b2a685"))
 
 (wire (pts (xy 102.7 115.71) (xy 107.78 115.71)) (stroke (width 0) (type default)) (uuid "a1514ed1-2c22-5cf6-bb06-a27000675757"))
 
-(global_label "SEAL_IN" (shape passive) (at 107.78 115.71 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "bbaf850c-5679-5fc6-9671-49ee68ed206d"))
+(global_label "SEAL_IN" (shape output) (at 107.78 115.71 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "bbaf850c-5679-5fc6-9671-49ee68ed206d"))
 
 (wire (pts (xy 77.3 118.25) (xy 72.22 118.25)) (stroke (width 0) (type default)) (uuid "f304c957-4adc-5c15-abb4-0b30d228c6cf"))
 
-(global_label "JTAG_TCK" (shape passive) (at 72.22 118.25 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "835b0931-e669-5c06-abf7-c40b65e6cd62"))
+(global_label "JTAG_TCK" (shape output) (at 72.22 118.25 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "835b0931-e669-5c06-abf7-c40b65e6cd62"))
 
 (wire (pts (xy 102.7 118.25) (xy 107.78 118.25)) (stroke (width 0) (type default)) (uuid "9d99328f-5c6b-57a2-8a61-db6b8a5c8e34"))
 
-(global_label "SEAL_OUT" (shape passive) (at 107.78 118.25 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "4246a17f-7093-57e3-ad39-dfea3a2153ad"))
+(global_label "SEAL_OUT" (shape input) (at 107.78 118.25 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "4246a17f-7093-57e3-ad39-dfea3a2153ad"))
 
 (wire (pts (xy 77.3 120.79) (xy 72.22 120.79)) (stroke (width 0) (type default)) (uuid "35636305-7059-57f0-baab-7ed5c3e99913"))
 
-(global_label "JTAG_TMS" (shape passive) (at 72.22 120.79 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "02f52d27-8010-574e-a3f8-202b07b2e866"))
+(global_label "JTAG_TMS" (shape output) (at 72.22 120.79 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "02f52d27-8010-574e-a3f8-202b07b2e866"))
 
 (wire (pts (xy 102.7 120.79) (xy 107.78 120.79)) (stroke (width 0) (type default)) (uuid "77a81656-1830-53f2-98dd-b67f9ae964f9"))
 
-(global_label "CARRIER_ID" (shape passive) (at 107.78 120.79 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "633ca64a-62cd-53e0-8d19-99177f8fc7b1"))
+(global_label "CARRIER_ID" (shape output) (at 107.78 120.79 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "633ca64a-62cd-53e0-8d19-99177f8fc7b1"))
 
 (wire (pts (xy 77.3 123.33) (xy 72.22 123.33)) (stroke (width 0) (type default)) (uuid "1d99c477-71ef-53fc-bf7e-ece79b478820"))
 
-(global_label "JTAG_TDI" (shape passive) (at 72.22 123.33 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "72ec5db4-4872-5daf-b836-ed09ceed09a2"))
+(global_label "JTAG_TDI" (shape output) (at 72.22 123.33 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "72ec5db4-4872-5daf-b836-ed09ceed09a2"))
 
 (wire (pts (xy 102.7 123.33) (xy 107.78 123.33)) (stroke (width 0) (type default)) (uuid "82bdb383-61d2-5cb9-a0f5-09f914b2f00d"))
 
 (wire (pts (xy 77.3 125.87) (xy 72.22 125.87)) (stroke (width 0) (type default)) (uuid "2cdfbc84-4078-5186-8907-4b58d2163477"))
 
-(global_label "JTAG_TDO" (shape passive) (at 72.22 125.87 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "5b0f9e95-d3e6-56dd-8970-820d1e761561"))
+(global_label "JTAG_TDO" (shape input) (at 72.22 125.87 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "5b0f9e95-d3e6-56dd-8970-820d1e761561"))
 
 (no_connect (at 102.7 125.87) (uuid "fd48c9c4-a0e7-5f6b-b938-6786c1d5e2b0"))
 
@@ -599,47 +599,47 @@
 
 (wire (pts (xy 77.3 130.95) (xy 72.22 130.95)) (stroke (width 0) (type default)) (uuid "357a82ff-e91b-5b01-b707-675e493b8752"))
 
-(global_label "SD_CLK" (shape passive) (at 72.22 130.95 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "f6db7958-874f-56a6-ad32-a2ea564c0ad3"))
+(global_label "SD_CLK" (shape input) (at 72.22 130.95 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "f6db7958-874f-56a6-ad32-a2ea564c0ad3"))
 
 (wire (pts (xy 102.7 130.95) (xy 107.78 130.95)) (stroke (width 0) (type default)) (uuid "a5f2722d-96a5-56c4-bdc4-48ea549a9b50"))
 
-(global_label "RTC_INT_N_AO" (shape passive) (at 107.78 130.95 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "c2c17c61-47dc-58dc-8f93-80bc66297abb"))
+(global_label "RTC_INT_N_AO" (shape input) (at 107.78 130.95 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "c2c17c61-47dc-58dc-8f93-80bc66297abb"))
 
 (wire (pts (xy 77.3 133.49) (xy 72.22 133.49)) (stroke (width 0) (type default)) (uuid "fa078c0a-390e-5038-b589-e726d502e183"))
 
-(global_label "SD_CMD" (shape passive) (at 72.22 133.49 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "da327f7c-5324-5f21-97d9-878b5f2670f8"))
+(global_label "SD_CMD" (shape bidirectional) (at 72.22 133.49 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "da327f7c-5324-5f21-97d9-878b5f2670f8"))
 
 (wire (pts (xy 102.7 133.49) (xy 107.78 133.49)) (stroke (width 0) (type default)) (uuid "126094e7-383c-53aa-a0d9-04ce2543f3ab"))
 
-(global_label "PWR_HOLD" (shape passive) (at 107.78 133.49 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "3d4008a7-50a2-5edd-b7b3-015017160e1d"))
+(global_label "PWR_HOLD" (shape input) (at 107.78 133.49 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "3d4008a7-50a2-5edd-b7b3-015017160e1d"))
 
 (wire (pts (xy 77.3 136.03) (xy 72.22 136.03)) (stroke (width 0) (type default)) (uuid "2d52a67c-eda1-5469-818f-695772aa0805"))
 
-(global_label "SD_D0" (shape passive) (at 72.22 136.03 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "b44214e7-583c-526e-b847-46609ad3e0b7"))
+(global_label "SD_D0" (shape bidirectional) (at 72.22 136.03 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "b44214e7-583c-526e-b847-46609ad3e0b7"))
 
 (wire (pts (xy 102.7 136.03) (xy 107.78 136.03)) (stroke (width 0) (type default)) (uuid "927b2a8c-51f4-5820-ac99-7858925b1963"))
 
 (wire (pts (xy 77.3 138.57) (xy 72.22 138.57)) (stroke (width 0) (type default)) (uuid "ddfc16d1-41cd-5dcf-94f6-9f675750e9df"))
 
-(global_label "SD_D1" (shape passive) (at 72.22 138.57 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "291eebba-e0c5-5886-a517-8e3c382e7187"))
+(global_label "SD_D1" (shape bidirectional) (at 72.22 138.57 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "291eebba-e0c5-5886-a517-8e3c382e7187"))
 
 (wire (pts (xy 102.7 138.57) (xy 107.78 138.57)) (stroke (width 0) (type default)) (uuid "10cffcf4-bbfd-5d6f-8c87-5609482fa6f5"))
 
 (wire (pts (xy 77.3 141.11) (xy 72.22 141.11)) (stroke (width 0) (type default)) (uuid "50908803-cf0a-5048-9570-3b6b1f18269e"))
 
-(global_label "SD_D2" (shape passive) (at 72.22 141.11 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "57caf4ab-e782-5450-97f2-dbd969b5e03a"))
+(global_label "SD_D2" (shape bidirectional) (at 72.22 141.11 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "57caf4ab-e782-5450-97f2-dbd969b5e03a"))
 
 (wire (pts (xy 102.7 141.11) (xy 107.78 141.11)) (stroke (width 0) (type default)) (uuid "77497f4e-cee0-5c1b-b030-e0417c48e8ec"))
 
 (wire (pts (xy 77.3 143.65) (xy 72.22 143.65)) (stroke (width 0) (type default)) (uuid "4458e083-5ef0-5d1b-bba8-492b7be3a736"))
 
-(global_label "SD_D3" (shape passive) (at 72.22 143.65 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "3596dd69-ede3-5b75-bf26-628ef3eeb247"))
+(global_label "SD_D3" (shape bidirectional) (at 72.22 143.65 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "3596dd69-ede3-5b75-bf26-628ef3eeb247"))
 
 (wire (pts (xy 102.7 143.65) (xy 107.78 143.65)) (stroke (width 0) (type default)) (uuid "e933955f-ff2b-576d-a775-ab01bd412a87"))
 
 (wire (pts (xy 77.3 146.19) (xy 72.22 146.19)) (stroke (width 0) (type default)) (uuid "afc54b52-32cd-5402-a91c-ef7b66474d1a"))
 
-(global_label "SD_CD_N" (shape passive) (at 72.22 146.19 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "bf0037a2-3ee0-58b5-9c94-2396010084cb"))
+(global_label "SD_CD_N" (shape output) (at 72.22 146.19 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "bf0037a2-3ee0-58b5-9c94-2396010084cb"))
 
 (wire (pts (xy 102.7 146.19) (xy 107.78 146.19)) (stroke (width 0) (type default)) (uuid "02c47e22-cbea-5a11-ade5-3391e6add2b5"))
 
@@ -649,13 +649,13 @@
 
 (wire (pts (xy 77.3 151.27) (xy 72.22 151.27)) (stroke (width 0) (type default)) (uuid "322ee8b3-b1f5-52c0-b5cc-05c29cc4be1a"))
 
-(global_label "ETH_TXP" (shape passive) (at 72.22 151.27 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "83b2dc51-a5f7-5c14-9ad6-e4fbf8bb6072"))
+(global_label "ETH_TXP" (shape input) (at 72.22 151.27 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "83b2dc51-a5f7-5c14-9ad6-e4fbf8bb6072"))
 
 (wire (pts (xy 102.7 151.27) (xy 107.78 151.27)) (stroke (width 0) (type default)) (uuid "c5a44c67-0ef6-59b2-bdf6-f01b4f9aa1cb"))
 
 (wire (pts (xy 77.3 153.81) (xy 72.22 153.81)) (stroke (width 0) (type default)) (uuid "739457cf-1e4a-591f-a3fe-d53935035c19"))
 
-(global_label "ETH_TXN" (shape passive) (at 72.22 153.81 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "e3d54627-4505-59aa-94a8-f477e66d1f03"))
+(global_label "ETH_TXN" (shape input) (at 72.22 153.81 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "e3d54627-4505-59aa-94a8-f477e66d1f03"))
 
 (wire (pts (xy 102.7 153.81) (xy 107.78 153.81)) (stroke (width 0) (type default)) (uuid "3b5ba70c-cf0b-508d-ab19-330c28a29138"))
 
@@ -665,13 +665,13 @@
 
 (wire (pts (xy 77.3 158.89) (xy 72.22 158.89)) (stroke (width 0) (type default)) (uuid "beae6688-a78f-5661-902a-be72cf5ac700"))
 
-(global_label "ETH_RXP" (shape passive) (at 72.22 158.89 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "7c9ac466-12a3-522d-be82-61cbde8c625f"))
+(global_label "ETH_RXP" (shape output) (at 72.22 158.89 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "7c9ac466-12a3-522d-be82-61cbde8c625f"))
 
 (wire (pts (xy 102.7 158.89) (xy 107.78 158.89)) (stroke (width 0) (type default)) (uuid "11a23c9f-aff4-5e09-89aa-8ae7cc58987b"))
 
 (wire (pts (xy 77.3 161.43) (xy 72.22 161.43)) (stroke (width 0) (type default)) (uuid "a5af26c7-ea8f-5cbb-8e78-e90aab4149f8"))
 
-(global_label "ETH_RXN" (shape passive) (at 72.22 161.43 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "fe89d129-d6ac-5714-843b-8209c067a94d"))
+(global_label "ETH_RXN" (shape output) (at 72.22 161.43 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "fe89d129-d6ac-5714-843b-8209c067a94d"))
 
 (wire (pts (xy 102.7 161.43) (xy 107.78 161.43)) (stroke (width 0) (type default)) (uuid "927673b9-cf06-5755-bea1-3e49b5417e27"))
 
@@ -681,13 +681,13 @@
 
 (wire (pts (xy 77.3 166.51) (xy 72.22 166.51)) (stroke (width 0) (type default)) (uuid "56fce02e-a7c3-5c13-8c0b-ff52bcc1ea25"))
 
-(global_label "ETH_LED1" (shape passive) (at 72.22 166.51 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "a288923c-fafb-504d-90a7-7c04ea5125d3"))
+(global_label "ETH_LED1" (shape input) (at 72.22 166.51 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "a288923c-fafb-504d-90a7-7c04ea5125d3"))
 
 (wire (pts (xy 102.7 166.51) (xy 107.78 166.51)) (stroke (width 0) (type default)) (uuid "026cb354-e73d-5395-9116-aad0fd207c9e"))
 
 (wire (pts (xy 77.3 169.05) (xy 72.22 169.05)) (stroke (width 0) (type default)) (uuid "19ac265a-f5b3-5eef-8a72-918bfecce3b8"))
 
-(global_label "ETH_LED2" (shape passive) (at 72.22 169.05 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "0bad44c7-81a1-5b1a-b6df-5e57f0584b9a"))
+(global_label "ETH_LED2" (shape input) (at 72.22 169.05 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "0bad44c7-81a1-5b1a-b6df-5e57f0584b9a"))
 
 (wire (pts (xy 102.7 169.05) (xy 107.78 169.05)) (stroke (width 0) (type default)) (uuid "5ef2e6a0-d563-5640-9560-c5eb041c811f"))
 
@@ -697,25 +697,25 @@
 
 (wire (pts (xy 77.3 174.13) (xy 72.22 174.13)) (stroke (width 0) (type default)) (uuid "479f4619-5867-5b4a-b13d-cd379f0d7b80"))
 
-(global_label "SENS_TX" (shape passive) (at 72.22 174.13 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "cab8750d-2e70-51dc-9bc3-4f388838aed0"))
+(global_label "SENS_TX" (shape input) (at 72.22 174.13 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "cab8750d-2e70-51dc-9bc3-4f388838aed0"))
 
 (wire (pts (xy 102.7 174.13) (xy 107.78 174.13)) (stroke (width 0) (type default)) (uuid "449d087f-9795-56c6-8fab-c0b205a371b7"))
 
 (wire (pts (xy 77.3 176.67) (xy 72.22 176.67)) (stroke (width 0) (type default)) (uuid "1670fa64-06a5-5d13-87bc-b7805d055c8c"))
 
-(global_label "SENS_RX" (shape passive) (at 72.22 176.67 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "7b192e5a-3b42-51cb-a40e-3918e6ad4ade"))
+(global_label "SENS_RX" (shape output) (at 72.22 176.67 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "7b192e5a-3b42-51cb-a40e-3918e6ad4ade"))
 
 (no_connect (at 102.7 176.67) (uuid "cab2f43d-90c6-5492-825e-056f86ede60f"))
 
 (wire (pts (xy 77.3 179.21) (xy 72.22 179.21)) (stroke (width 0) (type default)) (uuid "501712d9-6256-57ef-b971-2c23dfa33543"))
 
-(global_label "SENS_PWR_EN" (shape passive) (at 72.22 179.21 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "9a316f3a-fc4c-543f-bd90-14a7285aabf8"))
+(global_label "SENS_PWR_EN" (shape input) (at 72.22 179.21 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "9a316f3a-fc4c-543f-bd90-14a7285aabf8"))
 
 (no_connect (at 102.7 179.21) (uuid "4cc37d98-d28d-5206-9d1d-2e263541fe35"))
 
 (wire (pts (xy 77.3 181.75) (xy 72.22 181.75)) (stroke (width 0) (type default)) (uuid "2ad13021-66d9-5b3f-8900-da4adc97a32d"))
 
-(global_label "SENS_DET" (shape passive) (at 72.22 181.75 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "8f7157da-15df-50ef-9662-45a4c76cbe2e"))
+(global_label "SENS_DET" (shape output) (at 72.22 181.75 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "8f7157da-15df-50ef-9662-45a4c76cbe2e"))
 
 (no_connect (at 102.7 181.75) (uuid "e717b6e5-c987-57c7-8db1-005d905285ec"))
 
@@ -725,7 +725,7 @@
 
 (wire (pts (xy 77.3 186.83) (xy 72.22 186.83)) (stroke (width 0) (type default)) (uuid "44bc61fe-abc3-5629-bf59-e7f86a49df0f"))
 
-(global_label "VBAT_CELL" (shape passive) (at 72.22 186.83 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "3e6a9758-73bf-5a1b-b781-420dae2351ec"))
+(global_label "VBAT_CELL" (shape output) (at 72.22 186.83 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "3e6a9758-73bf-5a1b-b781-420dae2351ec"))
 
 (no_connect (at 102.7 186.83) (uuid "3849d55a-8972-535e-b21a-4b0d5f89b40a"))
 
@@ -1109,255 +1109,255 @@
 
 (wire (pts (xy 247.3 100.47) (xy 242.22 100.47)) (stroke (width 0) (type default)) (uuid "b3339e24-fcf4-58ea-a75b-d1687c25afba"))
 
-(global_label "AUD1_MCLK" (shape passive) (at 242.22 100.47 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "14930eeb-3fc8-5ab2-a9ec-0c21c39c62ac"))
+(global_label "AUD1_MCLK" (shape input) (at 242.22 100.47 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "14930eeb-3fc8-5ab2-a9ec-0c21c39c62ac"))
 
 (wire (pts (xy 272.7 100.47) (xy 277.78 100.47)) (stroke (width 0) (type default)) (uuid "db0ee310-54d8-58be-a5e8-81fa470460a0"))
 
-(global_label "GPIO0" (shape passive) (at 277.78 100.47 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "6bfd8917-4139-5349-b33e-71c1680842c1"))
+(global_label "GPIO0" (shape bidirectional) (at 277.78 100.47 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "6bfd8917-4139-5349-b33e-71c1680842c1"))
 
 (wire (pts (xy 247.3 103.01) (xy 242.22 103.01)) (stroke (width 0) (type default)) (uuid "8b51a253-0e5c-51c0-a1e6-32b0c1c83adc"))
 
-(global_label "AUD1_BCLK" (shape passive) (at 242.22 103.01 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "48be6801-8c7c-52d9-a242-94101b3b636f"))
+(global_label "AUD1_BCLK" (shape input) (at 242.22 103.01 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "48be6801-8c7c-52d9-a242-94101b3b636f"))
 
 (wire (pts (xy 272.7 103.01) (xy 277.78 103.01)) (stroke (width 0) (type default)) (uuid "1c9dc154-deae-5ab1-8d2d-28ea88c56aae"))
 
-(global_label "GPIO1" (shape passive) (at 277.78 103.01 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "24e192e8-4775-5bb9-a4a5-3210b3fc8e5f"))
+(global_label "GPIO1" (shape bidirectional) (at 277.78 103.01 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "24e192e8-4775-5bb9-a4a5-3210b3fc8e5f"))
 
 (wire (pts (xy 247.3 105.55) (xy 242.22 105.55)) (stroke (width 0) (type default)) (uuid "acee4042-19fd-5f1c-9293-6720e0900a5c"))
 
-(global_label "AUD1_FS" (shape passive) (at 242.22 105.55 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "8d183635-12f9-5136-8b99-1b20a2a3de17"))
+(global_label "AUD1_FS" (shape input) (at 242.22 105.55 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "8d183635-12f9-5136-8b99-1b20a2a3de17"))
 
 (wire (pts (xy 272.7 105.55) (xy 277.78 105.55)) (stroke (width 0) (type default)) (uuid "071aa75c-1da7-5a6a-87aa-da43ae272549"))
 
-(global_label "GPIO2" (shape passive) (at 277.78 105.55 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "33df7e81-afad-5098-9c51-3aa6f0fb1f9d"))
+(global_label "GPIO2" (shape bidirectional) (at 277.78 105.55 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "33df7e81-afad-5098-9c51-3aa6f0fb1f9d"))
 
 (wire (pts (xy 247.3 108.09) (xy 242.22 108.09)) (stroke (width 0) (type default)) (uuid "51d8f7aa-20fa-5c3b-94ce-370ad77ac7f7"))
 
-(global_label "AUD1_ADCOUT" (shape passive) (at 242.22 108.09 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "9965107a-aae3-58db-bb5d-99f38991c518"))
+(global_label "AUD1_ADCOUT" (shape output) (at 242.22 108.09 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "9965107a-aae3-58db-bb5d-99f38991c518"))
 
 (wire (pts (xy 272.7 108.09) (xy 277.78 108.09)) (stroke (width 0) (type default)) (uuid "1d07471f-ff65-5c99-9b4e-f9f4cfddd6b1"))
 
-(global_label "GPIO3" (shape passive) (at 277.78 108.09 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "b576c1fa-a1e7-5d08-8960-7ba3567bdf1b"))
+(global_label "GPIO3" (shape bidirectional) (at 277.78 108.09 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "b576c1fa-a1e7-5d08-8960-7ba3567bdf1b"))
 
 (wire (pts (xy 247.3 110.63) (xy 242.22 110.63)) (stroke (width 0) (type default)) (uuid "5399f1eb-721b-5581-adee-8febd707cced"))
 
-(global_label "AUD1_DACIN" (shape passive) (at 242.22 110.63 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "dcff875f-e4b1-5aef-899c-9353ccafb12a"))
+(global_label "AUD1_DACIN" (shape input) (at 242.22 110.63 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "dcff875f-e4b1-5aef-899c-9353ccafb12a"))
 
 (wire (pts (xy 272.7 110.63) (xy 277.78 110.63)) (stroke (width 0) (type default)) (uuid "fc06f683-2f11-51be-b31c-27a7d85fb3ec"))
 
-(global_label "GPIO4" (shape passive) (at 277.78 110.63 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "ab51c2df-1c40-5b0c-a76b-63e4c52b8ed6"))
+(global_label "GPIO4" (shape bidirectional) (at 277.78 110.63 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "ab51c2df-1c40-5b0c-a76b-63e4c52b8ed6"))
 
 (wire (pts (xy 247.3 113.17) (xy 242.22 113.17)) (stroke (width 0) (type default)) (uuid "d33006d8-6dc4-5bbe-9199-8adac84d7e89"))
 
-(global_label "AUD1_SCL" (shape passive) (at 242.22 113.17 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "4a1a8618-e546-5a04-95d8-368c5907e1d5"))
+(global_label "AUD1_SCL" (shape input) (at 242.22 113.17 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "4a1a8618-e546-5a04-95d8-368c5907e1d5"))
 
 (wire (pts (xy 272.7 113.17) (xy 277.78 113.17)) (stroke (width 0) (type default)) (uuid "1ca1edc8-9123-5b61-8b68-ec3725d9b0b1"))
 
-(global_label "GPIO5" (shape passive) (at 277.78 113.17 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "26fe6685-5881-5e79-a2ea-7ff1bb32faf3"))
+(global_label "GPIO5" (shape bidirectional) (at 277.78 113.17 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "26fe6685-5881-5e79-a2ea-7ff1bb32faf3"))
 
 (wire (pts (xy 247.3 115.71) (xy 242.22 115.71)) (stroke (width 0) (type default)) (uuid "49c594f7-7eaf-51d9-ba79-26a3c9a80950"))
 
-(global_label "AUD1_SDA" (shape passive) (at 242.22 115.71 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "41bfcb9d-cfc3-5671-8ac2-d47610a163fb"))
+(global_label "AUD1_SDA" (shape bidirectional) (at 242.22 115.71 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "41bfcb9d-cfc3-5671-8ac2-d47610a163fb"))
 
 (wire (pts (xy 272.7 115.71) (xy 277.78 115.71)) (stroke (width 0) (type default)) (uuid "4dc56c50-0d47-5af7-bcc6-2152feea4b02"))
 
-(global_label "GPIO6" (shape passive) (at 277.78 115.71 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "de994e60-33c9-5257-a584-8926d8877d32"))
+(global_label "GPIO6" (shape bidirectional) (at 277.78 115.71 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "de994e60-33c9-5257-a584-8926d8877d32"))
 
 (wire (pts (xy 247.3 118.25) (xy 242.22 118.25)) (stroke (width 0) (type default)) (uuid "cb97c3de-767e-559e-bee5-88a763865c3e"))
 
 (wire (pts (xy 272.7 118.25) (xy 277.78 118.25)) (stroke (width 0) (type default)) (uuid "8fb4ea80-4a20-5db6-a7d1-dfd7dbc46f8b"))
 
-(global_label "GPIO7" (shape passive) (at 277.78 118.25 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "615fd7a6-3a6f-5c2c-8da6-41b8bf84d597"))
+(global_label "GPIO7" (shape bidirectional) (at 277.78 118.25 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "615fd7a6-3a6f-5c2c-8da6-41b8bf84d597"))
 
 (wire (pts (xy 247.3 120.79) (xy 242.22 120.79)) (stroke (width 0) (type default)) (uuid "82eb2f0c-1900-5b23-9d54-541b7deeb624"))
 
-(global_label "AUD2_MCLK" (shape passive) (at 242.22 120.79 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "1236d4b0-2de7-5106-8ead-75e8147c6b07"))
+(global_label "AUD2_MCLK" (shape input) (at 242.22 120.79 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "1236d4b0-2de7-5106-8ead-75e8147c6b07"))
 
 (wire (pts (xy 272.7 120.79) (xy 277.78 120.79)) (stroke (width 0) (type default)) (uuid "de7e77ac-090b-5ba2-bcd4-3bd5043da79f"))
 
-(global_label "GPIO8" (shape passive) (at 277.78 120.79 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "5f099cde-edd0-508c-8e5f-bb00ce223e08"))
+(global_label "GPIO8" (shape bidirectional) (at 277.78 120.79 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "5f099cde-edd0-508c-8e5f-bb00ce223e08"))
 
 (wire (pts (xy 247.3 123.33) (xy 242.22 123.33)) (stroke (width 0) (type default)) (uuid "909d3a8e-6ccd-5a24-8388-7520270f3058"))
 
-(global_label "AUD2_BCLK" (shape passive) (at 242.22 123.33 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "562296f3-3233-5e18-9d2d-4eb07b97e68a"))
+(global_label "AUD2_BCLK" (shape input) (at 242.22 123.33 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "562296f3-3233-5e18-9d2d-4eb07b97e68a"))
 
 (wire (pts (xy 272.7 123.33) (xy 277.78 123.33)) (stroke (width 0) (type default)) (uuid "99a469f8-0606-57b9-822b-947456db5902"))
 
-(global_label "GPIO9" (shape passive) (at 277.78 123.33 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "3d810f4f-be1f-58b1-a0e0-bb00b538e6de"))
+(global_label "GPIO9" (shape bidirectional) (at 277.78 123.33 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "3d810f4f-be1f-58b1-a0e0-bb00b538e6de"))
 
 (wire (pts (xy 247.3 125.87) (xy 242.22 125.87)) (stroke (width 0) (type default)) (uuid "0fa72296-4a8f-5876-a832-68d533813d36"))
 
-(global_label "AUD2_FS" (shape passive) (at 242.22 125.87 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "879efd9b-1151-5575-a747-72ab51b176f0"))
+(global_label "AUD2_FS" (shape input) (at 242.22 125.87 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "879efd9b-1151-5575-a747-72ab51b176f0"))
 
 (wire (pts (xy 272.7 125.87) (xy 277.78 125.87)) (stroke (width 0) (type default)) (uuid "d3a67874-fbea-5e11-95d8-8d1385e4d30a"))
 
-(global_label "GPIO10" (shape passive) (at 277.78 125.87 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "e4c4166f-834e-52fc-b01a-79f0625ace9c"))
+(global_label "GPIO10" (shape bidirectional) (at 277.78 125.87 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "e4c4166f-834e-52fc-b01a-79f0625ace9c"))
 
 (wire (pts (xy 247.3 128.41) (xy 242.22 128.41)) (stroke (width 0) (type default)) (uuid "fef6ead2-05ce-5aa2-8723-c0217c8cbc34"))
 
-(global_label "AUD2_ADCOUT" (shape passive) (at 242.22 128.41 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "60e2e375-7eaf-5c21-9994-d99681bf995e"))
+(global_label "AUD2_ADCOUT" (shape output) (at 242.22 128.41 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "60e2e375-7eaf-5c21-9994-d99681bf995e"))
 
 (wire (pts (xy 272.7 128.41) (xy 277.78 128.41)) (stroke (width 0) (type default)) (uuid "057c6ef3-9ba3-514d-bbc9-3a27d2dee57b"))
 
-(global_label "GPIO11" (shape passive) (at 277.78 128.41 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "1c35905a-7850-5ac5-af1e-76f64b02bbcf"))
+(global_label "GPIO11" (shape bidirectional) (at 277.78 128.41 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "1c35905a-7850-5ac5-af1e-76f64b02bbcf"))
 
 (wire (pts (xy 247.3 130.95) (xy 242.22 130.95)) (stroke (width 0) (type default)) (uuid "7340d38c-fa89-5e64-94ac-917fea7fdb6d"))
 
-(global_label "AUD2_DACIN" (shape passive) (at 242.22 130.95 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "ecb33fc6-8f8c-575a-96ec-dc45baa11ede"))
+(global_label "AUD2_DACIN" (shape input) (at 242.22 130.95 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "ecb33fc6-8f8c-575a-96ec-dc45baa11ede"))
 
 (wire (pts (xy 272.7 130.95) (xy 277.78 130.95)) (stroke (width 0) (type default)) (uuid "e546e585-1e8c-50c4-a6f6-2d0d166fd89c"))
 
-(global_label "GPIO12" (shape passive) (at 277.78 130.95 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "d707a91d-32cc-50f7-b2c7-4d0f0758fdaf"))
+(global_label "GPIO12" (shape bidirectional) (at 277.78 130.95 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "d707a91d-32cc-50f7-b2c7-4d0f0758fdaf"))
 
 (wire (pts (xy 247.3 133.49) (xy 242.22 133.49)) (stroke (width 0) (type default)) (uuid "28f961ce-2662-5ad3-8790-f44cabf5969e"))
 
-(global_label "AUD2_SCL" (shape passive) (at 242.22 133.49 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "ac52fbf1-dfb3-58a3-8596-21a714b54427"))
+(global_label "AUD2_SCL" (shape input) (at 242.22 133.49 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "ac52fbf1-dfb3-58a3-8596-21a714b54427"))
 
 (wire (pts (xy 272.7 133.49) (xy 277.78 133.49)) (stroke (width 0) (type default)) (uuid "d6125db3-8df3-574f-ba0b-c7e837b950b4"))
 
-(global_label "GPIO13" (shape passive) (at 277.78 133.49 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "4c6a082c-029d-5021-81ce-3519ce237df6"))
+(global_label "GPIO13" (shape bidirectional) (at 277.78 133.49 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "4c6a082c-029d-5021-81ce-3519ce237df6"))
 
 (wire (pts (xy 247.3 136.03) (xy 242.22 136.03)) (stroke (width 0) (type default)) (uuid "723b9f90-fc85-5df6-b99f-4f6ad5b20dd2"))
 
-(global_label "AUD2_SDA" (shape passive) (at 242.22 136.03 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "db07e010-eb08-51ab-8056-156e6772ddf0"))
+(global_label "AUD2_SDA" (shape bidirectional) (at 242.22 136.03 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "db07e010-eb08-51ab-8056-156e6772ddf0"))
 
 (wire (pts (xy 272.7 136.03) (xy 277.78 136.03)) (stroke (width 0) (type default)) (uuid "7a9299ac-655c-54fa-9816-24dcfa93218c"))
 
-(global_label "GPIO14" (shape passive) (at 277.78 136.03 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "a1a83b3b-01c7-50f1-b0d8-3fb20f43f409"))
+(global_label "GPIO14" (shape bidirectional) (at 277.78 136.03 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "a1a83b3b-01c7-50f1-b0d8-3fb20f43f409"))
 
 (wire (pts (xy 247.3 138.57) (xy 242.22 138.57)) (stroke (width 0) (type default)) (uuid "b7bab90b-c574-5f34-bf95-b82b4ea22cf4"))
 
 (wire (pts (xy 272.7 138.57) (xy 277.78 138.57)) (stroke (width 0) (type default)) (uuid "69b5a832-0299-5047-8853-f2079f43ebb7"))
 
-(global_label "GPIO15" (shape passive) (at 277.78 138.57 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "8437c9c3-9ed7-5798-a6dc-1d5a3cae7284"))
+(global_label "GPIO15" (shape bidirectional) (at 277.78 138.57 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "8437c9c3-9ed7-5798-a6dc-1d5a3cae7284"))
 
 (wire (pts (xy 247.3 141.11) (xy 242.22 141.11)) (stroke (width 0) (type default)) (uuid "5343dbbd-1ac9-5e1d-9a20-3e261a226f9b"))
 
-(global_label "LCD_SCK" (shape passive) (at 242.22 141.11 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "0faff69f-f5f7-5f1f-9830-1a75dbd7b6bd"))
+(global_label "LCD_SCK" (shape input) (at 242.22 141.11 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "0faff69f-f5f7-5f1f-9830-1a75dbd7b6bd"))
 
 (wire (pts (xy 272.7 141.11) (xy 277.78 141.11)) (stroke (width 0) (type default)) (uuid "d9aa94e6-820f-58d1-b9b6-85685fe5d66a"))
 
 (wire (pts (xy 247.3 143.65) (xy 242.22 143.65)) (stroke (width 0) (type default)) (uuid "2bf5cf33-d210-5707-bb90-43775ce0e771"))
 
-(global_label "LCD_MOSI" (shape passive) (at 242.22 143.65 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "c6212901-5e7f-54c7-8aae-c0b569beb562"))
+(global_label "LCD_MOSI" (shape input) (at 242.22 143.65 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "c6212901-5e7f-54c7-8aae-c0b569beb562"))
 
 (wire (pts (xy 272.7 143.65) (xy 277.78 143.65)) (stroke (width 0) (type default)) (uuid "3900ce8b-9b1b-509a-80b9-7cd42c75a180"))
 
-(global_label "GPIO16" (shape passive) (at 277.78 143.65 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "a41c94dd-7aea-549b-b65e-a2b64d6fc324"))
+(global_label "GPIO16" (shape bidirectional) (at 277.78 143.65 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "a41c94dd-7aea-549b-b65e-a2b64d6fc324"))
 
 (wire (pts (xy 247.3 146.19) (xy 242.22 146.19)) (stroke (width 0) (type default)) (uuid "cd436c1c-f7a8-544f-a6b3-867053a62202"))
 
-(global_label "LCD_DC" (shape passive) (at 242.22 146.19 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "f1b56fe5-a987-5546-90e3-8e2f8366f8c2"))
+(global_label "LCD_DC" (shape input) (at 242.22 146.19 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "f1b56fe5-a987-5546-90e3-8e2f8366f8c2"))
 
 (wire (pts (xy 272.7 146.19) (xy 277.78 146.19)) (stroke (width 0) (type default)) (uuid "ea22ce38-2c5a-50e5-98c8-66001c602d05"))
 
-(global_label "GPIO17" (shape passive) (at 277.78 146.19 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "27afdb3d-de79-50f7-89f4-74e019580238"))
+(global_label "GPIO17" (shape bidirectional) (at 277.78 146.19 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "27afdb3d-de79-50f7-89f4-74e019580238"))
 
 (wire (pts (xy 247.3 148.73) (xy 242.22 148.73)) (stroke (width 0) (type default)) (uuid "5276d6dc-234b-5cc5-9d70-025284f10864"))
 
-(global_label "LCD_CS_N" (shape passive) (at 242.22 148.73 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "f56b9151-758e-51b9-91e1-5cadb5b501ef"))
+(global_label "LCD_CS_N" (shape input) (at 242.22 148.73 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "f56b9151-758e-51b9-91e1-5cadb5b501ef"))
 
 (wire (pts (xy 272.7 148.73) (xy 277.78 148.73)) (stroke (width 0) (type default)) (uuid "6653429d-9bb9-5851-b9ba-ad63c0edf70b"))
 
-(global_label "GPIO18" (shape passive) (at 277.78 148.73 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "28049991-710b-52e4-a49f-b43a7e3a6ffe"))
+(global_label "GPIO18" (shape bidirectional) (at 277.78 148.73 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "28049991-710b-52e4-a49f-b43a7e3a6ffe"))
 
 (wire (pts (xy 247.3 151.27) (xy 242.22 151.27)) (stroke (width 0) (type default)) (uuid "636c45a5-8a10-590c-bd57-a883aa2d9007"))
 
-(global_label "LCD_RST_N" (shape passive) (at 242.22 151.27 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "a1b58e85-9b54-5e0b-950d-5a7fec83d0a9"))
+(global_label "LCD_RST_N" (shape input) (at 242.22 151.27 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "a1b58e85-9b54-5e0b-950d-5a7fec83d0a9"))
 
 (wire (pts (xy 272.7 151.27) (xy 277.78 151.27)) (stroke (width 0) (type default)) (uuid "717c7f9e-89a6-5221-a85b-effd175e6d20"))
 
-(global_label "GPIO19" (shape passive) (at 277.78 151.27 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "ed042d97-bba8-542e-9b8f-79de1be7cd9c"))
+(global_label "GPIO19" (shape bidirectional) (at 277.78 151.27 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "ed042d97-bba8-542e-9b8f-79de1be7cd9c"))
 
 (wire (pts (xy 247.3 153.81) (xy 242.22 153.81)) (stroke (width 0) (type default)) (uuid "8542ccc2-4cf3-5b6d-881b-edc748d930c0"))
 
-(global_label "LCD_BL_PWM" (shape passive) (at 242.22 153.81 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "5df5220f-490c-5ed2-96d9-c247ca504b46"))
+(global_label "LCD_BL_PWM" (shape input) (at 242.22 153.81 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "5df5220f-490c-5ed2-96d9-c247ca504b46"))
 
 (wire (pts (xy 272.7 153.81) (xy 277.78 153.81)) (stroke (width 0) (type default)) (uuid "c356416d-a90c-591d-81ba-c32caa2e9790"))
 
-(global_label "GPIO20" (shape passive) (at 277.78 153.81 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "e8f99322-b174-5218-ac71-030018513f9f"))
+(global_label "GPIO20" (shape bidirectional) (at 277.78 153.81 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "e8f99322-b174-5218-ac71-030018513f9f"))
 
 (wire (pts (xy 247.3 156.35) (xy 242.22 156.35)) (stroke (width 0) (type default)) (uuid "9e9f6db9-90f1-5f66-8759-ceec47c9d26d"))
 
 (wire (pts (xy 272.7 156.35) (xy 277.78 156.35)) (stroke (width 0) (type default)) (uuid "086f3602-8581-5219-a239-aa03efdad820"))
 
-(global_label "GPIO21" (shape passive) (at 277.78 156.35 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "1d0ced01-8c76-526d-a735-760f54045919"))
+(global_label "GPIO21" (shape bidirectional) (at 277.78 156.35 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "1d0ced01-8c76-526d-a735-760f54045919"))
 
 (wire (pts (xy 247.3 158.89) (xy 242.22 158.89)) (stroke (width 0) (type default)) (uuid "a921ccc4-bd60-5b1c-a00b-a9857df85c0d"))
 
-(global_label "TP_SCL" (shape passive) (at 242.22 158.89 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "70a43081-1936-5476-8fb9-f03218746ccb"))
+(global_label "TP_SCL" (shape input) (at 242.22 158.89 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "70a43081-1936-5476-8fb9-f03218746ccb"))
 
 (wire (pts (xy 272.7 158.89) (xy 277.78 158.89)) (stroke (width 0) (type default)) (uuid "252acba6-e93f-5395-810f-36a1d2992b9b"))
 
-(global_label "GPIO22" (shape passive) (at 277.78 158.89 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "0b3adb24-a62e-5a0f-ad9f-31eb37488952"))
+(global_label "GPIO22" (shape bidirectional) (at 277.78 158.89 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "0b3adb24-a62e-5a0f-ad9f-31eb37488952"))
 
 (wire (pts (xy 247.3 161.43) (xy 242.22 161.43)) (stroke (width 0) (type default)) (uuid "93a356c6-8230-5a77-8028-bdbedd1e9683"))
 
-(global_label "TP_SDA" (shape passive) (at 242.22 161.43 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "49630396-1a35-54a7-843e-a97d0148b3bb"))
+(global_label "TP_SDA" (shape bidirectional) (at 242.22 161.43 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "49630396-1a35-54a7-843e-a97d0148b3bb"))
 
 (wire (pts (xy 272.7 161.43) (xy 277.78 161.43)) (stroke (width 0) (type default)) (uuid "cbc749d7-eb87-5cb4-ad64-6b2d5de31165"))
 
-(global_label "GPIO23" (shape passive) (at 277.78 161.43 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "da5edffd-59e7-5575-b79e-ca7fdb266ddb"))
+(global_label "GPIO23" (shape bidirectional) (at 277.78 161.43 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "da5edffd-59e7-5575-b79e-ca7fdb266ddb"))
 
 (wire (pts (xy 247.3 163.97) (xy 242.22 163.97)) (stroke (width 0) (type default)) (uuid "1c997d34-5d53-5b3a-b785-6fb9c003f4c9"))
 
-(global_label "TP_INT_N" (shape passive) (at 242.22 163.97 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "50817cf1-9ff8-5ad5-85a0-b11368459465"))
+(global_label "TP_INT_N" (shape output) (at 242.22 163.97 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "50817cf1-9ff8-5ad5-85a0-b11368459465"))
 
 (wire (pts (xy 272.7 163.97) (xy 277.78 163.97)) (stroke (width 0) (type default)) (uuid "f81173b6-d746-5a1e-a0f6-79e95d0c2330"))
 
-(global_label "GPIO24" (shape passive) (at 277.78 163.97 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "89e1cfdc-3dea-582c-b6b0-ba259d8c9db7"))
+(global_label "GPIO24" (shape bidirectional) (at 277.78 163.97 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "89e1cfdc-3dea-582c-b6b0-ba259d8c9db7"))
 
 (wire (pts (xy 247.3 166.51) (xy 242.22 166.51)) (stroke (width 0) (type default)) (uuid "2cc8be80-6ab7-5dd4-a1ab-2bfbe8f8efaf"))
 
 (wire (pts (xy 272.7 166.51) (xy 277.78 166.51)) (stroke (width 0) (type default)) (uuid "e2976db1-b10a-54b2-aebf-e1a141eb155f"))
 
-(global_label "GPIO25" (shape passive) (at 277.78 166.51 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "264d1f2c-b3e8-5f4e-8f06-1d025e32dc12"))
+(global_label "GPIO25" (shape bidirectional) (at 277.78 166.51 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "264d1f2c-b3e8-5f4e-8f06-1d025e32dc12"))
 
 (wire (pts (xy 247.3 169.05) (xy 242.22 169.05)) (stroke (width 0) (type default)) (uuid "58ebf477-f021-5656-a807-fda7aa563d04"))
 
-(global_label "SPK_PWM" (shape passive) (at 242.22 169.05 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "78ebb90b-9655-5f2f-aece-49531b867414"))
+(global_label "SPK_PWM" (shape input) (at 242.22 169.05 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "78ebb90b-9655-5f2f-aece-49531b867414"))
 
 (wire (pts (xy 272.7 169.05) (xy 277.78 169.05)) (stroke (width 0) (type default)) (uuid "2bc49099-c254-54b3-a27f-207c33ee7d34"))
 
-(global_label "GPIO26" (shape passive) (at 277.78 169.05 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "2af19804-6e10-5812-8696-c6920844886d"))
+(global_label "GPIO26" (shape bidirectional) (at 277.78 169.05 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "2af19804-6e10-5812-8696-c6920844886d"))
 
 (wire (pts (xy 247.3 171.59) (xy 242.22 171.59)) (stroke (width 0) (type default)) (uuid "e6f7d5ec-8207-52c8-9ff7-8b0496bb5067"))
 
 (wire (pts (xy 272.7 171.59) (xy 277.78 171.59)) (stroke (width 0) (type default)) (uuid "42502267-3fec-5d8a-85ed-cd309adb90fa"))
 
-(global_label "GPIO27" (shape passive) (at 277.78 171.59 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "d7785ee6-d6ac-5b87-ba31-084db0c38e20"))
+(global_label "GPIO27" (shape bidirectional) (at 277.78 171.59 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "d7785ee6-d6ac-5b87-ba31-084db0c38e20"))
 
 (wire (pts (xy 247.3 174.13) (xy 242.22 174.13)) (stroke (width 0) (type default)) (uuid "398cae63-fd33-57b2-b6e3-bc9f50d2ee11"))
 
-(global_label "CLK_REF10M" (shape passive) (at 242.22 174.13 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "3b52fd19-c3a9-5761-ada1-5fa932011218"))
+(global_label "CLK_REF10M" (shape output) (at 242.22 174.13 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "3b52fd19-c3a9-5761-ada1-5fa932011218"))
 
 (wire (pts (xy 272.7 174.13) (xy 277.78 174.13)) (stroke (width 0) (type default)) (uuid "0cf4a6d2-a2e7-571c-810a-35ebe2c86e40"))
 
-(global_label "GPIO28" (shape passive) (at 277.78 174.13 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "10b07e0e-a4ca-51ce-9e2e-4d362529301c"))
+(global_label "GPIO28" (shape bidirectional) (at 277.78 174.13 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "10b07e0e-a4ca-51ce-9e2e-4d362529301c"))
 
 (wire (pts (xy 247.3 176.67) (xy 242.22 176.67)) (stroke (width 0) (type default)) (uuid "bb6067cc-8489-5385-beb3-88cc37b58c7d"))
 
 (wire (pts (xy 272.7 176.67) (xy 277.78 176.67)) (stroke (width 0) (type default)) (uuid "49737085-2d50-56cb-9a2e-ca22c3ca3965"))
 
-(global_label "GPIO29" (shape passive) (at 277.78 176.67 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "edaaa87d-31b4-5065-a975-22d671208e35"))
+(global_label "GPIO29" (shape bidirectional) (at 277.78 176.67 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "edaaa87d-31b4-5065-a975-22d671208e35"))
 
 (wire (pts (xy 247.3 179.21) (xy 242.22 179.21)) (stroke (width 0) (type default)) (uuid "acc70dd2-7bbd-591e-90c8-815dc6d787ab"))
 
-(global_label "CLK_SI0" (shape passive) (at 242.22 179.21 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "0d6a7848-2939-5939-9150-53656ef37431"))
+(global_label "CLK_SI0" (shape output) (at 242.22 179.21 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "0d6a7848-2939-5939-9150-53656ef37431"))
 
 (wire (pts (xy 272.7 179.21) (xy 277.78 179.21)) (stroke (width 0) (type default)) (uuid "ce88ed28-3b45-54a9-8f21-713d173a4dea"))
 
-(global_label "GPIO30" (shape passive) (at 277.78 179.21 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "7356eb95-d5ca-54e2-bacb-0a009621eb89"))
+(global_label "GPIO30" (shape bidirectional) (at 277.78 179.21 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "7356eb95-d5ca-54e2-bacb-0a009621eb89"))
 
 (wire (pts (xy 247.3 181.75) (xy 242.22 181.75)) (stroke (width 0) (type default)) (uuid "869243c5-ed93-585f-9952-cf79987f79e4"))
 
 (wire (pts (xy 272.7 181.75) (xy 277.78 181.75)) (stroke (width 0) (type default)) (uuid "19c7b05d-af06-5429-852f-3b4f2af63b13"))
 
-(global_label "GPIO31" (shape passive) (at 277.78 181.75 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "f65dd30e-bf58-5a28-a76b-77d5d3d88d86"))
+(global_label "GPIO31" (shape bidirectional) (at 277.78 181.75 0) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify left)) (uuid "f65dd30e-bf58-5a28-a76b-77d5d3d88d86"))
 
 (wire (pts (xy 247.3 184.29) (xy 242.22 184.29)) (stroke (width 0) (type default)) (uuid "5ea6d1f0-0195-5da8-9873-7deb21280263"))
 
-(global_label "CLK_SI1" (shape passive) (at 242.22 184.29 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "685892c8-19e6-560d-b0cf-d15b9e60f76e"))
+(global_label "CLK_SI1" (shape output) (at 242.22 184.29 180) (fields_autoplaced yes) (effects (font (size 1.143 1.143)) (justify right)) (uuid "685892c8-19e6-560d-b0cf-d15b9e60f76e"))
 
 (wire (pts (xy 272.7 184.29) (xy 277.78 184.29)) (stroke (width 0) (type default)) (uuid "954f2c0a-3589-5c47-aa25-6e5cb53c7342"))
 
