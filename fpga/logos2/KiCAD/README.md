@@ -16,7 +16,7 @@ KiCad 9 format (version 20250114); KiCad 10 opens it and converts on save. Rev 0
 |---|---|---|
 | Root | `thriller.kicad_sch` | Title, notes, the sheet symbols |
 | Power Supplies | `th_power.kicad_sch` | 5 V from J1 (`+5V_IN`), PTC and TVS, 3V3_AO LDO, 1V0/1V8/3V3 bucks, power control from `PB_N_AO` and `RTC_INT_N_AO` |
-| Base | `th_base.kicad_sch` | Configuration straps and filters, QSPI NOR flash, **ST33KTPM2X TPM** (SPI, RST pull-down), YSN8130E RTC with level shifting to the always-on rail, the **25 MHz oscillator** (`SYS_CLK`, the module's only clock) |
+| Base | `th_base.kicad_sch` | Configuration straps and filters, QSPI NOR flash, **ST33KTPM2X TPM** (SPI per DB5174 figure 3: RST pull-down, PIRQ pull-up, optional 56 pF on CS and 33 Ω series), YSN8130E RTC with level shifting to the always-on rail, the **25 MHz oscillator** (`SYS_CLK`, the module's only clock) |
 | FPGA banks L | `th_userA.kicad_sch` (A2) | Units L3, L4, L5 with their nets as global labels; bank decoupling |
 | FPGA banks R | `th_userB.kicad_sch` (A2) | Units R4, R5; bank decoupling |
 | FPGA config and power | `th_fpga.kicad_sch` | Configuration/JTAG/ADC unit, core and auxiliary power unit, ground unit; core decoupling |
@@ -42,7 +42,7 @@ The loader domain's pins (flash, TPM, PSRAM, RTC, the clock) are all on L5 so th
 
 ### Things to check before layout
 
-- H14: the TPM symbol's pin numbers against the ST33KTPM2X data sheet, and the `CS` capacitor and series resistors.
+- The 3V3 rail's rise time at the TPM: DB5174 table 4 wants 2 V/ms or faster (H14).
 - H15: LAN8742A REF_CLK Out mode with an external 25 MHz clock on XTAL1.
 - The core decoupling quantities on `th_fpga` against UG040012 tables 2-3 and 2-6 for the 324 package.
 - `thriller_bom.csv` is from the one-board revision and is stale; regenerate from the schematic.
@@ -52,6 +52,6 @@ The loader domain's pins (flash, TPM, PSRAM, RTC, the clock) are all on L5 so th
 | Script | What it does |
 |---|---|
 | `ksch.py` | Minimal KiCad 9 schematic s-expression toolkit: parse, serialize, pin geometry, net connectivity |
-| `rework_module.py` | The one-board → module transformation. **Not idempotent**: run it from this directory on a clean `thriller/` (`git checkout thriller` first). It is kept as the record of what changed and why; from here on, edit the schematic in KiCad |
+| `rework_module.py` | The one-board → module transformation. **Not idempotent**: it runs on the one-board revision of `thriller/` (`git checkout f718401^ -- thriller`, then delete `th_conn`/`th_fpga`), from this directory, and is reproducible (deterministic UUIDs). It is kept as the record of what changed and why; from here on, edit the schematic in KiCad |
 | `pinout_csv.py` | Writes `hw/module-pinout.csv` and `../pinout324-assignment.csv` from the assignments in `rework_module.py` |
 | `render_sch.py` | Rough SVG/PNG preview of a sheet for checking generated geometry without KiCad |

@@ -1248,7 +1248,7 @@
 (property "Value" "ST33KTPM2X32DKG9" (at -12.7 -17.78 0) (effects (font (size 1.27 1.27))))
 (property "Footprint" "Package_DFN_QFN:QFN-32-1EP_5x5mm_P0.5mm_EP3.6x3.6mm" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
 (property "Datasheet" "https://www.st.com/en/secure-mcus/st33ktpm2x.html" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
-(property "Description" "ST33KTPM2X TPM 2.0, SPI, UFQFPN32 5x5 mm, CMVP #5570. PIN NUMBERS TO VERIFY against the ST33KTPM2X datasheet pinout (figure 1) before layout; NiC pins 3-5, 8-15, 23, 25-28, 31, 32 not drawn" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+(property "Description" "ST33KTPM2X TPM 2.0, SPI, UFQFPN32 5x5 mm, CMVP #5570. Pinout per DB5174 rev 3 figure 1; NiC pins 3-5, 8-15, 23, 25-28, 31, 32 not drawn" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
 (property "MPN" "ST33KTPM2X32DKG9" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
 (property "LCSC" "" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
 (symbol "ST33KTPM2X_0_1" (rectangle (start -12.7 15.24) (end 12.7 -15.24) (stroke (width 0.254) (type default)) (fill (type background))))

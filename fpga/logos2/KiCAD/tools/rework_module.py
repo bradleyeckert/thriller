@@ -10,7 +10,10 @@ PRJ = ROOT / 'thriller'
 ROOT_UUID = '02a4128e-5284-4df4-bd95-50d9619a72c4'
 PINS = json.load(open(ROOT.parent / 'pinout324.json')) if (ROOT.parent / 'pinout324.json').exists() else None
 
-def U(): return str(_uuid.uuid4())
+_ucount = [0]
+def U():   # deterministic UUIDs so reruns of the script produce identical files
+    _ucount[0] += 1
+    return str(_uuid.uuid5(_uuid.NAMESPACE_URL, f'thriller/rework/{_ucount[0]}'))
 
 # ------------------------------------------------------------------ library symbols (new-format text, embedded in sheets and added to thriller.kicad_sym)
 def load_fpga324():
@@ -56,7 +59,7 @@ def tpm_symbol():
          '(property "Value" "ST33KTPM2X32DKG9" (at -12.7 -17.78 0) (effects (font (size 1.27 1.27))))',
          '(property "Footprint" "Package_DFN_QFN:QFN-32-1EP_5x5mm_P0.5mm_EP3.6x3.6mm" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))',
          '(property "Datasheet" "https://www.st.com/en/secure-mcus/st33ktpm2x.html" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))',
-         '(property "Description" "ST33KTPM2X TPM 2.0, SPI, UFQFPN32 5x5 mm, CMVP #5570. PIN NUMBERS TO VERIFY against the ST33KTPM2X datasheet pinout (figure 1) before layout; NiC pins 3-5, 8-15, 23, 25-28, 31, 32 not drawn" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))',
+         '(property "Description" "ST33KTPM2X TPM 2.0, SPI, UFQFPN32 5x5 mm, CMVP #5570. Pinout per DB5174 rev 3 figure 1; NiC pins 3-5, 8-15, 23, 25-28, 31, 32 not drawn" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))',
          '(property "MPN" "ST33KTPM2X32DKG9" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))',
          '(property "LCSC" "" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))',
          '(symbol "ST33KTPM2X_0_1" (rectangle (start -12.7 15.24) (end 12.7 -15.24) (stroke (width 0.254) (type default)) (fill (type background))))',
@@ -121,6 +124,7 @@ def connect_pins(sheet, inst, lib_pins, assign, sheet_uuid, stub=5.08, text_rot=
     at = find1(inst, 'at'); x, y, rot = float(at[1]), float(at[2]), float(at[3])
     unit = int(find1(inst, 'unit')[1])
     power_runs = {}   # (ox, net) -> list of (Y, E)
+    ends = {}         # pin number -> stub end, for callers that add parts of their own ('w' draws the stub only)
     for (u, num, nm, px, py, prot, plen) in lib_pins:
         if u not in (0, unit): continue
         dx, dy = rot_mirror(px, py, rot, None)
@@ -130,7 +134,8 @@ def connect_pins(sheet, inst, lib_pins, assign, sheet_uuid, stub=5.08, text_rot=
         if a[0] == 'nc':
             sheet.tree.append(noconn(X, Y)); continue
         E = (round(X + ox * stub, 3), round(Y + oy * stub, 3))
-        sheet.tree.append(wire((X, Y), E))
+        sheet.tree.append(wire((X, Y), E)); ends[num] = E
+        if a[0] == 'w': continue
         if a[0] == 'p':
             if ox:  # horizontal pin: collect for run merging
                 power_runs.setdefault((ox, E[0], a[1]), []).append(E)
@@ -139,10 +144,10 @@ def connect_pins(sheet, inst, lib_pins, assign, sheet_uuid, stub=5.08, text_rot=
         else:
             lrot = {(-1, 0): 180, (1, 0): 0, (0, -1): 90, (0, 1): 270}[(ox, oy)]
             sheet.tree.append((glabel if a[0] == 'g' else llabel)(a[1], E[0], E[1], lrot))
-    for (ox, ex, net), ends in power_runs.items():
-        ends.sort(key=lambda e: e[1])
-        runs, cur = [], [ends[0]]
-        for e in ends[1:]:
+    for (ox, ex, net), pts in power_runs.items():
+        pts.sort(key=lambda e: e[1])
+        runs, cur = [], [pts[0]]
+        for e in pts[1:]:
             if abs(e[1] - cur[-1][1] - 2.54) < 0.01: cur.append(e)
             else: runs.append(cur); cur = [e]
         runs.append(cur)
@@ -154,6 +159,7 @@ def connect_pins(sheet, inst, lib_pins, assign, sheet_uuid, stub=5.08, text_rot=
             top = net.startswith('+') or net.startswith('VCC')
             e = run[0] if top else run[-1]
             sheet.tree.append(power_sym(net, e[0], e[1], sheet_uuid))
+    return ends
 
 # ------------------------------------------------------------------ deletion with pruning
 def delete_refs(sheet, refs, lib_ids=()):
@@ -402,6 +408,7 @@ def embed_common(sheet):
 CAP_PROPS = {'100n': {'Footprint': 'Capacitor_SMD:C_0402_1005Metric', 'Description': 'Capacitor 100 nF 16 V X7R 0402', 'LCSC': 'C1525'},
              '4u7': {'Footprint': 'Capacitor_SMD:C_0603_1608Metric', 'Description': 'Capacitor 4.7 uF 10 V X5R 0603', 'LCSC': 'C19666'},
              '1u': {'Footprint': 'Capacitor_SMD:C_0402_1005Metric', 'Description': 'Capacitor 1 uF 10 V X5R 0402', 'LCSC': 'C52923'},
+             '56p': {'Footprint': 'Capacitor_SMD:C_0402_1005Metric', 'Description': 'Capacitor 56 pF 50 V C0G 0402, TPM SPI_CS filter (DB5174 4.2); may be omitted', 'LCSC': ''},
              '470n': {'Footprint': 'Capacitor_SMD:C_0402_1005Metric', 'Description': 'Capacitor 470 nF 10 V X5R/X7R 0402 (UG040012 Table 2-6)', 'LCSC': ''},
              '100u': {'Footprint': 'Capacitor_SMD:C_1206_3216Metric', 'Description': 'Capacitor 100 uF 6.3 V X5R 1206', 'LCSC': 'C15008'}}
 
@@ -523,21 +530,33 @@ def main():
     embed_common(sh)
     su = suuid['th_base.kicad_sch']
     refs = RefCounter({'C': 270, 'R': 100})
-    tx, ty = 320, 150
+    tx, ty = 330, 240
     inst = sym_instance('thriller:ST33KTPM2X', 'U7', 'ST33KTPM2X32DKG9', tx, ty, 0, 1, su, [str(n) for n in range(1, 34)],
-                        {'Footprint': 'Package_DFN_QFN:QFN-32-1EP_5x5mm_P0.5mm_EP3.6x3.6mm', 'MPN': 'ST33KTPM2X32DKG9', 'LCSC': '', 'Description': 'TPM 2.0, SPI, CMVP #5570; pin numbers to verify against the datasheet'})
+                        {'Footprint': 'Package_DFN_QFN:QFN-32-1EP_5x5mm_P0.5mm_EP3.6x3.6mm', 'MPN': 'ST33KTPM2X32DKG9', 'LCSC': '', 'Description': 'TPM 2.0, SPI, CMVP #5570; pinout per DB5174 rev 3'})
     sh.tree.append(inst)
-    connect_pins(sh, inst, sh.libs['thriller:ST33KTPM2X'],
+    ends = connect_pins(sh, inst, sh.libs['thriller:ST33KTPM2X'],
                  {'1': ('p', '+3V3'), '22': ('p', '+3V3'), '2': ('p', 'GND'), '16': ('p', 'GND'), '33': ('p', 'GND'),
-                  '17': ('g', 'TPM_RST_N'), '18': ('g', 'TPM_PIRQ_N'), '19': ('g', 'TPM_CLK'), '20': ('g', 'TPM_CS_N'), '21': ('g', 'TPM_MOSI'), '24': ('g', 'TPM_MISO')}, su)
-    add_cap(sh, refs, '100n', '+3V3', tx - 30, ty + 30, su); add_cap(sh, refs, '1u', '+3V3', tx - 20, ty + 30, su)
-    # RST pull-down so the TPM stays in reset until the boot ROM drives the line
-    r = refs.next('R')
-    rin = sym_instance('thriller:R', r, '10k', tx + 35, ty + 12.7, 0, 1, su, ['1', '2'], {'Footprint': 'Resistor_SMD:R_0402_1005Metric', 'LCSC': 'C25744', 'Description': 'Resistor 10 kOhm 0402, TPM RST pull-down'})
-    sh.tree.append(rin)
-    (p1x, p1y, _, _), (p2x, p2y, _, _) = sh.pin_points(rin)[:2]
-    sh.tree.append(glabel('TPM_RST_N', p1x, p1y, 90)); sh.tree.append(power_sym('GND', p2x, p2y, su))
-    sh.tree.append(text_item('ST33KTPM2X TPM on SPI from the loader domain. RST driven by the FPGA with a 10k pull-down.\nGPIO_PP, GPI_I2C_Select, I2C pins and NiC pins left open (SPI mode).\nVerify pin numbers against the datasheet (DS, figure 1) before layout.', tx - 45, ty + 62, 1.5))
+                  '17': ('g', 'TPM_RST_N'), '18': ('g', 'TPM_PIRQ_N'), '19': ('w',), '20': ('g', 'TPM_CS_N'), '21': ('w',), '24': ('w',)}, su)
+    add_cap(sh, refs, '100n', '+3V3', tx - 40, ty - 22, su); add_cap(sh, refs, '1u', '+3V3', tx - 30, ty - 22, su)
+    def res(value, x, y, rot, desc):
+        r = sym_instance('thriller:R', refs.next('R'), value, x, y, rot, 1, su, ['1', '2'], {'Footprint': 'Resistor_SMD:R_0402_1005Metric', 'LCSC': 'C25744' if value == '10k' else '', 'Description': desc})
+        sh.tree.append(r); return [(px, py) for (px, py, _, _) in sh.pin_points(r)[:2]]
+    # 33 R series on CLK, MOSI, MISO (DB5174 figure 3: line adaptation; fit 0 R if the layout is short and clean)
+    for num, net in (('19', 'TPM_CLK'), ('21', 'TPM_MOSI'), ('24', 'TPM_MISO')):
+        ex, ey = ends[num]
+        p1, p2 = res('33R', ex + 3.81, ey, 90, 'Resistor 33 Ohm 0402, TPM SPI series (DB5174 4.3)')
+        assert p1 == (ex, ey), (p1, ends[num])
+        sh.tree.append(glabel(net, p2[0], p2[1], 0))
+    # RST pull-down so the TPM stays in reset until the boot ROM drives the line (DB5174: RST must not float; the FPGA drives it)
+    p1, p2 = res('10k', tx + 38, ty + 12.7, 0, 'Resistor 10 kOhm 0402, TPM RST pull-down')
+    sh.tree.append(glabel('TPM_RST_N', p1[0], p1[1], 90)); sh.tree.append(power_sym('GND', p2[0], p2[1], su))
+    # PIRQ pull-up, mandatory for standby current (DB5174 figure 3)
+    p1, p2 = res('10k', tx + 48, ty + 12.7, 0, 'Resistor 10 kOhm 0402, TPM PIRQ pull-up (mandatory, DB5174 4.3)')
+    sh.tree.append(power_sym('+3V3', p1[0], p1[1], su)); sh.tree.append(glabel('TPM_PIRQ_N', p2[0], p2[1], 270))
+    # 56 pF on CS so CLK is low when CS falls (DB5174 4.2); optional
+    c = sym_instance('thriller:C', refs.next('C'), '56p', tx + 58, ty + 12.7, 0, 1, su, ['1', '2'], CAP_PROPS['56p']); sh.tree.append(c)
+    sh.tree.append(glabel('TPM_CS_N', tx + 58, ty + 12.7 - 3.81, 90)); sh.tree.append(power_sym('GND', tx + 58, ty + 12.7 + 3.81, su))
+    sh.tree.append(text_item('ST33KTPM2X TPM on SPI from the loader domain (DB5174 rev 3, figure 3).\nRST driven by the FPGA with a 10k pull-down; 10k pull-up on PIRQ (mandatory).\n33R series on CLK/MOSI/MISO and 56p on CS: optional, fit as the layout requires.\nGPIO_PP, GPI_I2C_Select, I2C and NiC pins open (SPI mode). VPS slew 2 V/ms min (table 4).', tx - 45, ty - 44, 1.5))
     drop_texts(sh, ['Fit JP1', 'JTAG: not fitted', 'HSST quad', 'Supplies left floating', 'Secure element (always-on', 'Nothing else on this bus', '2 x SR44', 'FPGA configuration, JTAG, ADC, clock'])
     edit_texts(sh, [('ATECC608C', 'ST33KTPM2X TPM'), ('6. The secure element and the RTC each have their own I2C bus. Pull-ups to 3V3_AO on their side,\n   to +3V3 on the FPGA side. RTC_INT_N and PB_N tell the boot ROM the boot cause.', '6. The TPM is on its own SPI bus from the loader domain. The RTC I2C bus has pull-ups to 3V3_AO on its side,\n   to +3V3 on the FPGA side. RTC_INT_N and PB_N tell the boot ROM the boot cause.'), ('Real-time clock: wake alarm, local time (untrusted)', 'Real-time clock: wake alarm, local time (untrusted). Backup cells are on the carrier (VBAT_CELL via J1); keep CHGEN = 0.')])
     prune_libs(sh)

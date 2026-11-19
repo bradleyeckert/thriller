@@ -385,4 +385,4 @@
 (project "thriller"
 (path "/02a4128e-5284-4df4-bd95-50d9619a72c4/4252df29-7b4a-5d49-abd0-707f37dfb60b" (reference "R54") (unit 1)))))
 (embedded_fonts no)
-(text "The MicroSD socket is on the carrier (J1: SD_CLK, SD_CMD, SD_D0..3, SD_CD_N). The PSRAM holds ciphertext only and is outside the trust boundary." (exclude_from_sim no) (at 20 100 0) (effects (font (size 1.5 1.5)) (justify left top)) (uuid "8d56f813-0797-43d9-b31d-022b45c7f15a")))
+(text "The MicroSD socket is on the carrier (J1: SD_CLK, SD_CMD, SD_D0..3, SD_CD_N). The PSRAM holds ciphertext only and is outside the trust boundary." (exclude_from_sim no) (at 20 100 0) (effects (font (size 1.5 1.5)) (justify left top)) (uuid "888a9d1c-20b2-5a0f-a866-62c437f3f81e")))

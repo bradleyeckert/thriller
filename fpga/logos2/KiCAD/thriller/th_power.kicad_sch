@@ -2693,8 +2693,8 @@
 (project "thriller"
 (path "/02a4128e-5284-4df4-bd95-50d9619a72c4/58405345-9681-4f24-98c2-a3fa690db3a4" (reference "#PWR") (unit 1)))))
 (embedded_fonts no)
-(wire (pts (xy 40.64 31.75) (xy 33.02 31.75)) (stroke (width 0) (type default)) (uuid "d637ae54-7695-484a-9ee6-4276e50477a0"))
+(wire (pts (xy 40.64 31.75) (xy 33.02 31.75)) (stroke (width 0) (type default)) (uuid "e2222f85-d1cb-5cd5-9c18-af0648973534"))
 
-(global_label "+5V_IN" (shape passive) (at 33.02 31.75 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "00e2cc8c-342f-4de9-977b-6e482dda80bf"))
+(global_label "+5V_IN" (shape passive) (at 33.02 31.75 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "c13dc038-7661-5587-b4e8-3ca442bd28f1"))
 
-(text "Module: 5 V comes from the carrier through J1 (+5V_IN). The power button and the RTC alarm arrive as PB_N_AO and RTC_INT_N_AO; the switched 5 V rail is gone (the carrier powers its own parts)." (exclude_from_sim no) (at 20 20 0) (effects (font (size 1.5 1.5)) (justify left top)) (uuid "39c7612b-77b6-4bb3-958b-46181f7ebf76")))
+(text "Module: 5 V comes from the carrier through J1 (+5V_IN). The power button and the RTC alarm arrive as PB_N_AO and RTC_INT_N_AO; the switched 5 V rail is gone (the carrier powers its own parts)." (exclude_from_sim no) (at 20 20 0) (effects (font (size 1.5 1.5)) (justify left top)) (uuid "49ae256e-b4f5-5b31-8848-937438065d78")))

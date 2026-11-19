@@ -321,7 +321,7 @@
 
 (property "Datasheet" "https://www.st.com/en/secure-mcus/st33ktpm2x.html" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
 
-(property "Description" "ST33KTPM2X TPM 2.0, SPI, UFQFPN32 5x5 mm, CMVP #5570. PIN NUMBERS TO VERIFY against the ST33KTPM2X datasheet pinout (figure 1) before layout; NiC pins 3-5, 8-15, 23, 25-28, 31, 32 not drawn" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+(property "Description" "ST33KTPM2X TPM 2.0, SPI, UFQFPN32 5x5 mm, CMVP #5570. Pinout per DB5174 rev 3 figure 1; NiC pins 3-5, 8-15, 23, 25-28, 31, 32 not drawn" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
 
 (property "MPN" "ST33KTPM2X32DKG9" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
 
@@ -2424,356 +2424,477 @@
 (project "thriller"
 (path "/02a4128e-5284-4df4-bd95-50d9619a72c4/7c95428e-e923-4d38-91d5-bfe862deab42" (reference "#PWR") (unit 1)))))
 (embedded_fonts no)
-(global_label "VCCB" (shape passive) (at 147.32 45.72 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "d0ade461-91c7-4ab5-b7a5-f0bfe46981ba"))
+(global_label "VCCB" (shape passive) (at 147.32 45.72 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "7bc37c6c-fb6a-5d10-aeba-9477c1b28005"))
 
-(global_label "VCCADC" (shape passive) (at 147.32 50.8 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "19eebe75-866f-4fe4-a958-b468100139d4"))
+(global_label "VCCADC" (shape passive) (at 147.32 50.8 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "7b1a426f-048b-5b63-80e9-8ab07fa85899"))
 
-(global_label "VCCADC" (shape passive) (at 147.32 60.96 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "d5f3c4e8-326a-47c8-affa-7207aa2f4c65"))
+(global_label "VCCADC" (shape passive) (at 147.32 60.96 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "57ffb3c3-d5dd-563c-bc93-b3cc9da5db07"))
 
-(global_label "VCCADC" (shape passive) (at 147.32 66.04 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "285d92cd-27b3-48ab-8469-190ea7c77394"))
+(global_label "VCCADC" (shape passive) (at 147.32 66.04 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "1e62b5cd-ee7c-560b-a946-c6186e1c5382"))
 
-(global_label "ADC_5V_MON" (shape passive) (at 147.32 81.28 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "a202719b-832b-44e0-a50c-5e604e63b988"))
+(global_label "ADC_5V_MON" (shape passive) (at 147.32 81.28 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "32f76f76-b3df-58a0-a776-78998b8ec67d"))
 
-(global_label "ADC_5V_MON" (shape passive) (at 147.32 91.44 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "5f60756f-1ab5-4347-a5f6-0dada3d95d52"))
+(global_label "ADC_5V_MON" (shape passive) (at 147.32 91.44 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "60111cd6-37c7-5f74-ab6e-4b989883e436"))
 
-(global_label "ADC_5V_MON" (shape passive) (at 147.32 96.52 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "f5f24fde-08ad-4a1e-b926-5136f200d831"))
+(global_label "ADC_5V_MON" (shape passive) (at 147.32 96.52 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "27964599-1f0e-5e5e-8dc0-a6c1e857f4f4"))
 
-(global_label "CFG_MODE0" (shape passive) (at 180.34 27.94 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "1ba62e4f-eceb-4d5d-953d-3089674c8af1"))
+(global_label "CFG_MODE0" (shape passive) (at 180.34 27.94 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "1021bdba-a555-5a7b-ae87-8fc997ddbef9"))
 
-(global_label "FPGA_RST_N" (shape passive) (at 180.34 38.1 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "629e1329-a285-4f93-b8fb-bdd6b659400f"))
+(global_label "FPGA_RST_N" (shape passive) (at 180.34 38.1 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "96fb382c-cc22-5466-b063-d883a062e849"))
 
-(global_label "CFG_INIT_N" (shape passive) (at 180.34 43.18 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "c583089c-41c2-427e-8b05-197434a54b83"))
+(global_label "CFG_INIT_N" (shape passive) (at 180.34 43.18 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "01526534-f8e5-5594-986f-9631819cf2ae"))
 
-(global_label "CFG_DONE" (shape passive) (at 180.34 48.26 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "b4d99563-5dca-4e2e-95d1-8e84f0ba4609"))
+(global_label "CFG_DONE" (shape passive) (at 180.34 48.26 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "ddb11eec-dc5d-53f6-93c9-78e04370087e"))
 
-(global_label "CFG_MODE1" (shape passive) (at 180.34 81.28 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "ca16a995-0d66-470e-8e1e-8ed6575992b6"))
+(global_label "CFG_MODE1" (shape passive) (at 180.34 81.28 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "23d21cf4-4ede-507e-a542-d67f9ec945ef"))
 
-(global_label "CFG_MODE2" (shape passive) (at 180.34 86.36 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "4c9a3653-8064-4194-a5a7-e87c14769b65"))
+(global_label "CFG_MODE2" (shape passive) (at 180.34 86.36 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "8e65488f-6ded-5b31-ae01-79ec0595995d"))
 
-(global_label "CFG_CLK" (shape passive) (at 231.14 71.12 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "06970541-4706-476d-bcdd-34862f376989"))
+(global_label "CFG_CLK" (shape passive) (at 231.14 71.12 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "fe4ef526-7b38-53fa-b87a-632b606bcbff"))
 
-(global_label "JTAG_TMS" (shape passive) (at 180.34 53.34 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "362a159e-9524-4fba-a5c3-cace8e0c8ef8"))
+(global_label "JTAG_TMS" (shape passive) (at 180.34 53.34 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "1dac2ab6-77af-5fcf-95da-dad80ba4f969"))
 
-(global_label "JTAG_TDI" (shape passive) (at 180.34 58.42 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "edc7114c-b729-4afb-bb7d-015736aa3cd2"))
+(global_label "JTAG_TDI" (shape passive) (at 180.34 58.42 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "4314293e-0288-596c-b9c1-f320acb39204"))
 
-(global_label "JTAG_TCK" (shape passive) (at 180.34 91.44 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "6b6c3659-58fd-496a-aaeb-e9ea25916d58"))
+(global_label "JTAG_TCK" (shape passive) (at 180.34 91.44 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "16095507-bb3e-5e6d-88f0-e9835f0febbf"))
 
-(global_label "SYS_CLK" (shape passive) (at 121.92 118.11 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "17254691-9d51-4cab-85c7-a4df6faea47c"))
+(global_label "SYS_CLK" (shape passive) (at 121.92 118.11 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "f29cdd54-3621-5469-8f3d-560cad1ea346"))
 
-(global_label "SYS_CLK" (shape passive) (at 137.16 114.3 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "c553e08b-830c-4481-9f19-fbbdb7bf1b9b"))
+(global_label "SYS_CLK" (shape passive) (at 137.16 114.3 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "475217e9-987b-5411-92d2-869c8320f866"))
 
-(global_label "VBAT_CELL" (shape passive) (at 276.86 193.04 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "abd1bbf7-9581-47b9-988b-8aadcd64c0c6"))
+(global_label "VBAT_CELL" (shape passive) (at 276.86 193.04 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "b7ed7bcb-3415-52d2-be08-9cea611dc924"))
 
-(symbol (lib_id "thriller:ST33KTPM2X") (at 320 150 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "54da5988-f6e5-4077-9152-565e64519587")
-(property "Reference" "U7" (at 320 147.46 0) (effects (font (size 1.27 1.27))))
+(symbol (lib_id "thriller:ST33KTPM2X") (at 330 240 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "6bd7ee63-3f33-5055-bb5e-6dd36165eb59")
+(property "Reference" "U7" (at 330 237.46 0) (effects (font (size 1.27 1.27))))
 
-(property "Value" "ST33KTPM2X32DKG9" (at 320 152.54 0) (effects (font (size 1.27 1.27))))
+(property "Value" "ST33KTPM2X32DKG9" (at 330 242.54 0) (effects (font (size 1.27 1.27))))
 
-(property "Footprint" "Package_DFN_QFN:QFN-32-1EP_5x5mm_P0.5mm_EP3.6x3.6mm" (at 320 150 0) (effects (font (size 1.27 1.27)) (hide yes)))
+(property "Footprint" "Package_DFN_QFN:QFN-32-1EP_5x5mm_P0.5mm_EP3.6x3.6mm" (at 330 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
 
-(property "Description" "TPM 2.0, SPI, CMVP #5570; pin numbers to verify against the datasheet" (at 320 150 0) (effects (font (size 1.27 1.27)) (hide yes)))
+(property "Description" "TPM 2.0, SPI, CMVP #5570; pinout per DB5174 rev 3" (at 330 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
 
-(property "LCSC" "" (at 320 150 0) (effects (font (size 1.27 1.27)) (hide yes)))
+(property "LCSC" "" (at 330 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
 
-(property "MPN" "ST33KTPM2X32DKG9" (at 320 150 0) (effects (font (size 1.27 1.27)) (hide yes)))
+(property "MPN" "ST33KTPM2X32DKG9" (at 330 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
 
-(pin "1" (uuid "a1428ca0-84a9-4b75-ac33-416ac5b97b5d"))
+(pin "1" (uuid "ae32e415-97f6-5cca-9238-f1f694eb75f6"))
 
-(pin "2" (uuid "24a52e63-5c59-4d00-bdeb-2d27aa11d687"))
+(pin "2" (uuid "075b6957-f486-5600-9d04-fa07b10e8c22"))
 
-(pin "3" (uuid "a66e3317-6e6c-4dd5-b992-024167b8e8b9"))
+(pin "3" (uuid "f5f95ac9-faf2-52ac-9a55-1b012c3cc0e7"))
 
-(pin "4" (uuid "85ca746c-aeb9-4ab5-b894-d6a486413a9a"))
+(pin "4" (uuid "6f8493e2-c6bf-5057-aa7e-654258716c9d"))
 
-(pin "5" (uuid "b943670d-874c-4ca9-bb3a-21477f78df7a"))
+(pin "5" (uuid "3d4975b1-1557-5959-a0f1-1f1949fdc112"))
 
-(pin "6" (uuid "6364c6af-a8b3-4785-ae0a-114863a4fe45"))
+(pin "6" (uuid "8d36b156-bfd5-5607-a37d-6070cabd949b"))
 
-(pin "7" (uuid "adc5f8a0-dbe5-46ad-bd2d-c2abbf67acc2"))
+(pin "7" (uuid "3562371d-a265-5f40-aa0d-29fd7243da69"))
 
-(pin "8" (uuid "a5e03dd5-93aa-42fd-a49e-8db3e63502c4"))
+(pin "8" (uuid "7bef82de-d190-53aa-8ac2-54a5a4a17622"))
 
-(pin "9" (uuid "9831b872-0ee9-4c9f-949e-268164ce24b3"))
+(pin "9" (uuid "66252633-99c2-5f7d-bac1-3907e98fc642"))
 
-(pin "10" (uuid "1c0ba532-93ca-4e2e-a63a-b8066afff414"))
+(pin "10" (uuid "7a128724-0282-5afc-9673-a099b974b6d2"))
 
-(pin "11" (uuid "c851b8ec-4132-4b33-bced-1f0b47fd53ad"))
+(pin "11" (uuid "8118eb42-3b98-5401-be97-3925287e5cf7"))
 
-(pin "12" (uuid "a2c562b2-79e9-4b87-9311-f289c1087b4f"))
+(pin "12" (uuid "c23c6ce6-080f-51f7-91ed-88f1f5cc8e96"))
 
-(pin "13" (uuid "c10b1167-f5f7-4be0-bcb2-f9ae49c8e2d0"))
+(pin "13" (uuid "d6c4aa2e-36fe-517e-9cc9-44c906d9aa13"))
 
-(pin "14" (uuid "da4e7e8e-34c2-4f07-b40f-bfc1358cd73b"))
+(pin "14" (uuid "4401c9fb-03d8-5f5d-be98-6a193805e5e0"))
 
-(pin "15" (uuid "5514f307-6d8e-49c8-914d-6f93afc01633"))
+(pin "15" (uuid "b8bdf98f-5dbd-5f08-8c0c-c43c79463e84"))
 
-(pin "16" (uuid "971e911f-31b2-4de0-b8de-e7516a66eec7"))
+(pin "16" (uuid "9409fe62-064b-5f79-bd70-998d5bae4624"))
 
-(pin "17" (uuid "32058dec-7cb4-4f05-9a86-638046975503"))
+(pin "17" (uuid "33c5ef36-9a62-5950-91e5-9897faffa1f8"))
 
-(pin "18" (uuid "efbb9319-9a26-40d4-af1b-f46c623bb40f"))
+(pin "18" (uuid "d3ed69f9-1e48-5a0b-be38-11a72b47ca04"))
 
-(pin "19" (uuid "bd443a1b-aed3-4b06-bf12-43a98750b598"))
+(pin "19" (uuid "6baf7d2f-3334-5d01-b58b-9490bcf534a9"))
 
-(pin "20" (uuid "89707622-610d-4b0b-b7aa-7a51a3a46ae4"))
+(pin "20" (uuid "d815ed49-cc1b-583f-8768-ada93f0bc050"))
 
-(pin "21" (uuid "c4f0a1bd-786c-4acd-86bd-74749676f17c"))
+(pin "21" (uuid "656e5600-79ba-510f-9c3f-c9fe970b1700"))
 
-(pin "22" (uuid "98e4b7be-b5a6-415a-a5d5-ead3d8dbffa1"))
+(pin "22" (uuid "6bf31fae-ac00-53c0-b4e4-7c003a21610f"))
 
-(pin "23" (uuid "c681ddf8-33f0-477f-868d-700f4590c451"))
+(pin "23" (uuid "02a047d9-0c52-5fdb-8937-f6dec4524795"))
 
-(pin "24" (uuid "83e28c1e-b41d-46a2-92bd-35511281c86b"))
+(pin "24" (uuid "4a87b1fc-ab0c-53d6-a92d-301b39db8960"))
 
-(pin "25" (uuid "f510c064-ba18-4e33-89cf-89cd70fa90fe"))
+(pin "25" (uuid "52c66e1f-9218-5caa-9de2-8a45fb7cef04"))
 
-(pin "26" (uuid "0e38e3cf-ee26-45cb-ad3d-c6206f26a51f"))
+(pin "26" (uuid "a4741f08-645b-5fb9-a83e-b5b97ba178dd"))
 
-(pin "27" (uuid "0893e623-b6b1-429e-897c-aef3f907cf37"))
+(pin "27" (uuid "1ddb9873-8733-5259-ac97-a83f8dd58b6f"))
 
-(pin "28" (uuid "6a9e55e2-d650-4369-8a73-694a05b47b64"))
+(pin "28" (uuid "32a7180a-7940-5b40-896a-6d6e235b11ba"))
 
-(pin "29" (uuid "1708a273-7715-4b80-8227-b2633b191364"))
+(pin "29" (uuid "4293094f-d8fe-5171-ab4e-0400e21dde1f"))
 
-(pin "30" (uuid "8f5b581a-38f6-4d12-ae38-2204b3c3057e"))
+(pin "30" (uuid "9a44e91b-eaec-5d5d-96fc-aca9f462531e"))
 
-(pin "31" (uuid "8f2395eb-e7ec-426f-894f-7474b413fe63"))
+(pin "31" (uuid "2090126b-8006-5078-89fa-89cf549c9f83"))
 
-(pin "32" (uuid "144a490a-2029-43ef-b2c9-33be69335544"))
+(pin "32" (uuid "72aed5f2-af69-5af0-a33f-c6699d024f58"))
 
-(pin "33" (uuid "b159021b-5776-4762-b51a-8048f98beffb"))
+(pin "33" (uuid "69a5e40c-b818-5a60-a234-3f43eaaf40af"))
 
 (instances
 (project "thriller"
 (path "/02a4128e-5284-4df4-bd95-50d9619a72c4/7c95428e-e923-4d38-91d5-bfe862deab42" (reference "U7") (unit 1)))))
 
-(wire (pts (xy 302.22 137.3) (xy 297.14 137.3)) (stroke (width 0) (type default)) (uuid "5210d0cf-0034-43e6-9d10-be00e90a5299"))
+(wire (pts (xy 312.22 227.3) (xy 307.14 227.3)) (stroke (width 0) (type default)) (uuid "6fda2b34-54fc-5992-b3a5-c6f61673b283"))
 
-(wire (pts (xy 302.22 139.84) (xy 297.14 139.84)) (stroke (width 0) (type default)) (uuid "5467e827-ff97-4fe7-8931-2010cf203f88"))
+(wire (pts (xy 312.22 229.84) (xy 307.14 229.84)) (stroke (width 0) (type default)) (uuid "b4fa359f-7074-58a0-bc1a-c3d14c651779"))
 
-(wire (pts (xy 302.22 144.92) (xy 297.14 144.92)) (stroke (width 0) (type default)) (uuid "a4a99158-ee73-4470-998d-4d643c9c7547"))
+(wire (pts (xy 312.22 234.92) (xy 307.14 234.92)) (stroke (width 0) (type default)) (uuid "f7e1db32-93ce-5cf6-abef-0d0733b4b912"))
 
-(global_label "TPM_RST_N" (shape passive) (at 297.14 144.92 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "6aadc83b-f3a0-49fb-bbf1-1c4293696623"))
+(global_label "TPM_RST_N" (shape passive) (at 307.14 234.92 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "c81148b3-6e02-531f-8f01-502e0ea05504"))
 
-(wire (pts (xy 302.22 147.46) (xy 297.14 147.46)) (stroke (width 0) (type default)) (uuid "43e9d600-78db-4ee9-82eb-a1f39b4fe910"))
+(wire (pts (xy 312.22 237.46) (xy 307.14 237.46)) (stroke (width 0) (type default)) (uuid "492c562d-eef5-5949-a9ea-d98241c308e0"))
 
-(global_label "TPM_PIRQ_N" (shape passive) (at 297.14 147.46 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "865fdf39-af44-4bbb-8abc-b6e625721faf"))
+(global_label "TPM_PIRQ_N" (shape passive) (at 307.14 237.46 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "ea799384-2bff-56ad-b834-68101bdaebca"))
 
-(no_connect (at 302.22 152.54) (uuid "98b54cd1-85ba-485e-aecc-4e0197027e1a"))
+(no_connect (at 312.22 242.54) (uuid "b4720dce-423d-5408-a2cf-4f781b976acc"))
 
-(no_connect (at 302.22 155.08) (uuid "46e1ff18-a5b7-45c1-b1c3-4b3283cb13f1"))
+(no_connect (at 312.22 245.08) (uuid "4280f6e2-defb-5750-9314-5409c2513bd2"))
 
-(wire (pts (xy 302.22 160.16) (xy 297.14 160.16)) (stroke (width 0) (type default)) (uuid "da1b106a-dbea-4159-a325-2d829d4cc3ec"))
+(wire (pts (xy 312.22 250.16) (xy 307.14 250.16)) (stroke (width 0) (type default)) (uuid "5e38c961-d5c5-59d8-a7c3-94a0451276eb"))
 
-(wire (pts (xy 302.22 162.7) (xy 297.14 162.7)) (stroke (width 0) (type default)) (uuid "9c92fd7a-033b-411c-8d7e-02fcd7a6ca45"))
+(wire (pts (xy 312.22 252.7) (xy 307.14 252.7)) (stroke (width 0) (type default)) (uuid "8178fc96-608e-56a6-b5e9-42b001b1e14a"))
 
-(wire (pts (xy 337.78 142.38) (xy 342.86 142.38)) (stroke (width 0) (type default)) (uuid "8b1b973e-cf52-4f75-a997-92ec864c3bc8"))
+(wire (pts (xy 347.78 232.38) (xy 352.86 232.38)) (stroke (width 0) (type default)) (uuid "c02757e4-9832-5dec-8214-2e181a0b003b"))
 
-(global_label "TPM_CLK" (shape passive) (at 342.86 142.38 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "d4c9bf5a-7dc8-46e3-b034-5300f66346d4"))
+(wire (pts (xy 347.78 234.92) (xy 352.86 234.92)) (stroke (width 0) (type default)) (uuid "b97b75af-5d17-5bf7-b9e4-55d3a14d0565"))
 
-(wire (pts (xy 337.78 144.92) (xy 342.86 144.92)) (stroke (width 0) (type default)) (uuid "27e42810-0ed1-4f55-9b93-a6b06534f9a8"))
+(global_label "TPM_CS_N" (shape passive) (at 352.86 234.92 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "213f464a-a17f-589a-a875-615d70ce85e7"))
 
-(global_label "TPM_CS_N" (shape passive) (at 342.86 144.92 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "feaf4502-4d18-4ff0-a22f-0a93a85c8d1b"))
+(wire (pts (xy 347.78 237.46) (xy 352.86 237.46)) (stroke (width 0) (type default)) (uuid "ab4597ab-92e1-5062-9807-b3da9ce2678e"))
 
-(wire (pts (xy 337.78 147.46) (xy 342.86 147.46)) (stroke (width 0) (type default)) (uuid "f19aec21-f7ee-4444-8f8c-9fc64461e25c"))
+(wire (pts (xy 347.78 240) (xy 352.86 240)) (stroke (width 0) (type default)) (uuid "e9e06c17-a7ea-5654-ad0b-407a8bcdd609"))
 
-(global_label "TPM_MOSI" (shape passive) (at 342.86 147.46 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "641c7e8d-21ab-4237-80fc-c7496a9026cb"))
+(no_connect (at 347.78 245.08) (uuid "32d036c7-f5b4-502f-be66-3158662bf588"))
 
-(wire (pts (xy 337.78 150) (xy 342.86 150)) (stroke (width 0) (type default)) (uuid "76000336-ac8f-4c9e-a5c1-fcf170f1b22b"))
+(no_connect (at 347.78 247.62) (uuid "b29f83d6-76fa-5986-ac30-666e9e7270a7"))
 
-(global_label "TPM_MISO" (shape passive) (at 342.86 150 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "df221f7b-3edd-4fa2-9ec0-17388d864c6a"))
+(wire (pts (xy 347.78 252.7) (xy 352.86 252.7)) (stroke (width 0) (type default)) (uuid "353f2b28-9a68-5278-ae5f-90d57cf212f8"))
 
-(no_connect (at 337.78 155.08) (uuid "a64b6ebf-5b7c-4a10-8560-68109153bb7d"))
+(no_connect (at 318.57 260.32) (uuid "2ba4a515-53e9-5ca9-8f99-876599e2cedd"))
 
-(no_connect (at 337.78 157.62) (uuid "82f371ed-7f6b-447b-b4fc-d7e1ba8f1f2f"))
+(no_connect (at 319.84 260.32) (uuid "04181db7-85ad-5b36-9727-96ea2558845a"))
 
-(wire (pts (xy 337.78 162.7) (xy 342.86 162.7)) (stroke (width 0) (type default)) (uuid "df57cbad-c3a9-48b9-ab86-4253561e6d09"))
+(no_connect (at 321.11 260.32) (uuid "850ba9e7-0a84-5d6b-8291-3c1bb01fed95"))
 
-(no_connect (at 308.57 170.32) (uuid "d66641c8-9aef-4d4f-8a18-ff26928941da"))
+(no_connect (at 322.38 260.32) (uuid "a9776421-9d90-5632-9e20-1ce7bc7caa1c"))
 
-(no_connect (at 309.84 170.32) (uuid "46fecae7-b9d6-4a2f-9be5-e3f8576b6ddf"))
+(no_connect (at 323.65 260.32) (uuid "9a3fe774-981c-57dc-a4f3-1699886e4a27"))
 
-(no_connect (at 311.11 170.32) (uuid "f28bb29a-c378-4c14-a04a-615d57232072"))
+(no_connect (at 324.92 260.32) (uuid "d289eaa1-2bec-5c41-9016-c149316adec5"))
 
-(no_connect (at 312.38 170.32) (uuid "0c9d45a7-b4ff-4201-bb69-c353620edc68"))
+(no_connect (at 326.19 260.32) (uuid "c880d2ef-e93a-5c5b-9b37-e06df81ccc2e"))
 
-(no_connect (at 313.65 170.32) (uuid "ff27715d-07e0-4bb8-af0f-35103f77a011"))
+(no_connect (at 327.46 260.32) (uuid "6e927428-5ed2-5069-b618-5e62e71aa458"))
 
-(no_connect (at 314.92 170.32) (uuid "82ecf503-d05e-4ccd-9ac3-7bd736d2df57"))
+(no_connect (at 328.73 260.32) (uuid "e389f81c-3cff-5c84-91cf-188a696b63f7"))
 
-(no_connect (at 316.19 170.32) (uuid "f52121ef-bd3d-4e1a-9162-74c707ee9bf8"))
+(no_connect (at 330 260.32) (uuid "6dbaa693-c117-5a2c-8f37-d10dc0b4dbc5"))
 
-(no_connect (at 317.46 170.32) (uuid "261f8a7d-9711-4a51-a60f-577a2ce68c06"))
+(no_connect (at 331.27 260.32) (uuid "cf250609-875f-5d40-b97d-9be4a5b0772d"))
 
-(no_connect (at 318.73 170.32) (uuid "584fd283-5cff-42f7-8fdf-3199c26046e2"))
+(no_connect (at 332.54 260.32) (uuid "a20f32b5-bcb6-5ed8-8935-ffcb7657c279"))
 
-(no_connect (at 320 170.32) (uuid "6527c4ef-343f-4f17-80d9-982f98cf5c81"))
+(no_connect (at 333.81 260.32) (uuid "d5733c48-53ad-51e8-abcf-489bcf09afe5"))
 
-(no_connect (at 321.27 170.32) (uuid "eee0bde4-1da2-4604-9e6f-91f045c3886c"))
+(no_connect (at 335.08 260.32) (uuid "5e3a6d54-47c1-568d-9fc7-6d5cfdb2bbd7"))
 
-(no_connect (at 322.54 170.32) (uuid "259950e7-adb0-4882-82ac-e1f9a9be9b76"))
+(no_connect (at 336.35 260.32) (uuid "37caf074-e59e-53e5-ac4b-e38849ac914b"))
 
-(no_connect (at 323.81 170.32) (uuid "44d5120c-6c2d-4b91-b8d6-fa7e68b707ce"))
+(no_connect (at 337.62 260.32) (uuid "29c398ec-702c-5410-b0ae-4066d58ef447"))
 
-(no_connect (at 325.08 170.32) (uuid "68e2dc10-3812-4ac1-bac3-50dceab7da38"))
+(no_connect (at 338.89 260.32) (uuid "9bde49aa-ba6c-5f3e-9b21-550be340caf5"))
 
-(no_connect (at 326.35 170.32) (uuid "93cf8adf-5e1e-4739-b9c9-b88a677db4e6"))
+(no_connect (at 340.16 260.32) (uuid "9d56a34c-40e9-5dc3-b95f-9f2ca835229f"))
 
-(no_connect (at 327.62 170.32) (uuid "fcbaf18e-e763-4bd0-8c79-ae1ce49cd5c5"))
+(wire (pts (xy 307.14 227.3) (xy 307.14 229.84)) (stroke (width 0) (type default)) (uuid "eb41154e-eca4-5059-9d9d-f8a0b413b74e"))
 
-(no_connect (at 328.89 170.32) (uuid "8648a95c-1898-4e33-b52e-b7b697754b5f"))
+(symbol (lib_id "thriller:+3V3") (at 307.14 227.3 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "9ecf3842-3807-591b-b8e7-6db5cbe325ff")
+(property "Reference" "#PWR" (at 307.14 224.76 0) (effects (font (size 1.27 1.27)) (hide yes)))
 
-(no_connect (at 330.16 170.32) (uuid "036e51f2-a0ed-47fd-a93b-fbfc31207780"))
+(property "Value" "+3V3" (at 307.14 229.84 0) (effects (font (size 1.27 1.27))))
 
-(wire (pts (xy 297.14 137.3) (xy 297.14 139.84)) (stroke (width 0) (type default)) (uuid "45ceb4b3-f732-41c5-9662-1fbf3223e43c"))
-
-(symbol (lib_id "thriller:+3V3") (at 297.14 137.3 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "9ae84cbf-0eb7-425a-af9a-b5ed7363507d")
-(property "Reference" "#PWR" (at 297.14 134.76 0) (effects (font (size 1.27 1.27)) (hide yes)))
-
-(property "Value" "+3V3" (at 297.14 139.84 0) (effects (font (size 1.27 1.27))))
-
-(pin "1" (uuid "f0e0758a-cdc9-4345-8bdb-a23fa3af0062"))
+(pin "1" (uuid "aaa7bf12-fc3a-5e76-99c2-fac0eae5bdf6"))
 
 (instances
 (project "thriller"
 (path "/02a4128e-5284-4df4-bd95-50d9619a72c4/7c95428e-e923-4d38-91d5-bfe862deab42" (reference "#PWR") (unit 1)))))
 
-(wire (pts (xy 297.14 160.16) (xy 297.14 162.7)) (stroke (width 0) (type default)) (uuid "8b9a4af8-96fc-4496-9ff3-f9cf759b86bc"))
+(wire (pts (xy 307.14 250.16) (xy 307.14 252.7)) (stroke (width 0) (type default)) (uuid "84c5bead-3636-5e3b-a0dc-c11ae8956ee6"))
 
-(symbol (lib_id "thriller:GND") (at 297.14 162.7 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "7cb19236-8e5f-41a0-878e-c832140738f5")
-(property "Reference" "#PWR" (at 297.14 160.16 0) (effects (font (size 1.27 1.27)) (hide yes)))
+(symbol (lib_id "thriller:GND") (at 307.14 252.7 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "a786406f-917e-5927-82a2-7e5852eb9eb5")
+(property "Reference" "#PWR" (at 307.14 250.16 0) (effects (font (size 1.27 1.27)) (hide yes)))
 
-(property "Value" "GND" (at 297.14 165.24 0) (effects (font (size 1.27 1.27))))
+(property "Value" "GND" (at 307.14 255.24 0) (effects (font (size 1.27 1.27))))
 
-(pin "1" (uuid "ef2f0b02-3094-428b-9a38-ea03d5ad4d1a"))
-
-(instances
-(project "thriller"
-(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/7c95428e-e923-4d38-91d5-bfe862deab42" (reference "#PWR") (unit 1)))))
-
-(symbol (lib_id "thriller:GND") (at 342.86 162.7 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "14890d59-267f-4591-b6bd-6ac26f67956a")
-(property "Reference" "#PWR" (at 342.86 160.16 0) (effects (font (size 1.27 1.27)) (hide yes)))
-
-(property "Value" "GND" (at 342.86 165.24 0) (effects (font (size 1.27 1.27))))
-
-(pin "1" (uuid "c109033a-ef47-4767-9e34-6fad391f52d6"))
+(pin "1" (uuid "95cc775d-4bdf-5dfe-b5c8-635d8f81a5bd"))
 
 (instances
 (project "thriller"
 (path "/02a4128e-5284-4df4-bd95-50d9619a72c4/7c95428e-e923-4d38-91d5-bfe862deab42" (reference "#PWR") (unit 1)))))
 
-(symbol (lib_id "thriller:C") (at 290 180 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "6d6f6323-8d1b-40cf-a6e0-10be6ce69daa")
-(property "Reference" "C271" (at 290 177.46 0) (effects (font (size 1.27 1.27))))
+(symbol (lib_id "thriller:GND") (at 352.86 252.7 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "711b5270-6f75-5cb9-b0df-3ca94075187e")
+(property "Reference" "#PWR" (at 352.86 250.16 0) (effects (font (size 1.27 1.27)) (hide yes)))
 
-(property "Value" "100n" (at 290 182.54 0) (effects (font (size 1.27 1.27))))
+(property "Value" "GND" (at 352.86 255.24 0) (effects (font (size 1.27 1.27))))
 
-(property "Footprint" "Capacitor_SMD:C_0402_1005Metric" (at 290 180 0) (effects (font (size 1.27 1.27)) (hide yes)))
+(pin "1" (uuid "6adc5a71-c41a-565c-b593-fd1099c5161f"))
 
-(property "Description" "Capacitor 100 nF 16 V X7R 0402" (at 290 180 0) (effects (font (size 1.27 1.27)) (hide yes)))
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/7c95428e-e923-4d38-91d5-bfe862deab42" (reference "#PWR") (unit 1)))))
 
-(property "LCSC" "C1525" (at 290 180 0) (effects (font (size 1.27 1.27)) (hide yes)))
+(symbol (lib_id "thriller:C") (at 290 218 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "997d71d1-7abf-53d5-bf3b-648aadc4ec87")
+(property "Reference" "C271" (at 290 215.46 0) (effects (font (size 1.27 1.27))))
 
-(pin "1" (uuid "3ea3b4ab-ef42-49ca-b995-03505cb3f2a1"))
+(property "Value" "100n" (at 290 220.54 0) (effects (font (size 1.27 1.27))))
 
-(pin "2" (uuid "890036c0-4a00-4a7c-b4b0-0013ad6fcde9"))
+(property "Footprint" "Capacitor_SMD:C_0402_1005Metric" (at 290 218 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Description" "Capacitor 100 nF 16 V X7R 0402" (at 290 218 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "LCSC" "C1525" (at 290 218 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(pin "1" (uuid "01eb50d3-bd5e-5e9b-acbf-a2274afae7ec"))
+
+(pin "2" (uuid "fdcad6ad-1c24-5595-89fa-df239af36f12"))
 
 (instances
 (project "thriller"
 (path "/02a4128e-5284-4df4-bd95-50d9619a72c4/7c95428e-e923-4d38-91d5-bfe862deab42" (reference "C271") (unit 1)))))
 
-(symbol (lib_id "thriller:+3V3") (at 290 176.19 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "99cbace1-c83e-493e-a298-e80fcf414af9")
-(property "Reference" "#PWR" (at 290 173.65 0) (effects (font (size 1.27 1.27)) (hide yes)))
+(symbol (lib_id "thriller:+3V3") (at 290 214.19 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "fede381f-266e-5e47-ac23-b55ce1000b59")
+(property "Reference" "#PWR" (at 290 211.65 0) (effects (font (size 1.27 1.27)) (hide yes)))
 
-(property "Value" "+3V3" (at 290 178.73 0) (effects (font (size 1.27 1.27))))
+(property "Value" "+3V3" (at 290 216.73 0) (effects (font (size 1.27 1.27))))
 
-(pin "1" (uuid "197a1f43-7929-4522-8d80-4ca0a1b7a4db"))
-
-(instances
-(project "thriller"
-(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/7c95428e-e923-4d38-91d5-bfe862deab42" (reference "#PWR") (unit 1)))))
-
-(symbol (lib_id "thriller:GND") (at 290 183.81 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "621d37a2-97e8-4f8d-a84a-9117fd4ce169")
-(property "Reference" "#PWR" (at 290 181.27 0) (effects (font (size 1.27 1.27)) (hide yes)))
-
-(property "Value" "GND" (at 290 186.35 0) (effects (font (size 1.27 1.27))))
-
-(pin "1" (uuid "0f78f86a-f777-4f75-8c28-e964f4113763"))
+(pin "1" (uuid "d5568f57-f883-5e9d-912e-c0d5d88a8dd8"))
 
 (instances
 (project "thriller"
 (path "/02a4128e-5284-4df4-bd95-50d9619a72c4/7c95428e-e923-4d38-91d5-bfe862deab42" (reference "#PWR") (unit 1)))))
 
-(symbol (lib_id "thriller:C") (at 300 180 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "f9dd2e98-d405-457f-91a0-16f62953086b")
-(property "Reference" "C272" (at 300 177.46 0) (effects (font (size 1.27 1.27))))
+(symbol (lib_id "thriller:GND") (at 290 221.81 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "e4561718-1592-5e4a-9b60-7e31996c5bad")
+(property "Reference" "#PWR" (at 290 219.27 0) (effects (font (size 1.27 1.27)) (hide yes)))
 
-(property "Value" "1u" (at 300 182.54 0) (effects (font (size 1.27 1.27))))
+(property "Value" "GND" (at 290 224.35 0) (effects (font (size 1.27 1.27))))
 
-(property "Footprint" "Capacitor_SMD:C_0402_1005Metric" (at 300 180 0) (effects (font (size 1.27 1.27)) (hide yes)))
+(pin "1" (uuid "99310e17-3744-5f4c-9070-f660377e102c"))
 
-(property "Description" "Capacitor 1 uF 10 V X5R 0402" (at 300 180 0) (effects (font (size 1.27 1.27)) (hide yes)))
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/7c95428e-e923-4d38-91d5-bfe862deab42" (reference "#PWR") (unit 1)))))
 
-(property "LCSC" "C52923" (at 300 180 0) (effects (font (size 1.27 1.27)) (hide yes)))
+(symbol (lib_id "thriller:C") (at 300 218 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "5aa4a229-a17c-5979-b84d-6970c21e3937")
+(property "Reference" "C272" (at 300 215.46 0) (effects (font (size 1.27 1.27))))
 
-(pin "1" (uuid "f3e9a19e-9709-4b0b-bb99-387bb464aad7"))
+(property "Value" "1u" (at 300 220.54 0) (effects (font (size 1.27 1.27))))
 
-(pin "2" (uuid "a7207926-e824-4e3a-9648-d72b99b03541"))
+(property "Footprint" "Capacitor_SMD:C_0402_1005Metric" (at 300 218 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Description" "Capacitor 1 uF 10 V X5R 0402" (at 300 218 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "LCSC" "C52923" (at 300 218 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(pin "1" (uuid "97c54441-6ce1-51f6-aa9c-0aa1b6230d87"))
+
+(pin "2" (uuid "77cf647c-5255-5db3-8cf8-46665e6cf001"))
 
 (instances
 (project "thriller"
 (path "/02a4128e-5284-4df4-bd95-50d9619a72c4/7c95428e-e923-4d38-91d5-bfe862deab42" (reference "C272") (unit 1)))))
 
-(symbol (lib_id "thriller:+3V3") (at 300 176.19 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "84af1714-9266-4696-9f4d-65aefacd3a8f")
-(property "Reference" "#PWR" (at 300 173.65 0) (effects (font (size 1.27 1.27)) (hide yes)))
+(symbol (lib_id "thriller:+3V3") (at 300 214.19 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "ffc2eb7d-f54c-52c9-9b11-352755b6f19a")
+(property "Reference" "#PWR" (at 300 211.65 0) (effects (font (size 1.27 1.27)) (hide yes)))
 
-(property "Value" "+3V3" (at 300 178.73 0) (effects (font (size 1.27 1.27))))
+(property "Value" "+3V3" (at 300 216.73 0) (effects (font (size 1.27 1.27))))
 
-(pin "1" (uuid "e652d311-7fb9-47ce-846d-9c524d1d8751"))
-
-(instances
-(project "thriller"
-(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/7c95428e-e923-4d38-91d5-bfe862deab42" (reference "#PWR") (unit 1)))))
-
-(symbol (lib_id "thriller:GND") (at 300 183.81 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "444f4ae6-3587-4ad5-8176-60d6ccddf37b")
-(property "Reference" "#PWR" (at 300 181.27 0) (effects (font (size 1.27 1.27)) (hide yes)))
-
-(property "Value" "GND" (at 300 186.35 0) (effects (font (size 1.27 1.27))))
-
-(pin "1" (uuid "3a3d3929-e752-4cc0-aa66-d96e1025de58"))
+(pin "1" (uuid "38fea5a4-4efb-5e7d-91c3-4e67012412ba"))
 
 (instances
 (project "thriller"
 (path "/02a4128e-5284-4df4-bd95-50d9619a72c4/7c95428e-e923-4d38-91d5-bfe862deab42" (reference "#PWR") (unit 1)))))
 
-(symbol (lib_id "thriller:R") (at 355 162.7 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "2791cba9-2854-4c72-829b-8c9474922cad")
-(property "Reference" "R101" (at 355 160.16 0) (effects (font (size 1.27 1.27))))
+(symbol (lib_id "thriller:GND") (at 300 221.81 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "0f7a3a80-73fd-5bc8-a80a-0d50a2cf7b8a")
+(property "Reference" "#PWR" (at 300 219.27 0) (effects (font (size 1.27 1.27)) (hide yes)))
 
-(property "Value" "10k" (at 355 165.24 0) (effects (font (size 1.27 1.27))))
+(property "Value" "GND" (at 300 224.35 0) (effects (font (size 1.27 1.27))))
 
-(property "Footprint" "Resistor_SMD:R_0402_1005Metric" (at 355 162.7 0) (effects (font (size 1.27 1.27)) (hide yes)))
+(pin "1" (uuid "6ace3d0d-524e-553c-a8b1-5f6b3119097b"))
 
-(property "Description" "Resistor 10 kOhm 0402, TPM RST pull-down" (at 355 162.7 0) (effects (font (size 1.27 1.27)) (hide yes)))
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/7c95428e-e923-4d38-91d5-bfe862deab42" (reference "#PWR") (unit 1)))))
 
-(property "LCSC" "C25744" (at 355 162.7 0) (effects (font (size 1.27 1.27)) (hide yes)))
+(symbol (lib_id "thriller:R") (at 356.67 232.38 90) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "f0e9ca42-3947-5041-9cfa-fde329a41876")
+(property "Reference" "R101" (at 356.67 229.84 0) (effects (font (size 1.27 1.27))))
 
-(pin "1" (uuid "970384be-3040-4c47-b437-9e6ce6b8929a"))
+(property "Value" "33R" (at 356.67 234.92 0) (effects (font (size 1.27 1.27))))
 
-(pin "2" (uuid "7f88a925-b2d4-4ddf-be57-ceed386e0511"))
+(property "Footprint" "Resistor_SMD:R_0402_1005Metric" (at 356.67 232.38 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Description" "Resistor 33 Ohm 0402, TPM SPI series (DB5174 4.3)" (at 356.67 232.38 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "LCSC" "" (at 356.67 232.38 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(pin "1" (uuid "69cd1897-0e82-5f66-afab-226db42043b8"))
+
+(pin "2" (uuid "1b848857-7bb1-5766-b9f9-dea91496f962"))
 
 (instances
 (project "thriller"
 (path "/02a4128e-5284-4df4-bd95-50d9619a72c4/7c95428e-e923-4d38-91d5-bfe862deab42" (reference "R101") (unit 1)))))
 
-(global_label "TPM_RST_N" (shape passive) (at 355 158.89 90) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "c366bb9d-9875-4c58-8469-4d75f8f2a4e8"))
+(global_label "TPM_CLK" (shape passive) (at 360.48 232.38 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "37f5daf3-15e7-5a83-89d2-f96f40e92cb7"))
 
-(symbol (lib_id "thriller:GND") (at 355 166.51 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "c2d3541f-ac18-4690-9053-1968e409af99")
-(property "Reference" "#PWR" (at 355 163.97 0) (effects (font (size 1.27 1.27)) (hide yes)))
+(symbol (lib_id "thriller:R") (at 356.67 237.46 90) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "117dabeb-a501-57ae-b498-c7599d436187")
+(property "Reference" "R102" (at 356.67 234.92 0) (effects (font (size 1.27 1.27))))
 
-(property "Value" "GND" (at 355 169.05 0) (effects (font (size 1.27 1.27))))
+(property "Value" "33R" (at 356.67 240 0) (effects (font (size 1.27 1.27))))
 
-(pin "1" (uuid "ee7446c4-5cbb-4892-ad79-b026fcd31fcf"))
+(property "Footprint" "Resistor_SMD:R_0402_1005Metric" (at 356.67 237.46 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Description" "Resistor 33 Ohm 0402, TPM SPI series (DB5174 4.3)" (at 356.67 237.46 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "LCSC" "" (at 356.67 237.46 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(pin "1" (uuid "67c8f41c-8b1a-59d8-9ff9-0913734fc85a"))
+
+(pin "2" (uuid "b3fe876a-75f1-53af-a5b0-bac0b7841991"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/7c95428e-e923-4d38-91d5-bfe862deab42" (reference "R102") (unit 1)))))
+
+(global_label "TPM_MOSI" (shape passive) (at 360.48 237.46 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "53af4a17-b47d-5dc8-9b71-ce49b88515a6"))
+
+(symbol (lib_id "thriller:R") (at 356.67 240 90) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "59c5818c-e55d-52f2-947f-e731c229437b")
+(property "Reference" "R103" (at 356.67 237.46 0) (effects (font (size 1.27 1.27))))
+
+(property "Value" "33R" (at 356.67 242.54 0) (effects (font (size 1.27 1.27))))
+
+(property "Footprint" "Resistor_SMD:R_0402_1005Metric" (at 356.67 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Description" "Resistor 33 Ohm 0402, TPM SPI series (DB5174 4.3)" (at 356.67 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "LCSC" "" (at 356.67 240 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(pin "1" (uuid "4678752a-0db9-5816-9c2d-c6397990088c"))
+
+(pin "2" (uuid "bebcf452-f02c-5004-b09e-295d34b65f9b"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/7c95428e-e923-4d38-91d5-bfe862deab42" (reference "R103") (unit 1)))))
+
+(global_label "TPM_MISO" (shape passive) (at 360.48 240 0) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "1d9fde32-3cd9-5180-91b7-2abd71da6856"))
+
+(symbol (lib_id "thriller:R") (at 368 252.7 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "f7f92027-f8a8-5fd7-83c1-10b6f158bd8f")
+(property "Reference" "R104" (at 368 250.16 0) (effects (font (size 1.27 1.27))))
+
+(property "Value" "10k" (at 368 255.24 0) (effects (font (size 1.27 1.27))))
+
+(property "Footprint" "Resistor_SMD:R_0402_1005Metric" (at 368 252.7 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Description" "Resistor 10 kOhm 0402, TPM RST pull-down" (at 368 252.7 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "LCSC" "C25744" (at 368 252.7 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(pin "1" (uuid "12b3125d-252a-5e79-a3f3-4db38c615b3b"))
+
+(pin "2" (uuid "9fe97c12-3b1d-552f-ba01-59bfd1059d54"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/7c95428e-e923-4d38-91d5-bfe862deab42" (reference "R104") (unit 1)))))
+
+(global_label "TPM_RST_N" (shape passive) (at 368 248.89 90) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "088ae15f-8fd6-5962-b696-6772fd78e538"))
+
+(symbol (lib_id "thriller:GND") (at 368 256.51 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "a9604870-9916-51a1-b575-fb188bf3ef02")
+(property "Reference" "#PWR" (at 368 253.97 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "GND" (at 368 259.05 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "4ecabec2-e36a-5dab-b02a-35bdc0cfb1e2"))
 
 (instances
 (project "thriller"
 (path "/02a4128e-5284-4df4-bd95-50d9619a72c4/7c95428e-e923-4d38-91d5-bfe862deab42" (reference "#PWR") (unit 1)))))
 
-(text "ST33KTPM2X TPM on SPI from the loader domain. RST driven by the FPGA with a 10k pull-down.\nGPIO_PP, GPI_I2C_Select, I2C pins and NiC pins left open (SPI mode).\nVerify pin numbers against the datasheet (DS, figure 1) before layout." (exclude_from_sim no) (at 275 212 0) (effects (font (size 1.5 1.5)) (justify left top)) (uuid "622bd070-b015-46ff-9ad7-0148e6df89e0")))
+(symbol (lib_id "thriller:R") (at 378 252.7 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "5576406e-20dc-5ff2-95b3-8e8add0c3697")
+(property "Reference" "R105" (at 378 250.16 0) (effects (font (size 1.27 1.27))))
+
+(property "Value" "10k" (at 378 255.24 0) (effects (font (size 1.27 1.27))))
+
+(property "Footprint" "Resistor_SMD:R_0402_1005Metric" (at 378 252.7 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Description" "Resistor 10 kOhm 0402, TPM PIRQ pull-up (mandatory, DB5174 4.3)" (at 378 252.7 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "LCSC" "C25744" (at 378 252.7 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(pin "1" (uuid "d909f7a7-3d99-557e-96c3-b99a096ad9e6"))
+
+(pin "2" (uuid "46741ad9-7ae3-5e6f-8f44-55383b528ac8"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/7c95428e-e923-4d38-91d5-bfe862deab42" (reference "R105") (unit 1)))))
+
+(symbol (lib_id "thriller:+3V3") (at 378 248.89 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "c48f8bc4-c8d1-57b3-8e96-8957588c39b5")
+(property "Reference" "#PWR" (at 378 246.35 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "+3V3" (at 378 251.43 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "3f02ac25-c7e5-53ea-83d3-6c0675b6f64a"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/7c95428e-e923-4d38-91d5-bfe862deab42" (reference "#PWR") (unit 1)))))
+
+(global_label "TPM_PIRQ_N" (shape passive) (at 378 256.51 270) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "709a6f63-407e-5ae4-a63b-919499d37850"))
+
+(symbol (lib_id "thriller:C") (at 388 252.7 0) (unit 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (uuid "91b3c4cd-6f56-59cf-b991-3d0faf17827e")
+(property "Reference" "C273" (at 388 250.16 0) (effects (font (size 1.27 1.27))))
+
+(property "Value" "56p" (at 388 255.24 0) (effects (font (size 1.27 1.27))))
+
+(property "Footprint" "Capacitor_SMD:C_0402_1005Metric" (at 388 252.7 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Description" "Capacitor 56 pF 50 V C0G 0402, TPM SPI_CS filter (DB5174 4.2); may be omitted" (at 388 252.7 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "LCSC" "" (at 388 252.7 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(pin "1" (uuid "5dc7004f-da53-52e4-a34d-acb9eee2842a"))
+
+(pin "2" (uuid "8751cffe-5f92-5fdf-8c81-6270b2c2d2e0"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/7c95428e-e923-4d38-91d5-bfe862deab42" (reference "C273") (unit 1)))))
+
+(global_label "TPM_CS_N" (shape passive) (at 388 248.89 90) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "3dfddbd1-0790-55ba-9975-e472f849099e"))
+
+(symbol (lib_id "thriller:GND") (at 388 256.51 0) (unit 1) (exclude_from_sim no) (in_bom no) (on_board no) (dnp no) (uuid "bc62c7cc-9851-5542-952f-710f420de04d")
+(property "Reference" "#PWR" (at 388 253.97 0) (effects (font (size 1.27 1.27)) (hide yes)))
+
+(property "Value" "GND" (at 388 259.05 0) (effects (font (size 1.27 1.27))))
+
+(pin "1" (uuid "33f3b9b3-6c5f-5f62-83c3-4d129ce5c26e"))
+
+(instances
+(project "thriller"
+(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/7c95428e-e923-4d38-91d5-bfe862deab42" (reference "#PWR") (unit 1)))))
+
+(text "ST33KTPM2X TPM on SPI from the loader domain (DB5174 rev 3, figure 3).\nRST driven by the FPGA with a 10k pull-down; 10k pull-up on PIRQ (mandatory).\n33R series on CLK/MOSI/MISO and 56p on CS: optional, fit as the layout requires.\nGPIO_PP, GPI_I2C_Select, I2C and NiC pins open (SPI mode). VPS slew 2 V/ms min (table 4)." (exclude_from_sim no) (at 285 196 0) (effects (font (size 1.5 1.5)) (justify left top)) (uuid "58c1e28d-51cc-5cf9-bf4e-df69d0a2e5db")))

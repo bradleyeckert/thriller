@@ -15,6 +15,12 @@ frozen (`doc/questions.md`, E5).
   and SHA-3, the SP 800-108 KDF, HMAC, AES (CBC, CFB128, CTR, ECB, OFB), RSA with KTS-IFC, ECDSA and KAS-ECC. **Firmware 9.257 must be confirmed on #5570's own hardware and firmware list**, which
   the certificate page does not reproduce (E6). The other order codes are **DKJ1** (firmware 9.512, adds an optional FIPS 140-3 Level 2 authentication mode; minimum order quantity applies) and **CKE3** (firmware 9.256,
   the former ST33KTPM2XI2C line, same features, different production site). The order code must stay on the current certificate's hardware and firmware list, so a change of code, or of certificate, is a change to check (E6).
+- **Integration (data brief DB5174 rev 3, figures 1 to 3; drawn on `th_base` of the module schematic):** VPS on pins 1 and 22, GND on 2 and 16, `RST` 17, `PIRQ` 18, `SPI_CLK` 19, `SPI_CS` 20,
+  `SPI_MOSI` 21, `SPI_MISO` 24, `GPI_I2C_Select` 6, `GPIO_PP` 7, I2C on 29 and 30, exposed pad 33 (not connected to the die; grounded for solderability); the other 17 pins are not internally
+  connected. 100 nF + 1 µF on VPS; a 10 kΩ pull-up on `PIRQ` is **mandatory** (standby current); `RST` must never float (the FPGA drives it, with a 10 kΩ pull-down so the TPM stays in reset while the
+  FPGA configures); 56 pF on `SPI_CS` and 33 Ω series on CLK/MOSI/MISO are optional line conditioning, footprinted and fitted as the layout requires. VPS must rise at 2 V/ms or faster
+  between 1.36 and 1.62 V, else a power-on reset and warm-reset sequence must be run: a constraint on the 3V3 switcher's soft start (`th_power`). −40 to 105 °C ambient, 66 mW maximum,
+  θJA 35 °C/W. UFQFPN32 is 5 × 5 × 0.55 mm, 0.5 mm pitch, 3.6 mm pad.
 - **Inside:** an SP 800-90B noise source, LMS-signed firmware updates, an active shield, environmental monitors, and fault-injection and side-channel countermeasures; Common Criteria EAL4+
   with AVA_VAN.5 targeted. Four endorsement keys with ST-issued certificates (RSA-2048, RSA-3072, ECC P-256, ECC P-384) are provisioned at ST's factory.
 - **Interface: SPI**, in the TCG PC Client Platform TPM Profile (PTP) FIFO protocol: a 4-byte header, wait states signalled by the TPM on the fourth header byte, locality 0 only, the
