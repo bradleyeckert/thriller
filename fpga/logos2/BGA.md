@@ -13,5 +13,4 @@ Many unused I/Os are allowed (not all 210 I/Os are used), so the best use of the
 Each no-connect omits a via-in-pad hole to provide a fat breakout channel.
 Other rows have no-connects as needed to allow routing on a 6-layer PCB.
 
-The PCB is 1.0 mm thick. It follows a SODIMM (260-pin) form factor to fit a TE 2309407-1 or 2309409-1 socket:
-69.6mm x 40.0mm. So, it is wider than the standard 30.0mm SODIMM.
+The PCB is 1.2 mm thick. The form factor is 20 mm \* 40-50mm.

@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg"
+     xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+     width="420mm" height="297mm" viewBox="0 0 420 297" version="1.1" id="thriller_block" inkscape:version="1.0.1">
+  <sodipodi:namedview id="namedview" pagecolor="#ffffff" bordercolor="#666666" borderopacity="1" inkscape:document-units="mm" showgrid="true" units="mm" inkscape:pageshadow="2">
+    <inkscape:grid type="xygrid" id="grid" units="mm" spacingx="1" spacingy="1" empspacing="5" />
+  </sodipodi:namedview>
+  <title>thriller: module and carrier block diagram</title>
+  <defs>
+    <marker id="arrow" orient="auto" markerWidth="4" markerHeight="4" refX="3.2" refY="2" markerUnits="strokeWidth" style="overflow:visible">
+      <path d="M0,0 L4,2 L0,4 z" style="fill:#303030;stroke:none" />
+    </marker>
+    <marker id="arrow_s" orient="auto" markerWidth="4" markerHeight="4" refX="0.8" refY="2" markerUnits="strokeWidth" style="overflow:visible">
+      <path d="M4,0 L0,2 L4,4 z" style="fill:#303030;stroke:none" />
+    </marker>
+  </defs>
+  <g inkscape:groupmode="layer" id="layer_regions" inkscape:label="Regions">
+    <rect x="8" y="28" width="244" height="230" rx="0" style="fill:#fbfbfb;stroke:#000;stroke-width:0.6;stroke-dasharray:3,1.5" />
+    <rect x="280" y="28" width="132" height="230" rx="0" style="fill:#ffffff;stroke:#000;stroke-width:0.4" />
+    <rect x="8" y="262" width="404" height="32" rx="0.8" style="fill:#ffffff;stroke:#000;stroke-width:0.3" />
+  </g>
+  <g inkscape:groupmode="layer" id="layer_module" inkscape:label="Module">
+    <rect x="18" y="64" width="48" height="12" rx="0.8" style="fill:#ffffff;stroke:#000;stroke-width:0.3" />
+    <rect x="18" y="95" width="48" height="16" rx="0.8" style="fill:#ffffff;stroke:#000;stroke-width:0.3" />
+    <rect x="18" y="117" width="48" height="16" rx="0.8" style="fill:#ffffff;stroke:#000;stroke-width:0.3" />
+    <rect x="18" y="150" width="48" height="40" rx="0.8" style="fill:#ffffff;stroke:#000;stroke-width:0.3" />
+    <rect x="222" y="79" width="26" height="8" rx="0.8" style="fill:#fff;stroke:#000;stroke-width:0.3" />
+    <rect x="222" y="105" width="26" height="8" rx="0.8" style="fill:#fff;stroke:#000;stroke-width:0.3" />
+    <rect x="222" y="129" width="26" height="8" rx="0.8" style="fill:#fff;stroke:#000;stroke-width:0.3" />
+  </g>
+  <g inkscape:groupmode="layer" id="layer_fpga" inkscape:label="FPGA">
+    <rect x="76" y="50" width="138" height="200" rx="1.2" style="fill:#ffffff;stroke:#000;stroke-width:0.5" />
+    <rect x="82" y="60" width="54" height="128" rx="0.8" style="fill:#fff3c4;stroke:#000;stroke-width:0.35;stroke-dasharray:1.5,1" />
+    <rect x="86" y="66" width="46" height="8" rx="0.8" style="fill:#fff;stroke:#000;stroke-width:0.3" />
+    <rect x="86" y="77" width="46" height="8" rx="0.8" style="fill:#fff;stroke:#000;stroke-width:0.3" />
+    <rect x="86" y="88" width="46" height="8" rx="0.8" style="fill:#fff;stroke:#000;stroke-width:0.3" />
+    <rect x="86" y="99" width="46" height="8" rx="0.8" style="fill:#fff;stroke:#000;stroke-width:0.3" />
+    <rect x="86" y="110" width="46" height="8" rx="0.8" style="fill:#fff;stroke:#000;stroke-width:0.3" />
+    <rect x="86" y="121" width="46" height="8" rx="0.8" style="fill:#fff;stroke:#000;stroke-width:0.3" />
+    <rect x="86" y="132" width="46" height="8" rx="0.8" style="fill:#fff;stroke:#000;stroke-width:0.3" />
+    <rect x="86" y="143" width="46" height="8" rx="0.8" style="fill:#fff;stroke:#000;stroke-width:0.3" />
+    <rect x="86" y="154" width="46" height="8" rx="0.8" style="fill:#fff;stroke:#000;stroke-width:0.3" />
+    <rect x="86" y="165" width="46" height="8" rx="0.8" style="fill:#fff;stroke:#000;stroke-width:0.3" />
+    <rect x="86" y="176" width="46" height="8" rx="0.8" style="fill:#fff;stroke:#000;stroke-width:0.3" />
+    <rect x="140" y="60" width="10" height="148" rx="0.8" style="fill:#eeeeee;stroke:#000;stroke-width:0.35" />
+    <rect x="154" y="60" width="54" height="80" rx="0.8" style="fill:#e1ecf9;stroke:#000;stroke-width:0.35" />
+    <rect x="158" y="66" width="46" height="8" rx="0.8" style="fill:#fff;stroke:#000;stroke-width:0.3" />
+    <rect x="158" y="79" width="46" height="8" rx="0.8" style="fill:#fff;stroke:#000;stroke-width:0.3" />
+    <rect x="158" y="93" width="46" height="8" rx="0.8" style="fill:#fff;stroke:#000;stroke-width:0.3" />
+    <rect x="158" y="105" width="46" height="8" rx="0.8" style="fill:#fff;stroke:#000;stroke-width:0.3" />
+    <rect x="158" y="117" width="46" height="8" rx="0.8" style="fill:#fff;stroke:#000;stroke-width:0.3" />
+    <rect x="158" y="129" width="46" height="8" rx="0.8" style="fill:#fff;stroke:#000;stroke-width:0.3" />
+    <rect x="154" y="144" width="54" height="64" rx="0.8" style="fill:#e4f3e4;stroke:#000;stroke-width:0.35" />
+    <rect x="158" y="152" width="46" height="8" rx="0.8" style="fill:#fff;stroke:#000;stroke-width:0.3" />
+    <rect x="158" y="166" width="46" height="8" rx="0.8" style="fill:#fff;stroke:#000;stroke-width:0.3" />
+    <rect x="158" y="177" width="46" height="8" rx="0.8" style="fill:#fff;stroke:#000;stroke-width:0.3" />
+    <rect x="158" y="188" width="46" height="8" rx="0.8" style="fill:#fff;stroke:#000;stroke-width:0.3" />
+    <rect x="158" y="199" width="46" height="8" rx="0.8" style="fill:#fff;stroke:#000;stroke-width:0.3" />
+    <rect x="82" y="212" width="126" height="34" rx="0.8" style="fill:#f4f4f4;stroke:#000;stroke-width:0.35" />
+  </g>
+  <g inkscape:groupmode="layer" id="layer_carrier" inkscape:label="Carrier">
+    <rect x="300" y="31.5" width="104" height="9" rx="0.8" style="fill:#fff;stroke:#000;stroke-width:0.3" />
+    <rect x="300" y="42.5" width="104" height="9" rx="0.8" style="fill:#fff;stroke:#000;stroke-width:0.3" />
+    <rect x="300" y="53.5" width="52" height="9" rx="0.8" style="fill:#fff;stroke:#000;stroke-width:0.3" />
+    <rect x="356" y="53.5" width="48" height="9" rx="0.8" style="fill:#fff;stroke:#000;stroke-width:0.3" />
+    <rect x="300" y="64.5" width="104" height="9" rx="0.8" style="fill:#fff;stroke:#000;stroke-width:0.3" />
+    <rect x="300" y="78.5" width="104" height="9" rx="0.8" style="fill:#fff;stroke:#000;stroke-width:0.3" />
+    <rect x="300" y="92.5" width="104" height="9" rx="0.8" style="fill:#fff;stroke:#000;stroke-width:0.3" />
+    <rect x="300" y="116.5" width="104" height="9" rx="0.8" style="fill:#fff;stroke:#000;stroke-width:0.3" />
+    <rect x="300" y="128.5" width="104" height="9" rx="0.8" style="fill:#fff;stroke:#000;stroke-width:0.3" />
+    <rect x="300" y="165.5" width="104" height="9" rx="0.8" style="fill:#fff;stroke:#000;stroke-width:0.3" />
+    <rect x="300" y="176.5" width="104" height="9" rx="0.8" style="fill:#fff;stroke:#000;stroke-width:0.3" />
+    <rect x="300" y="187.5" width="104" height="9" rx="0.8" style="fill:#fff;stroke:#000;stroke-width:0.3" />
+    <rect x="300" y="198.5" width="104" height="9" rx="0.8" style="fill:#fff;stroke:#000;stroke-width:0.3" />
+  </g>
+  <g inkscape:groupmode="layer" id="layer_connectors" inkscape:label="Connectors">
+    <rect x="262" y="33" width="10" height="107" rx="0.8" style="fill:#f0e0f0;stroke:#000;stroke-width:0.5" />
+    <rect x="262" y="164" width="10" height="46" rx="0.8" style="fill:#f0e0f0;stroke:#000;stroke-width:0.5" />
+  </g>
+  <g inkscape:groupmode="layer" id="layer_nets" inkscape:label="Nets">
+    <polyline points="352,58 356,58" style="fill:none;stroke:#000000;stroke-width:0.6;stroke-linejoin:round" marker-end="url(#arrow)" />
+    <polyline points="262,36 11,36 11,240 76,240" style="fill:none;stroke:#2e8b57;stroke-width:0.45;stroke-linejoin:round" marker-end="url(#arrow)" />
+    <polyline points="272,36 300,36" style="fill:none;stroke:#2e8b57;stroke-width:0.45;stroke-linejoin:round" />
+    <polyline points="262,39.5 13,39.5 13,232 76,232" style="fill:none;stroke:#2e8b57;stroke-width:0.45;stroke-linejoin:round;stroke-dasharray:2,1" marker-end="url(#arrow)" />
+    <polyline points="272,39.5 284,39.5 284,47 300,47" style="fill:none;stroke:#2e8b57;stroke-width:0.45;stroke-linejoin:round;stroke-dasharray:2,1" />
+    <polyline points="262,43 15,43 15,170 18,170" style="fill:none;stroke:#000000;stroke-width:0.8;stroke-linejoin:round" marker-end="url(#arrow)" />
+    <polyline points="272,43 280,43 280,58 300,58" style="fill:none;stroke:#000000;stroke-width:0.8;stroke-linejoin:round" />
+    <polyline points="132,169 137,169 137,46.5 262,46.5" style="fill:none;stroke:#1f5fbf;stroke-width:0.45;stroke-linejoin:round" marker-end="url(#arrow)" />
+    <polyline points="272,46.5 276,46.5 276,69 300,69" style="fill:none;stroke:#1f5fbf;stroke-width:0.45;stroke-linejoin:round" />
+    <polyline points="66,180 76,180" style="fill:none;stroke:#000000;stroke-width:0.7;stroke-linejoin:round" marker-end="url(#arrow)" />
+    <polyline points="66,70 76,70" style="fill:none;stroke:#7d3c98;stroke-width:0.45;stroke-linejoin:round" marker-end="url(#arrow)" />
+    <polyline points="66,103 86,103" style="fill:none;stroke:#1f5fbf;stroke-width:0.45;stroke-linejoin:round" marker-end="url(#arrow)" marker-start="url(#arrow_s)" />
+    <polyline points="66,125 86,125" style="fill:none;stroke:#1f5fbf;stroke-width:0.45;stroke-linejoin:round" marker-end="url(#arrow)" marker-start="url(#arrow_s)" />
+    <polyline points="204,83 222,83" style="fill:none;stroke:#1f5fbf;stroke-width:0.45;stroke-linejoin:round" marker-end="url(#arrow)" marker-start="url(#arrow_s)" />
+    <polyline points="248,83 262,83" style="fill:none;stroke:#1f5fbf;stroke-width:0.45;stroke-linejoin:round" marker-end="url(#arrow)" marker-start="url(#arrow_s)" />
+    <polyline points="272,83 300,83" style="fill:none;stroke:#1f5fbf;stroke-width:0.45;stroke-linejoin:round" />
+    <polyline points="204,97 262,97" style="fill:none;stroke:#1f5fbf;stroke-width:0.45;stroke-linejoin:round" marker-end="url(#arrow)" marker-start="url(#arrow_s)" />
+    <polyline points="272,97 300,97" style="fill:none;stroke:#1f5fbf;stroke-width:0.45;stroke-linejoin:round" />
+    <polyline points="204,109 222,109" style="fill:none;stroke:#1f5fbf;stroke-width:0.45;stroke-linejoin:round" marker-end="url(#arrow)" marker-start="url(#arrow_s)" />
+    <polyline points="132,147 139,147 139,112 158,112" style="fill:none;stroke:#707070;stroke-width:0.45;stroke-linejoin:round;stroke-dasharray:1,0.8" marker-end="url(#arrow)" />
+    <polyline points="204,121 262,121" style="fill:none;stroke:#1f5fbf;stroke-width:0.45;stroke-linejoin:round" marker-end="url(#arrow)" marker-start="url(#arrow_s)" />
+    <polyline points="272,121 300,121" style="fill:none;stroke:#1f5fbf;stroke-width:0.45;stroke-linejoin:round" />
+    <polyline points="204,133 222,133" style="fill:none;stroke:#2e8b57;stroke-width:0.45;stroke-linejoin:round" marker-end="url(#arrow)" marker-start="url(#arrow_s)" />
+    <polyline points="248,133 262,133" style="fill:none;stroke:#000000;stroke-width:0.45;stroke-linejoin:round" marker-start="url(#arrow_s)" />
+    <polyline points="272,133 300,133" style="fill:none;stroke:#000000;stroke-width:0.45;stroke-linejoin:round" />
+    <polyline points="204,170 262,170" style="fill:none;stroke:#c0392b;stroke-width:0.45;stroke-linejoin:round" marker-end="url(#arrow)" marker-start="url(#arrow_s)" />
+    <polyline points="272,170 300,170" style="fill:none;stroke:#c0392b;stroke-width:0.45;stroke-linejoin:round" />
+    <polyline points="204,181 262,181" style="fill:none;stroke:#c0392b;stroke-width:0.45;stroke-linejoin:round" marker-end="url(#arrow)" marker-start="url(#arrow_s)" />
+    <polyline points="272,181 300,181" style="fill:none;stroke:#c0392b;stroke-width:0.45;stroke-linejoin:round" />
+    <polyline points="204,192 262,192" style="fill:none;stroke:#c0392b;stroke-width:0.45;stroke-linejoin:round" marker-end="url(#arrow)" marker-start="url(#arrow_s)" />
+    <polyline points="272,192 300,192" style="fill:none;stroke:#c0392b;stroke-width:0.45;stroke-linejoin:round" />
+    <polyline points="262,203 204,203" style="fill:none;stroke:#7d3c98;stroke-width:0.45;stroke-linejoin:round" marker-end="url(#arrow)" />
+    <polyline points="300,203 272,203" style="fill:none;stroke:#7d3c98;stroke-width:0.45;stroke-linejoin:round" />
+    <polyline points="12,272.2 24,272.2" style="fill:none;stroke:#1f5fbf;stroke-width:0.6;stroke-linejoin:round" />
+    <polyline points="12,276.8 24,276.8" style="fill:none;stroke:#c0392b;stroke-width:0.6;stroke-linejoin:round" />
+    <polyline points="12,281.4 24,281.4" style="fill:none;stroke:#2e8b57;stroke-width:0.6;stroke-linejoin:round" />
+    <polyline points="160,272.2 172,272.2" style="fill:none;stroke:#7d3c98;stroke-width:0.6;stroke-linejoin:round" />
+    <polyline points="160,276.8 172,276.8" style="fill:none;stroke:#000000;stroke-width:0.6;stroke-linejoin:round" />
+    <polyline points="160,281.4 172,281.4" style="fill:none;stroke:#707070;stroke-width:0.6;stroke-linejoin:round;stroke-dasharray:1,0.8" />
+  </g>
+  <g inkscape:groupmode="layer" id="layer_labels" inkscape:label="Labels">
+    <text x="12" y="14" style="font-size:5.5px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:start;font-weight:bold;">thriller: module and carrier block diagram</text>
+    <text x="12" y="20" style="font-size:2.6px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:start;">Chipset on a potted DF40 mezzanine module (the FIPS 140-3 module); connectors, transducers and interfaces on the carrier. See hw/module.md, doc/hw.md, doc/fips.md.</text>
+    <text x="18" y="33" style="font-size:3.0px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:start;font-weight:bold;">thriller module: potted; FIPS 140-3 module boundary = loader domain + TPM + flash (hw/module.md)</text>
+    <text x="283" y="254.5" style="font-size:3.0px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:start;font-weight:bold;">Carrier: outside the module, inside the application device&#x27;s seal</text>
+    <text x="42.0" y="69.7" style="font-size:2.4px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;">25 MHz oscillator</text>
+    <text x="42.0" y="72.30000000000001" style="font-size:1.9px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;">the module&#x27;s only clock</text>
+    <text x="42.0" y="102.7" style="font-size:2.4px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;">QSPI NOR flash 32 MB</text>
+    <text x="42.0" y="105.10000000000001" style="font-size:1.7px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;">bitstreams, loader, supervisor, app; TPM blobs</text>
+    <text x="42.0" y="124.7" style="font-size:2.4px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;">ST33KTPM2X TPM 2.0</text>
+    <text x="42.0" y="127.10000000000001" style="font-size:1.7px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;">SPI; reset from FPGA; CMVP #5570</text>
+    <text x="42" y="156" style="font-size:2.4px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;">Regulators</text>
+    <text x="42" y="161.0" style="font-size:1.8px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;">5 V in (always on)</text>
+    <text x="42" y="165.6" style="font-size:1.8px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;">3V3_AO LDO: RTC, power control</text>
+    <text x="42" y="170.2" style="font-size:1.8px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;">bucks: 1.0 V VCC/VCC_DRM</text>
+    <text x="42" y="174.8" style="font-size:1.8px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;">1.8 V VCCA, 3.3 V I/O + TPM</text>
+    <text x="42" y="179.4" style="font-size:1.8px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;">EN = WAKE | PB_N | RTC /INT</text>
+    <text x="42" y="184.0" style="font-size:1.8px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;">PGOOD, rail monitors -&gt; security block</text>
+    <text x="18" y="199" style="font-size:1.8px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:start;">Potting: whole card, both sides, except the two DF40</text>
+    <text x="18" y="202.5" style="font-size:1.8px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:start;">connectors; heatsink bonded to the FPGA before potting;</text>
+    <text x="18" y="206" style="font-size:1.8px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:start;">underfill on the BGA and the TPM.</text>
+    <text x="18" y="212" style="font-size:1.8px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:start;">PG2L50H-6IMBG324: 18x18 balls, 0.8 mm, 210 I/O.</text>
+    <text x="18" y="215.5" style="font-size:1.8px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:start;">Card 20 mm x ~40 mm, 6-layer (fpga/logos2/BGA.md).</text>
+    <text x="145" y="56.5" style="font-size:3.0px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;">FPGA  PG2L50H-6IMBG324  (Pango Logos2)</text>
+    <text x="109" y="64.5" style="font-size:2.2px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;">Loader core domain (the module)</text>
+    <text x="109.0" y="70.7" style="font-size:2.0px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;">Loader core + boot ROM</text>
+    <text x="109.0" y="81.7" style="font-size:2.0px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;">Key source + key registers</text>
+    <text x="109.0" y="92.7" style="font-size:2.0px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;">Masked Ascon + SHA-256 cores</text>
+    <text x="109.0" y="103.7" style="font-size:2.0px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;">XIP engine: 3 ports + install port</text>
+    <text x="109.0" y="113.7" style="font-size:2.0px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;">Security block: detectors, key gate,</text>
+    <text x="109.0" y="116.0" style="font-size:1.6px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;">lockdown, PHY reset, WAKE, tamper inputs</text>
+    <text x="109.0" y="125.7" style="font-size:2.0px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;">TPM interface (SPI master)</text>
+    <text x="109.0" y="136.7" style="font-size:2.0px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;">QSPI direct mode (installs)</text>
+    <text x="109.0" y="147.7" style="font-size:2.0px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;">Recording engine (segment key)</text>
+    <text x="109.0" y="158.7" style="font-size:2.0px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;">TRNG + HMAC_DRBG</text>
+    <text x="109.0" y="169.7" style="font-size:2.0px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;">Host UART (byte pipe; recovery)</text>
+    <text x="109.0" y="180.7" style="font-size:2.0px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;">Module watchdog, core control</text>
+    <text x="146.5" y="134" style="font-size:1.8px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;" transform="rotate(-90 146.5 134)">Mailboxes: A loader–supervisor, B loader–application, C supervisor–application (the module&#x27;s service API, doc/api.md)</text>
+    <text x="181" y="64.5" style="font-size:2.2px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;">Supervisor core domain</text>
+    <text x="181.0" y="70.7" style="font-size:2.0px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;">Supervisor core</text>
+    <text x="181.0" y="82.7" style="font-size:2.0px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;">Ethernet transport</text>
+    <text x="181.0" y="85.0" style="font-size:1.6px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;">RMII MAC, ARP, IPv4, ICMP, UDP demux</text>
+    <text x="181.0" y="97.7" style="font-size:2.0px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;">SD controller</text>
+    <text x="181.0" y="109.7" style="font-size:2.0px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;">Stream buffer controller</text>
+    <text x="181.0" y="120.7" style="font-size:2.0px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;">Sensor link</text>
+    <text x="181.0" y="123.0" style="font-size:1.6px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;">frames to the module, MAC checked</text>
+    <text x="181.0" y="133.7" style="font-size:2.0px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;">RTC I2C, timers, scheduling</text>
+    <text x="181" y="148.5" style="font-size:2.2px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;">Application core domain</text>
+    <text x="181.0" y="155.7" style="font-size:2.0px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;">Application core</text>
+    <text x="181.0" y="158.0" style="font-size:1.6px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;">samples -&gt; recording engine (FIFO)</text>
+    <text x="181.0" y="170.7" style="font-size:2.0px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;">I2S x2, MCLK, CODEC I2C</text>
+    <text x="181.0" y="181.7" style="font-size:2.0px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;">LCD SPI, touch I2C</text>
+    <text x="181.0" y="192.7" style="font-size:2.0px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;">Speaker PWM, carrier GPIO</text>
+    <text x="181.0" y="202.7" style="font-size:2.0px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;">Carrier clock inputs</text>
+    <text x="181.0" y="205.0" style="font-size:1.6px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;">through clock monitors; never the loader</text>
+    <text x="145" y="217.5" style="font-size:2.4px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;">Configuration engine (vendor silicon)</text>
+    <text x="145" y="222.5" style="font-size:1.75px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;">Master SPI from the QSPI flash at power-up; multi-boot fallback to the second bitstream slot</text>
+    <text x="145" y="226.7" style="font-size:1.75px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;">Bitstream authenticated (RSA-2048) before decryption (AES-256-GCM); keys in eFuse; JTAG locked at enrollment</text>
+    <text x="145" y="230.9" style="font-size:1.75px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;">The bitstream carries the boot ROM, the three cores and the pairing keys;</text>
+    <text x="145" y="235.1" style="font-size:1.75px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;">the loader, supervisor and application run from flash under per-line Ascon-AEAD128</text>
+    <text x="145" y="239.3" style="font-size:1.75px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-style:italic;">Core clock: 25 MHz oscillator -&gt; PLL; clock and PLL-lock monitors in the security block</text>
+    <text x="235.0" y="83.665" style="font-size:1.9px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;">LAN8742A PHY</text>
+    <text x="235" y="90.5" style="font-size:1.5px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;">25 MHz from XO; reset = network policy</text>
+    <text x="235.0" y="108.7" style="font-size:1.9px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;">ESP-PSRAM64H</text>
+    <text x="235.0" y="110.9" style="font-size:1.5px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;">ciphertext ring</text>
+    <text x="235.0" y="132.7" style="font-size:1.9px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;">YSN8130E RTC</text>
+    <text x="235.0" y="134.9" style="font-size:1.5px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;">/INT -&gt; EN</text>
+    <text x="267.6" y="86.5" style="font-size:2.1px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;" transform="rotate(-90 267.6 86.5)">J1  DF40C-80DP-0.4V(51): power, control, ciphertext, MAC&#x27;d frames</text>
+    <text x="267.6" y="187.0" style="font-size:1.9px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;" transform="rotate(-90 267.6 187.0)">J2  DF40C-80DP: audio, display, clocks, GPIO</text>
+    <text x="267" y="216" style="font-size:1.7px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;">A minimal carrier</text>
+    <text x="267" y="219" style="font-size:1.7px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;">mates J1 only</text>
+    <text x="352.0" y="35.7" style="font-size:2.1px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;">Pushbutton, enclosure switch, seal loop</text>
+    <text x="352.0" y="38.0" style="font-size:1.6px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;">carrier identity EEPROM</text>
+    <text x="352.0" y="46.7" style="font-size:2.1px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;">JTAG header</text>
+    <text x="352.0" y="49.0" style="font-size:1.6px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;">fixture carrier only; unrouted in production</text>
+    <text x="326.0" y="57.7" style="font-size:2.1px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;">USB-C: 5 V in</text>
+    <text x="326.0" y="60.0" style="font-size:1.6px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;">the only power into the module</text>
+    <text x="380.0" y="57.7" style="font-size:2.1px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;">Carrier 3.3 V LDO</text>
+    <text x="380.0" y="60.0" style="font-size:1.6px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;">for carrier parts only</text>
+    <text x="352.0" y="68.7" style="font-size:2.1px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;">FT2232H: USB-UART</text>
+    <text x="352.0" y="71.0" style="font-size:1.6px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;">status, host sessions, CLI, updates</text>
+    <text x="352.0" y="82.7" style="font-size:2.1px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;">RJ45 with magnetics</text>
+    <text x="352.0" y="85.0" style="font-size:1.6px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;">10/100; edge proxy to TLS 443 off-board</text>
+    <text x="352.0" y="96.7" style="font-size:2.1px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;">MicroSD socket</text>
+    <text x="352.0" y="99.0" style="font-size:1.6px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;">TVS on data lines; ciphertext, log, packages</text>
+    <text x="352.0" y="120.7" style="font-size:2.1px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;">Sensor connector</text>
+    <text x="352.0" y="123.0" style="font-size:1.6px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;">two-way link, replaceable sensor</text>
+    <text x="352.0" y="132.7" style="font-size:2.1px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;">2 x SR44 cells</text>
+    <text x="352.0" y="135.0" style="font-size:1.6px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;">RTC backup; loss = module removed</text>
+    <text x="352.0" y="169.7" style="font-size:2.1px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;">2 x NAU88C22 CODECs</text>
+    <text x="352.0" y="172.0" style="font-size:1.6px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;">four mic channels; plaintext I2S</text>
+    <text x="352.0" y="180.7" style="font-size:2.1px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;">LCD + touch panel</text>
+    <text x="352.0" y="183.0" style="font-size:1.6px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;">4-wire SPI, I2C touch</text>
+    <text x="352.0" y="192.735" style="font-size:2.1px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;">Speaker amplifier; carrier GPIO</text>
+    <text x="352.0" y="202.7" style="font-size:2.1px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;font-weight:bold;">SI5351A + 10 MHz reference in</text>
+    <text x="352.0" y="205.0" style="font-size:1.6px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:middle;">application clocks only</text>
+    <text x="300" y="222.0" style="font-size:1.8px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:start;">Everything on the carrier changes without touching the validated module.</text>
+    <text x="300" y="225.8" style="font-size:1.8px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:start;">Treat these parts as inside, or passing through, the application device&#x27;s tamper-evident enclosure.</text>
+    <text x="300" y="229.6" style="font-size:1.8px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:start;">The module cannot authenticate its carrier: removal is detected (RTC backup loss, seal loop),</text>
+    <text x="300" y="233.4" style="font-size:1.8px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:start;">and an installed bit with a carrier identifier is checked at boot (R51, H13).</text>
+    <text x="18" y="238.5" style="font-size:1.9px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#2e8b57;text-anchor:start;">PB_N, enclosure switch, seal loop, carrier ID -&gt; security block and supervisor</text>
+    <text x="18" y="230.5" style="font-size:1.9px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#2e8b57;text-anchor:start;">JTAG -&gt; configuration engine (fixture only)</text>
+    <text x="140" y="41.5" style="font-size:1.9px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000000;text-anchor:middle;">5 V, always on</text>
+    <text x="200" y="45" style="font-size:1.9px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#1f5fbf;text-anchor:middle;">UART: session frames (ciphertext); status in recovery</text>
+    <text x="71" y="178" style="font-size:1.4px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000000;text-anchor:middle;">rails</text>
+    <text x="71" y="68" style="font-size:1.4px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#7d3c98;text-anchor:middle;">25 MHz</text>
+    <text x="76" y="101.5" style="font-size:1.4px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#1f5fbf;text-anchor:middle;">QSPI</text>
+    <text x="76" y="123.5" style="font-size:1.4px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#1f5fbf;text-anchor:middle;">SPI</text>
+    <text x="213" y="81.5" style="font-size:1.5px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#1f5fbf;text-anchor:middle;">RMII</text>
+    <text x="255" y="81.5" style="font-size:1.5px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#1f5fbf;text-anchor:middle;">MDI</text>
+    <text x="233" y="95.5" style="font-size:1.6px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#1f5fbf;text-anchor:middle;">SD: ciphertext, log, packages</text>
+    <text x="213" y="107.5" style="font-size:1.5px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#1f5fbf;text-anchor:middle;">QSPI</text>
+    <text x="139.5" y="145.5" style="font-size:1.5px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#707070;text-anchor:start;">ciphertext FIFO</text>
+    <text x="233" y="119.5" style="font-size:1.6px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#1f5fbf;text-anchor:middle;">sensor link: MAC&#x27;d frames</text>
+    <text x="213" y="131.5" style="font-size:1.5px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#2e8b57;text-anchor:middle;">I2C</text>
+    <text x="255" y="131.5" style="font-size:1.5px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000000;text-anchor:middle;">VBAT</text>
+    <text x="233" y="168.5" style="font-size:1.6px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#c0392b;text-anchor:middle;">I2S x2, MCLK, I2C (plaintext)</text>
+    <text x="233" y="179.5" style="font-size:1.6px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#c0392b;text-anchor:middle;">LCD SPI, touch I2C</text>
+    <text x="233" y="190.5" style="font-size:1.6px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#c0392b;text-anchor:middle;">PWM, GPIO</text>
+    <text x="233" y="201.5" style="font-size:1.6px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#7d3c98;text-anchor:middle;">carrier clocks (untrusted)</text>
+    <text x="12" y="268" style="font-size:2.4px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:start;font-weight:bold;">Legend</text>
+    <text x="27" y="273.0" style="font-size:1.8px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:start;">ciphertext or MAC&#x27;d: safe to expose (flash, card, network, UART, sensor, TPM bus)</text>
+    <text x="27" y="277.6" style="font-size:1.8px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:start;">plaintext: accepted inside the application device&#x27;s seal (R38)</text>
+    <text x="27" y="282.2" style="font-size:1.8px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:start;">control and tamper inputs; dashed = JTAG, fixture carrier only</text>
+    <text x="175" y="273.0" style="font-size:1.8px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:start;">clocks: the module&#x27;s own 25 MHz inside; carrier clocks reach only the supervisor and application domains</text>
+    <text x="175" y="277.6" style="font-size:1.8px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:start;">power: 5 V in; the module&#x27;s rails never leave the card</text>
+    <text x="175" y="282.2" style="font-size:1.8px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:start;">private connection inside the FPGA, never on a bus</text>
+    <text x="12" y="288" style="font-size:1.8px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:start;">Fills: yellow = loader core domain (the FIPS module logic); blue = supervisor core domain; green = application core domain; grey = mailboxes.</text>
+    <text x="12" y="292" style="font-size:1.8px;font-family:'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;fill:#000;text-anchor:start;">The dashed outline is the potted module and the FIPS 140-3 physical boundary; the TPM is an embedded validated module inside it; the flash holds only ciphertext and public data.</text>
+  </g>
+  <g inkscape:groupmode="layer" id="layer_legend" inkscape:label="Legend">
+  </g>
+</svg>
