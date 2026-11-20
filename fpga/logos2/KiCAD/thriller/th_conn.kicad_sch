@@ -4009,16 +4009,6 @@
 	)
 	(wire
 		(pts
-			(xy 129.54 132.08) (xy 124.46 132.08)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "b66c5c2b-97b2-4be7-bc23-267286ad62b9")
-	)
-	(wire
-		(pts
 			(xy 74.93 104.14) (xy 72.39 104.14)
 		)
 		(stroke
@@ -5851,28 +5841,6 @@
 				(font
 					(size 1.27 1.27)
 				)
-				(hide yes)
-			)
-		)
-	)
-	(global_label "SENS_27M"
-		(shape input)
-		(at 124.46 132.08 180)
-		(fields_autoplaced yes)
-		(effects
-			(font
-				(size 1.143 1.143)
-			)
-			(justify right)
-		)
-		(uuid "8f7157da-15df-50ef-9662-45a4c76cbe2e")
-		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 113.0104 132.08 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify right)
 				(hide yes)
 			)
 		)
@@ -7985,5 +7953,9 @@
 	(no_connect
 		(at 72.39 144.78)
 		(uuid "f99d5a76-bb3a-5cf3-9c58-b60087abab42")
+	)
+	(no_connect
+		(at 129.54 132.08)
+		(uuid "f761e0f3-5c5b-5e4d-8328-a052423ea94a")
 	)
 )

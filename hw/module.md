@@ -83,13 +83,13 @@ group (contact numbers are in [`module-pinout.csv`](module-pinout.csv), generate
 | Ethernet MDI: TX±, RX±, two LEDs | 6 | Ciphertext (and the PHY's link) | The PHY is on the module, so RMII never leaves it and the network policy's reset is internal |
 | I2S × 2: MCLK, BCLK, FS, DACIN, ADCOUT each | 10 | **Plaintext** | Accepted as before (R38), now with the connectors inside the device's seal |
 | LCD SPI: SCK, MOSI, DC, CS, RST, backlight; touch IRQ | 7 | Plaintext | Supervisor and application domain |
-| Carrier I2C: SDA, SCL | 2 | Control / plaintext | One bus for the carrier's ID EEPROM (the carrier identity, below), the touch controller and the CODECs |
+| Carrier I2C: SDA, SCL | 2 | Control / plaintext | One bus for the carrier's ID EEPROM (a 24AA02UID or similar, whose write-protected UID is the carrier identifier, below), the touch controller and the CODECs |
 | Speaker PWM | 1 | Plaintext | |
-| Sensor link: TX, RX, power enable, 27 MHz clock out | 4 | MAC'd frames | |
+| Sensor link: TX, RX, power enable | 3 | MAC'd frames | |
 | Application clocks: SI5351A output, 10 MHz reference | 2 | Clock, untrusted | Enter the supervisor and application domains only; never the loader domain (Clocking, below) |
 | Pushbutton, enclosure switch, seal loop (2), RTC alarm out, power hold out | 6 | Control | Tamper inputs into the security block; the seal loop opens when the application device is opened or the module is pulled; the two outputs let the carrier's power path follow the module |
-| Carrier GPIO | 60 | Application | Unassigned FPGA I/O for carrier variants, no module change. GPIO0 to 31 reach FPGA balls now; GPIO32 to 59 are on the connectors but not yet wired to balls |
-| Reserved | 7 (J1 55, 79, 80; J2 30, 32, 33, 80) | — | Unconnected on both sides until a pinout revision assigns them |
+| Carrier GPIO | 60 | Application | Unassigned FPGA I/O for carrier variants, no module change; GPIO0 to 13 on bank L4, 14 to 31 and 42 to 59 on R5, 32 to 41 on L3 |
+| Reserved | 8 (J1 55, 79, 80; J2 30, 32, 33, 35, 80) | — | Unconnected on both sides until a pinout revision assigns them |
 
 Rules:
 
@@ -120,7 +120,8 @@ authentic recording (R51). The module cannot authenticate a carrier by itself, s
 2. **The seal loop and the enclosure switch** cross the connectors into the security block: opening the application device, or pulling the module, opens the loop, which is logged with the
    boot cause and, at Level 3, zeroizes.
 3. **An installed state.** The server's `LIFECYCLE` message sets the *installed* bit in the TPM's lifecycle index when the module is commissioned in its application device, with a carrier
-   identifier read from the carrier (a serial EEPROM; not an authenticator) recorded alongside. A later boot that reads a different identifier, or none, is reported.
+   identifier read from the carrier recorded alongside. The identifier is the factory-programmed, write-protected 64-bit unique ID of a Microchip 24AA02UID (or similar 2 kbit I2C EEPROM with a
+   locked UID block) on the carrier, read over the carrier I2C bus (`SDA`/`SCL`, J1 70/71); it is a serial number, not an authenticator. A later boot that reads a different identifier, or none, is reported.
 4. **A carrier authenticator, if provenance of the analog front end must be cryptographic.** A small authentication IC on the carrier, challenged by the module each session, would let the
    module refuse to record in an unknown carrier. It is a product decision (H13), not a default: the three signals above make substitution visible, which is what the threat model asked for.
 

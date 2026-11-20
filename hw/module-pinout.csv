@@ -92,18 +92,18 @@ J2,10,I2S1_DACIN,I2S / CODEC I2C,Plaintext,F13,L4,
 J2,11,GND,Ground,Power,,,
 J2,12,I2S1_ADCOUT,I2S / CODEC I2C,Plaintext,F14,L4,
 J2,13,I2S1_FS,I2S / CODEC I2C,Plaintext,B11,L4,
-J2,14,GPIO50,Carrier GPIO,Application,,,FPGA ball not wired yet
-J2,15,GPIO51,Carrier GPIO,Application,,,FPGA ball not wired yet
+J2,14,GPIO50,Carrier GPIO,Application,T1,R5,
+J2,15,GPIO51,Carrier GPIO,Application,M6,R5,
 J2,16,GND,Ground,Power,,,
-J2,17,GPIO52,Carrier GPIO,Application,,,FPGA ball not wired yet
-J2,18,GPIO53,Carrier GPIO,Application,,,FPGA ball not wired yet
-J2,19,GPIO54,Carrier GPIO,Application,,,FPGA ball not wired yet
-J2,20,GPIO55,Carrier GPIO,Application,,,FPGA ball not wired yet
+J2,17,GPIO52,Carrier GPIO,Application,N6,R5,
+J2,18,GPIO53,Carrier GPIO,Application,R6,R5,
+J2,19,GPIO54,Carrier GPIO,Application,V7,R5,
+J2,20,GPIO55,Carrier GPIO,Application,V6,R5,
 J2,21,GND,Ground,Power,,,
-J2,22,GPIO56,Carrier GPIO,Application,,,FPGA ball not wired yet
-J2,23,GPIO57,Carrier GPIO,Application,,,FPGA ball not wired yet
-J2,24,GPIO58,Carrier GPIO,Application,,,FPGA ball not wired yet
-J2,25,GPIO59,Carrier GPIO,Application,,,FPGA ball not wired yet
+J2,22,GPIO56,Carrier GPIO,Application,U9,R5,
+J2,23,GPIO57,Carrier GPIO,Application,V9,R5,
+J2,24,GPIO58,Carrier GPIO,Application,U7,R5,
+J2,25,GPIO59,Carrier GPIO,Application,U6,R5,
 J2,26,GND,Ground,Power,,,
 J2,27,SENS_RX,Sensor link,MAC'd frames,B3,R4,
 J2,28,SENS_TX,Sensor link,MAC'd frames,B2,R4,
@@ -113,7 +113,7 @@ J2,31,GND,Ground,Power,,,
 J2,32,,Reserved,,,,unconnected on both sides
 J2,33,,Reserved,,,,unconnected on both sides
 J2,34,GND,Ground,Power,,,
-J2,35,SENS_27M,Sensor link,Clock to the sensor,,,FPGA ball not wired yet
+J2,35,,Reserved,,,,unconnected on both sides
 J2,36,GND,Ground,Power,,,
 J2,37,GND,Ground,Power,,,
 J2,38,CLK_SL0,Application clocks,"Clock, untrusted",F15,L4,
@@ -135,27 +135,27 @@ J2,53,GPIO29,Carrier GPIO,Application,U3,R5,
 J2,54,GPIO30,Carrier GPIO,Application,U4,R5,
 J2,55,GPIO31,Carrier GPIO,Application,V2,R5,
 J2,56,GND,Ground,Power,,,
-J2,57,GPIO32,Carrier GPIO,Application,,,FPGA ball not wired yet
-J2,58,GPIO33,Carrier GPIO,Application,,,FPGA ball not wired yet
-J2,59,GPIO34,Carrier GPIO,Application,,,FPGA ball not wired yet
-J2,60,GPIO35,Carrier GPIO,Application,,,FPGA ball not wired yet
+J2,57,GPIO32,Carrier GPIO,Application,D9,L3,
+J2,58,GPIO33,Carrier GPIO,Application,C9,L3,
+J2,59,GPIO34,Carrier GPIO,Application,B9,L3,
+J2,60,GPIO35,Carrier GPIO,Application,B8,L3,
 J2,61,GND,Ground,Power,,,
-J2,62,GPIO36,Carrier GPIO,Application,,,FPGA ball not wired yet
-J2,63,GPIO37,Carrier GPIO,Application,,,FPGA ball not wired yet
-J2,64,GPIO38,Carrier GPIO,Application,,,FPGA ball not wired yet
-J2,65,GPIO39,Carrier GPIO,Application,,,FPGA ball not wired yet
+J2,62,GPIO36,Carrier GPIO,Application,A8,L3,
+J2,63,GPIO37,Carrier GPIO,Application,C11,L3,
+J2,64,GPIO38,Carrier GPIO,Application,C10,L3,
+J2,65,GPIO39,Carrier GPIO,Application,A10,L3,
 J2,66,GND,Ground,Power,,,
-J2,67,GPIO40,Carrier GPIO,Application,,,FPGA ball not wired yet
-J2,68,GPIO41,Carrier GPIO,Application,,,FPGA ball not wired yet
-J2,69,GPIO42,Carrier GPIO,Application,,,FPGA ball not wired yet
-J2,70,GPIO43,Carrier GPIO,Application,,,FPGA ball not wired yet
+J2,67,GPIO40,Carrier GPIO,Application,A9,L3,
+J2,68,GPIO41,Carrier GPIO,Application,D10,L3,
+J2,69,GPIO42,Carrier GPIO,Application,U2,R5,
+J2,70,GPIO43,Carrier GPIO,Application,V5,R5,
 J2,71,GND,Ground,Power,,,
-J2,72,GPIO44,Carrier GPIO,Application,,,FPGA ball not wired yet
-J2,73,GPIO45,Carrier GPIO,Application,,,FPGA ball not wired yet
-J2,74,GPIO46,Carrier GPIO,Application,,,FPGA ball not wired yet
-J2,75,GPIO47,Carrier GPIO,Application,,,FPGA ball not wired yet
+J2,72,GPIO44,Carrier GPIO,Application,V4,R5,
+J2,73,GPIO45,Carrier GPIO,Application,P2,R5,
+J2,74,GPIO46,Carrier GPIO,Application,R2,R5,
+J2,75,GPIO47,Carrier GPIO,Application,M4,R5,
 J2,76,GND,Ground,Power,,,
-J2,77,GPIO48,Carrier GPIO,Application,,,FPGA ball not wired yet
-J2,78,GPIO49,Carrier GPIO,Application,,,FPGA ball not wired yet
+J2,77,GPIO48,Carrier GPIO,Application,N4,R5,
+J2,78,GPIO49,Carrier GPIO,Application,R1,R5,
 J2,79,GND,Ground,Power,,,
 J2,80,,Reserved,,,,unconnected on both sides

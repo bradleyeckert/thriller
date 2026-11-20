@@ -76,8 +76,7 @@ and one developer session at a time, one install, one recording segment.
 build mode (u8: production, developer with epoch u16); approved-mode indicator (u8, always 1 in this module); self-test state (u8: passed, running, failed with the failing test in `fault_code`);
 fault code (u16); lockdown count (u16) and last lockdown cause (u8); lifecycle bits (u8: enrolled, retired, wiped); network policy as read from the application header (u8); session state
 (u8 bit field: host, server, developer open; host slot u8); segment state (u8); install state (u8); TPM state (u8: not started, started, platform hierarchy disabled, lockout active);
-boot cause (u8); `backup_lost` (u8: the RTC lost its backup since the last acknowledged boot, which is the module-removal indicator, `hw/module.md`); `carrier_id` (8 bytes, as read from the
-carrier's identifier, zero if none) and `carrier_match` (u8, against the identifier recorded when the installed bit was set); latest verified beacon time (u64, zero if none) and the sample count
+boot cause (u8); `backup_lost` (u8: the RTC lost its backup since the last acknowledged boot, which is the module-removal indicator, `hw/module.md`); `carrier_id` (8 bytes: the write-protected UID of the carrier's 24AA02UID or similar ID EEPROM, read over the carrier I2C bus; zero if none) and `carrier_match` (u8, against the identifier recorded when the installed bit was set); latest verified beacon time (u64, zero if none) and the sample count
 at that beacon (u64). The UART status report in recovery is the same block, in hexadecimal.
 
 ### Sessions

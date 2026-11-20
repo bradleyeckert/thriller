@@ -31,9 +31,9 @@ What was added: the two DF40 connectors, the TPM, the 25 MHz oscillator in place
 |---|---|---|
 | L5 (configuration) | 3V3 | QSPI flash data and `CS` (fixed-function balls), TPM SPI, PSRAM, RTC I2C and interrupt, `SYS_CLK` on the GSCLK ball |
 | L4 | 3V3 | I2S × 2, LCD, touch interrupt, the carrier I2C (`SDA`/`SCL`), speaker PWM, the two carrier clocks on clock-capable balls, GPIO0..13 |
-| L3 | 3V3 | Spare: the place for GPIO32..59, which are on the connectors but not yet wired to balls |
-| R4 | 3V3 | PHY RMII with `ETH_REFCLK` on the GSCLK ball, SD, host UART, sensor link, pushbutton, tamper, seal loop, `PWR_HOLD`, `PGOOD` (`CARRIER_ID` and `SENS_DET` still have balls here but no longer reach a connector) |
-| R5 | 3V3 | GPIO14..31 |
+| L3 | 3V3 | GPIO32..41 (all ten of its I/O, the two VREF balls included; 3.3 V LVCMOS needs no VREF) |
+| R4 | 3V3 | PHY RMII with `ETH_REFCLK` on the GSCLK ball, SD, host UART, sensor link, pushbutton, tamper, seal loop, `PWR_HOLD`, `PGOOD` |
+| R5 | 3V3 | GPIO14..31 and GPIO42..59 (its VREF and clock-capable balls left free) |
 | configuration | — | Straps, JTAG, `CFG_*`, `VCCB`, `VCCADC`, `ADC_5V_MON`, all on `th_power` |
 
 The loader domain's pins (flash, TPM, PSRAM, RTC, the clock) are all on L5 so the partition's I/O stays inside one bank (`doc/fips.md`, F12).
@@ -42,7 +42,7 @@ The loader domain's pins (flash, TPM, PSRAM, RTC, the clock) are all on L5 so th
 
 - The 3V3 rail's rise time at the TPM: DB5174 table 4 wants 2 V/ms or faster (H14).
 - H15: LAN8742A REF_CLK Out mode with an external 25 MHz clock on XTAL1.
-- `SENS_27M` (J2 35) and GPIO32..59 have no FPGA ball yet; `CARRIER_ID` (replaced by the ID EEPROM on the carrier I2C) and `SENS_DET` still occupy balls on R4; U1 G16 (`GMCLK`) is unconnected on `th_userA`.
+- Four stub wires on `th_userA` bank L4 (balls B13, B12, D12, B17) end in nothing; give them a net or a no-connect.
 - The core decoupling quantities (now on `th_power`) against UG040012 tables 2-3 and 2-6 for the 324 package.
 - `thriller_bom.csv` is from the one-board revision and is stale; regenerate from the schematic.
 
@@ -53,5 +53,6 @@ The loader domain's pins (flash, TPM, PSRAM, RTC, the clock) are all on L5 so th
 | `ksch.py` | Minimal KiCad 9 schematic s-expression toolkit: parse, serialize, pin geometry, net connectivity |
 | `rework_module.py` | The one-board → module transformation of 2026-11-18 (its output was commit f718401; the schematic has been rearranged by hand since, so it is history, not a generator). Runs on the one-board revision (`git checkout f718401^ -- thriller`), reproducibly |
 | `label_shapes.py` | Sets every global label's shape (input/output/bidirectional, the direction relative to the sheet it is on, from a per-net table of what the parts do) and 45 mil text. By default it only fills in labels still marked passive and keeps hand-set shapes; `--check` reports, `--force` applies the table everywhere |
+| `edit_pins.py` | Text-level pin edits that keep eeschema's formatting (remove or add a global label with its stub, add or remove a no-connect); its `main` is the 2026-11-20 move of GPIO32..59 onto L3/R5 and the removal of `SENS_DET`, `SENS_27M`, `CARRIER_ID` |
 | `pinout_csv.py` | Regenerates `hw/module-pinout.csv` from `th_conn` and the FPGA units (contact, net, ball, bank from the schematic; group, class and note kept from the existing CSV by net name), and `../pinout324-assignment.csv`. `--check` reports differences without writing |
 | `render_sch.py` | Rough SVG/PNG preview of a sheet for checking generated geometry without KiCad |

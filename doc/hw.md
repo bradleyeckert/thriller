@@ -431,6 +431,7 @@ stands in for the server's time beacons (`doc/acquisition.md`, When a recording 
   (`doc/fpga.md`, TRNG).
 - **Local time.** For the display, for log entries (marked as local time, distinct from beacon-anchored time), and for interpolating between beacons when the device has been powered down,
   where the sample count cannot run; the host treats that interpolation as an estimate inside the beacon bracket, never as evidence.
+- **Carrier identifier.** The carrier carries a Microchip 24AA02UID or similar I2C EEPROM whose factory-programmed, write-protected 64-bit UID the supervisor reads over the carrier I2C bus (`SDA`/`SCL`, J1 70/71) at boot and reports as `carrier_id`; it is compared with the identifier recorded when the installed bit was set (`hw/module.md`). A serial number, not an authenticator (H13).
 - **Removal indicator.** The RTC's backup cells are on the carrier, so unplugging the module from its carrier drops `VBAT` and sets the RTC's power-loss flag. The supervisor reads it at boot and the
   module records *backup lost* in the boot record, the status block and the attestation report until the server acknowledges it (`hw/module.md`, R51).
 - **Scheduling discipline.** The supervisor never sets an alarm inside a recording it has started, and flushes the stream buffer before any planned power-down (the module refuses to drop power-hold while a segment is open); an alarm that arrives anyway
