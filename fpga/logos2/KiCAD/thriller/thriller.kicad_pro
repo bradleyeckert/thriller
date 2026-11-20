@@ -415,31 +415,19 @@
     ],
     [
       "58405345-9681-4f24-98c2-a3fa690db3a4",
-      "Power Supplies"
+      "Power supplies, RTC, config"
     ],
     [
       "7c95428e-e923-4d38-91d5-bfe862deab42",
-      "Base Chipset"
+      "Flash. PSRAM"
     ],
     [
       "eb85ccc6-627b-46b1-b6d2-206fdf39b791",
-      "User Banks"
-    ],
-    [
-      "71045cc5-933b-556a-9a4b-530b8d3a5613",
-      "User Banks R"
-    ],
-    [
-      "4252df29-7b4a-5d49-abd0-707f37dfb60b",
-      "Storage"
+      "FPGA banks"
     ],
     [
       "33eda6da-34ec-54c6-aba0-63d9912705aa",
-      "External Interfaces"
-    ],
-    [
-      "fc6464a2-c6b7-5735-a1cf-fb39f96e9573",
-      "FPGA config and power"
+      "Ethernet PHY"
     ],
     [
       "f6c83907-71bb-54b9-bca2-dcd1c9a18fda",

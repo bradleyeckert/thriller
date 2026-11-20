@@ -1,81 +1,241 @@
-(kicad_sch (version 20250114) (generator "eeschema") (generator_version "9.0") (uuid "02a4128e-5284-4df4-bd95-50d9619a72c4") (paper "A4")
-(title_block (title "Logos2 Thriller module") (date "2026-11-12") (rev "0.2") (company "thriller: FPGA root-of-trust platform (github.com/bradleyeckert/thriller)"))
-
-(lib_symbols)
-
-(text "thriller module: PG2L50H-6IMBG324 + QSPI flash + ST33KTPM2X TPM + PSRAM + RTC + LAN8742A PHY + 25 MHz XO + regulators, on a potted 20 x ~40 mm card\nwith two Hirose DF40C-80DP-0.4V(51) connectors (J1 power/control/ciphertext, J2 audio/display/clocks/GPIO). See hw/module.md.\n\nPower: 5 V always on from J1 -> 3V3_AO (RTC, power control). EN_PWR (PB_N_AO | RTC alarm | PWR_HOLD) -> 1V0 -> 1V8 -> 3V3 -> PGOOD.\nAll I/O banks at 3.3 V. Everything with a connector, transducer or user interface is on the carrier.\nSymbols: thriller.kicad_sym (project) and FPGA_Pango_Logos2.kicad_sym. Nets between pages use global labels." (exclude_from_sim no) (at 20 25 0) (effects (font (size 1.5 1.5)) (justify left top)) (uuid "cdc35c25-af26-5a2f-9dc4-d19f92fc3be7"))
-
-(sheet (at 30 70) (size 60 10) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes) (stroke (width 0.1524) (type solid)) (fill (color 0 0 0 0.0000)) (uuid "58405345-9681-4f24-98c2-a3fa690db3a4")
-(property "Sheetname" "Power Supplies" (at 30 69.3 0) (effects (font (size 1.27 1.27)) (justify left bottom)))
-
-(property "Sheetfile" "th_power.kicad_sch" (at 30 80.6 0) (effects (font (size 1.27 1.27)) (justify left top)))
-
-(instances
-(project "thriller"
-(path "/02a4128e-5284-4df4-bd95-50d9619a72c4" (page "2")))))
-
-(sheet (at 120 70) (size 60 10) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes) (stroke (width 0.1524) (type solid)) (fill (color 0 0 0 0.0000)) (uuid "7c95428e-e923-4d38-91d5-bfe862deab42")
-(property "Sheetname" "Base: config, flash, TPM, RTC, clock" (at 120 69.3 0) (effects (font (size 1.27 1.27)) (justify left bottom)))
-
-(property "Sheetfile" "th_base.kicad_sch" (at 120 80.6 0) (effects (font (size 1.27 1.27)) (justify left top)))
-
-(instances
-(project "thriller"
-(path "/02a4128e-5284-4df4-bd95-50d9619a72c4" (page "3")))))
-
-(sheet (at 30 90) (size 60 10) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes) (stroke (width 0.1524) (type solid)) (fill (color 0 0 0 0.0000)) (uuid "eb85ccc6-627b-46b1-b6d2-206fdf39b791")
-(property "Sheetname" "FPGA banks L" (at 30 89.3 0) (effects (font (size 1.27 1.27)) (justify left bottom)))
-
-(property "Sheetfile" "th_userA.kicad_sch" (at 30 100.6 0) (effects (font (size 1.27 1.27)) (justify left top)))
-
-(instances
-(project "thriller"
-(path "/02a4128e-5284-4df4-bd95-50d9619a72c4" (page "4")))))
-
-(sheet (at 120 90) (size 60 10) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes) (stroke (width 0.1524) (type solid)) (fill (color 0 0 0 0.0000)) (uuid "71045cc5-933b-556a-9a4b-530b8d3a5613")
-(property "Sheetname" "FPGA banks R" (at 120 89.3 0) (effects (font (size 1.27 1.27)) (justify left bottom)))
-
-(property "Sheetfile" "th_userB.kicad_sch" (at 120 100.6 0) (effects (font (size 1.27 1.27)) (justify left top)))
-
-(instances
-(project "thriller"
-(path "/02a4128e-5284-4df4-bd95-50d9619a72c4" (page "5")))))
-
-(sheet (at 30 110) (size 60 10) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes) (stroke (width 0.1524) (type solid)) (fill (color 0 0 0 0.0000)) (uuid "4252df29-7b4a-5d49-abd0-707f37dfb60b")
-(property "Sheetname" "PSRAM" (at 30 109.3 0) (effects (font (size 1.27 1.27)) (justify left bottom)))
-
-(property "Sheetfile" "th_storage.kicad_sch" (at 30 120.6 0) (effects (font (size 1.27 1.27)) (justify left top)))
-
-(instances
-(project "thriller"
-(path "/02a4128e-5284-4df4-bd95-50d9619a72c4" (page "6")))))
-
-(sheet (at 120 110) (size 60 10) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes) (stroke (width 0.1524) (type solid)) (fill (color 0 0 0 0.0000)) (uuid "33eda6da-34ec-54c6-aba0-63d9912705aa")
-(property "Sheetname" "Ethernet PHY" (at 120 109.3 0) (effects (font (size 1.27 1.27)) (justify left bottom)))
-
-(property "Sheetfile" "th_ext.kicad_sch" (at 120 120.6 0) (effects (font (size 1.27 1.27)) (justify left top)))
-
-(instances
-(project "thriller"
-(path "/02a4128e-5284-4df4-bd95-50d9619a72c4" (page "7")))))
-
-(sheet_instances
-(path "/" (page "1")))
-(embedded_fonts no)
-(sheet (at 30 130) (size 60 10) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes) (stroke (width 0.1524) (type solid)) (fill (color 0 0 0 0.0000)) (uuid "fc6464a2-c6b7-5735-a1cf-fb39f96e9573")
-(property "Sheetname" "FPGA config and power" (at 30 129.3 0) (effects (font (size 1.27 1.27)) (justify left bottom)))
-
-(property "Sheetfile" "th_fpga.kicad_sch" (at 30 140.6 0) (effects (font (size 1.27 1.27)) (justify left top)))
-
-(instances
-(project "thriller"
-(path "/02a4128e-5284-4df4-bd95-50d9619a72c4" (page "8")))))
-
-(sheet (at 120 130) (size 60 10) (exclude_from_sim no) (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes) (stroke (width 0.1524) (type solid)) (fill (color 0 0 0 0.0000)) (uuid "f6c83907-71bb-54b9-bca2-dcd1c9a18fda")
-(property "Sheetname" "Module connectors J1, J2" (at 120 129.3 0) (effects (font (size 1.27 1.27)) (justify left bottom)))
-
-(property "Sheetfile" "th_conn.kicad_sch" (at 120 140.6 0) (effects (font (size 1.27 1.27)) (justify left top)))
-
-(instances
-(project "thriller"
-(path "/02a4128e-5284-4df4-bd95-50d9619a72c4" (page "9"))))))
+(kicad_sch
+	(version 20250114)
+	(generator "eeschema")
+	(generator_version "9.0")
+	(uuid "02a4128e-5284-4df4-bd95-50d9619a72c4")
+	(paper "A4")
+	(title_block
+		(title "Logos2 Thriller module")
+		(date "2026-11-19")
+		(rev "0.1")
+		(company "thriller: FPGA root-of-trust platform (github.com/bradleyeckert/thriller)")
+	)
+	(lib_symbols)
+	(text "thriller module: PG2L50H-6IMBG324 + QSPI flash + ST33KTPM2X TPM + PSRAM + RTC + LAN8742A PHY + 25 MHz XO + regulators, on a potted 20 x ~40 mm card\nwith two Hirose DF40C-80DP-0.4V(51) connectors (J1 power/control/ciphertext, J2 audio/display/clocks/GPIO). See hw/module.md.\n\nPower: 5 V always on from J1 -> 3V3_AO (RTC, power control). EN_PWR (PB_N_AO | RTC alarm | PWR_HOLD) -> 1V0 -> 1V8 -> 3V3 -> PGOOD.\nAll I/O banks at 3.3 V. Everything with a connector, transducer or user interface is on the carrier.\nSymbols: thriller.kicad_sym (project) and FPGA_Pango_Logos2.kicad_sym. Nets between pages use global labels."
+		(exclude_from_sim no)
+		(at 20 25 0)
+		(effects
+			(font
+				(size 1.5 1.5)
+			)
+			(justify left top)
+		)
+		(uuid "cdc35c25-af26-5a2f-9dc4-d19f92fc3be7")
+	)
+	(sheet
+		(at 120 89.68)
+		(size 60 10)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(fill
+			(color 0 0 0 0.0000)
+		)
+		(uuid "33eda6da-34ec-54c6-aba0-63d9912705aa")
+		(property "Sheetname" "Ethernet PHY"
+			(at 120 88.98 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Sheetfile" "th_ext.kicad_sch"
+			(at 120 100.28 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(instances
+			(project "thriller"
+				(path "/02a4128e-5284-4df4-bd95-50d9619a72c4"
+					(page "5")
+				)
+			)
+		)
+	)
+	(sheet
+		(at 30 70)
+		(size 60 10)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(fill
+			(color 0 0 0 0.0000)
+		)
+		(uuid "58405345-9681-4f24-98c2-a3fa690db3a4")
+		(property "Sheetname" "Power supplies, RTC, config"
+			(at 30 69.2884 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Sheetfile" "th_power.kicad_sch"
+			(at 30 80.5846 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(instances
+			(project "thriller"
+				(path "/02a4128e-5284-4df4-bd95-50d9619a72c4"
+					(page "2")
+				)
+			)
+		)
+	)
+	(sheet
+		(at 120 70)
+		(size 60 10)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(fill
+			(color 0 0 0 0.0000)
+		)
+		(uuid "7c95428e-e923-4d38-91d5-bfe862deab42")
+		(property "Sheetname" "Flash. PSRAM"
+			(at 120 69.2884 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Sheetfile" "th_base.kicad_sch"
+			(at 120 80.5846 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(instances
+			(project "thriller"
+				(path "/02a4128e-5284-4df4-bd95-50d9619a72c4"
+					(page "3")
+				)
+			)
+		)
+	)
+	(sheet
+		(at 30 90)
+		(size 60 10)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(fill
+			(color 0 0 0 0.0000)
+		)
+		(uuid "eb85ccc6-627b-46b1-b6d2-206fdf39b791")
+		(property "Sheetname" "FPGA banks"
+			(at 30 89.2884 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Sheetfile" "th_userA.kicad_sch"
+			(at 30 100.5846 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(instances
+			(project "thriller"
+				(path "/02a4128e-5284-4df4-bd95-50d9619a72c4"
+					(page "4")
+				)
+			)
+		)
+	)
+	(sheet
+		(at 29.83 109.68)
+		(size 60 10)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(fill
+			(color 0 0 0 0.0000)
+		)
+		(uuid "f6c83907-71bb-54b9-bca2-dcd1c9a18fda")
+		(property "Sheetname" "Module connectors J1, J2"
+			(at 29.83 108.98 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Sheetfile" "th_conn.kicad_sch"
+			(at 29.83 120.28 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(instances
+			(project "thriller"
+				(path "/02a4128e-5284-4df4-bd95-50d9619a72c4"
+					(page "6")
+				)
+			)
+		)
+	)
+	(sheet_instances
+		(path "/"
+			(page "1")
+		)
+	)
+	(embedded_fonts no)
+)

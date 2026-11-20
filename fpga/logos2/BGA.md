@@ -14,3 +14,8 @@ Each no-connect omits a via-in-pad hole to provide a fat breakout channel.
 Other rows have no-connects as needed to allow routing on a 6-layer PCB.
 
 The PCB is 1.2 mm thick. The form factor is 20 mm \* 40-50mm.
+
+## mezzanine connector
+
+The DF40 type connectors have a 0.4 mm pitch. Two 2x40 pin connectors supply a total of 160 pins.
+The general strategy is to use 20% of the pins (every 5th pin) as ground.
