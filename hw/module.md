@@ -70,26 +70,26 @@ grades 1 to 2 W/mK), so the regulators rely on the ground planes and the heatsin
 ## The 160 contacts
 
 The pinout is a **contract**: it is frozen before either module or carrier is laid out, every FPGA family's module presents the same one, and a change is a carrier revision. Counts by
-group (contact numbers are in [`module-pinout.csv`](module-pinout.csv), generated from the schematic by `fpga/logos2/KiCAD/tools/pinout_csv.py` together with the FPGA ball each net lands on; one connector carries power, the UART, JTAG, the card, the MDI pairs and the control lines, the other the audio, display, sensor,
-clock and GPIO lines, so a minimal carrier can mate only the first):
+group (contact numbers are in [`module-pinout.csv`](module-pinout.csv), generated from the schematic by `fpga/logos2/KiCAD/tools/pinout_csv.py` together with the FPGA ball each net lands on; J1 carries power, the UART, JTAG, the card, the MDI pairs, the LCD, the carrier I2C, the control lines and 20 GPIO; J2 the audio, sensor link, clocks and 40 GPIO, so a minimal carrier can mate only J1):
 
-| Group | Signals | Class | Notes |
+| Group | Contacts | Class | Notes |
 |---|---|---|---|
-| 5 V in, always on | 6 | Power | The only power the module takes. DF40 contacts are rated 0.3 A each, so six for margin |
-| Ground | about 40 | Power | One ground contact adjacent to every signal group, and the DF40's ground plates where the variant has them; the return path for everything |
-| `VBAT` | 1 | Power | RTC backup from the carrier's cells; its loss is the removal indicator (below) |
+| 5 V in, always on | 6 | Power | The only power the module takes. DF40 contacts are rated 0.3 A each, so six for margin (J1 1 to 3, 41 to 43) |
+| Ground | 35 | Power | A ground contact every four or five signals, and the DF40's ground plates where the variant has them; the return path for everything |
+| `VBAT_CELL` | 1 | Power | RTC backup from the carrier's cells; its loss is the removal indicator (below) |
 | MicroSD: CLK, CMD, D0 to D3, CD | 7 | Ciphertext | Driven by the supervisor's SD controller |
-| UART: TX, RX | 2 | Ciphertext frames; plaintext status in recovery | The host UART, on the module (the boot ROM needs it) |
+| Host UART: TX, RX | 2 | Ciphertext frames; plaintext status in recovery | On the module because the boot ROM needs it |
 | JTAG: TCK, TMS, TDI, TDO | 4 | **Fixture only** | Connected on the fixture carrier; unconnected on production carriers; dead after the eFuse lock in any case |
 | Ethernet MDI: TX±, RX±, two LEDs | 6 | Ciphertext (and the PHY's link) | The PHY is on the module, so RMII never leaves it and the network policy's reset is internal |
-| I2S × 2, each with its MCLK and CODEC I2C: 7 per CODEC | 14 | **Plaintext** | Accepted as before (R38), now with the connectors inside the device's seal |
-| LCD SPI: SCK, MOSI, DC, CS, RST, backlight; touch I2C and IRQ | 9 | Plaintext | Supervisor and application domain |
+| I2S × 2: MCLK, BCLK, FS, DACIN, ADCOUT each | 10 | **Plaintext** | Accepted as before (R38), now with the connectors inside the device's seal |
+| LCD SPI: SCK, MOSI, DC, CS, RST, backlight; touch IRQ | 7 | Plaintext | Supervisor and application domain |
+| Carrier I2C: SDA, SCL | 2 | Control / plaintext | One bus for the carrier's ID EEPROM (the carrier identity, below), the touch controller and the CODECs |
 | Speaker PWM | 1 | Plaintext | |
-| Sensor link: TX, RX, power enable, detect | 4 | MAC'd frames | |
-| Application clocks: SI5351A outputs, 10 MHz reference | 3 | Clock, untrusted | Enter the supervisor and application domains only; never the loader domain (Clocking, below) |
-| Pushbutton, enclosure switch, seal loop (2), carrier identity (1-wire or I2C EEPROM) | 5 | Control | Tamper inputs into the security block; the seal loop opens when the application device is opened or the module is pulled |
-| Carrier GPIO | 32 | Application | For carrier variants, no module change |
-| Reserved | 22 (J1 51 and 71 to 80, J2 36 to 40 and 75 to 80) | — | Unconnected on both sides until a pinout revision assigns them |
+| Sensor link: TX, RX, power enable, 27 MHz clock out | 4 | MAC'd frames | |
+| Application clocks: SI5351A output, 10 MHz reference | 2 | Clock, untrusted | Enter the supervisor and application domains only; never the loader domain (Clocking, below) |
+| Pushbutton, enclosure switch, seal loop (2), RTC alarm out, power hold out | 6 | Control | Tamper inputs into the security block; the seal loop opens when the application device is opened or the module is pulled; the two outputs let the carrier's power path follow the module |
+| Carrier GPIO | 60 | Application | Unassigned FPGA I/O for carrier variants, no module change. GPIO0 to 31 reach FPGA balls now; GPIO32 to 59 are on the connectors but not yet wired to balls |
+| Reserved | 7 (J1 55, 79, 80; J2 30, 32, 33, 80) | — | Unconnected on both sides until a pinout revision assigns them |
 
 Rules:
 

@@ -1,54 +1,84 @@
 #!/usr/bin/env python3
-"""Write hw/module-pinout.csv (the H11 pinout contract) and the FPGA ball table from the assignments in rework_module.py.
-Run from fpga/logos2/KiCAD: python3 tools/pinout_csv.py"""
-import csv, pathlib, sys
+"""Regenerate hw/module-pinout.csv from the schematic.
+
+Contact, net, FPGA ball and bank come from the sheets (J1/J2 on th_conn, the PG2L50H-6IMBG324 wherever its units
+are); group, class and note are kept from the existing CSV by net name, so they can be edited by hand and survive.
+Also writes fpga/logos2/pinout324-assignment.csv (every ball with its net). Run from fpga/logos2/KiCAD; pass
+--check to report differences without writing."""
+import csv, glob, json, pathlib, re, sys
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
-import rework_module as rm
+from ksch import *
 
-GROUP = [('+5V_IN', '5 V in', 'Power'), ('GND', 'Ground', 'Power'), ('VBAT_CELL', 'RTC backup', 'Power'),
-         ('HOST_UART', 'Host UART', 'Ciphertext frames; plaintext status in recovery'), ('JTAG', 'JTAG', 'Fixture only'),
-         ('SD_', 'MicroSD', 'Ciphertext'), ('ETH_', 'Ethernet MDI / LEDs', 'Ciphertext (PHY link)'),
-         ('SENS_', 'Sensor link', "MAC'd frames"), ('PB_N_AO', 'Power button', 'Control'), ('TAMPER_N', 'Enclosure switch', 'Control'),
-         ('SEAL_', 'Seal loop', 'Control'), ('CARRIER_ID', 'Carrier identity', 'Control'), ('TPM_PIRQ_N', 'TPM interrupt (observation)', 'Control'),
-         ('RTC_INT_N_AO', 'RTC alarm (observation)', 'Control'), ('PWR_HOLD', 'Power hold (observation)', 'Control'),
-         ('AUD', 'I2S / CODEC I2C', 'Plaintext'), ('LCD_', 'LCD SPI', 'Plaintext'), ('TP_', 'Touch I2C', 'Plaintext'), ('SPK_PWM', 'Speaker', 'Plaintext'),
-         ('CLK_', 'Application clocks', 'Clock, untrusted'), ('GPIO', 'Carrier GPIO', 'Application')]
+KICAD = pathlib.Path(__file__).resolve().parents[1]
+PRJ = KICAD / 'thriller'
+CSV = KICAD.parents[2] / 'hw' / 'module-pinout.csv'
+BALLS = KICAD.parent / 'pinout324.json'
+ASSIGN = KICAD.parent / 'pinout324-assignment.csv'
 
-def classify(net):
-    for pre, grp, cls in GROUP:
-        if net.startswith(pre): return grp, cls
-    return '', ''
+def net_name(net, p, ncs):
+    pins, names = net.describe(net.find(p))
+    if names: return sorted(names, key=len)[0]
+    pw = [q for q in pins if '.' not in q]           # power symbols
+    if pw: return pw[0]
+    return '' if p in ncs else '???'
 
-def main():
-    fa, balls = rm.fpga_assignment()
-    ball_of = {a[1]: b for b, a in fa.items() if a[0] == 'g'}
-    bank_of = {b: v[0] for b, v in balls.items()}
-    out = pathlib.Path(rm.ROOT).parents[2] / 'hw' / 'module-pinout.csv'
-    with open(out, 'w', newline='') as f:
-        w = csv.writer(f)
-        w.writerow(['connector', 'contact', 'net', 'group', 'class', 'fpga_ball', 'fpga_bank', 'note'])
-        for conn, A in (('J1', rm.j1_assignment()), ('J2', rm.j2_assignment())):
-            for p in range(1, 81):
-                a = A[str(p)]
-                if a[0] == 'nc':
-                    w.writerow([conn, p, '', 'Reserved', '', '', '', 'unconnected on both sides']); continue
-                net = a[1]; grp, cls = classify(net)
-                b = ball_of.get(net, '')
-                note = ''
-                if net in ('RTC_INT_N_AO', 'PWR_HOLD', 'VBAT_CELL', 'PB_N_AO'): note = 'not an FPGA pin; see th_base/th_power'
-                if net.startswith('ETH_'): note = 'PHY pin (th_ext)'
-                if net.startswith('JTAG'): note = 'route on the fixture carrier only'
-                w.writerow([conn, p, net, grp, cls, b, bank_of.get(b, ''), note])
-    print('wrote', out)
-    # FPGA ball table next to the pinout json
-    out2 = pathlib.Path(rm.ROOT).parent / 'pinout324-assignment.csv'
-    with open(out2, 'w', newline='') as f:
-        w = csv.writer(f)
-        w.writerow(['ball', 'bank', 'pin_name', 'net'])
+def main(check=False):
+    # connector contacts
+    sh = Sheet(open(PRJ / 'th_conn.kicad_sch').read()); net = Net(sh)
+    ncs = set(label_pos(n) for n in sh.items('no_connect'))
+    contacts = []
+    for s in sh.symbols():
+        ref = sh.prop(s, 'Reference')
+        if ref not in ('J1', 'J2'): continue
+        for (x, y, num, nm) in sh.pin_points(s):
+            contacts.append((ref, int(num), net_name(net, (x, y), ncs)))
+    contacts.sort()
+    # FPGA balls
+    balls = json.load(open(BALLS)); ball_of = {}; net_of_ball = {}
+    for f in glob.glob(str(PRJ / '*.kicad_sch')):
+        S = Sheet(open(f).read()); N = Net(S)
+        for s in S.symbols():
+            if not unq(find1(s, 'lib_id')[1]).endswith('PG2L50H-6IMBG324'): continue
+            for (x, y, num, nm) in S.pin_points(s):
+                pins, names = N.describe(N.find((x, y)))
+                n = sorted(names, key=len)[0] if names else next((q for q in pins if '.' not in q), '')
+                if n: net_of_ball[num] = n; ball_of.setdefault(n, []).append(num)
+    # annotations from the existing CSV
+    old = {}
+    if CSV.exists():
+        for r in csv.DictReader(open(CSV)):
+            key = r['net'] or ('', r['connector'], r['contact'])
+            old.setdefault(key, r)
+    rows = []
+    for ref, num, n in contacts:
+        a = old.get(n) or old.get(('', ref, str(num))) or {}
+        b = ball_of.get(n, [])
+        if n in ('GND', '+5V', '') or n.startswith('+'): b = []
+        note = a.get('note', '')
+        if n == '': grp, cls, note = 'Reserved', '', 'unconnected on both sides'
+        else:
+            grp, cls = a.get('group', ''), a.get('class', '')
+            if not b and n not in ('GND', '+5V') and not n.startswith('+') and n not in ('VBAT_CELL', 'PB_N_AO', 'RTC_INT_N_AO', 'ETH_TXP', 'ETH_TXN', 'ETH_RXP', 'ETH_RXN', 'ETH_LED1', 'ETH_LED2'):
+                note = 'FPGA ball not wired yet'
+            elif note == 'FPGA ball not wired yet': note = ''
+        rows.append({'connector': ref, 'contact': num, 'net': n, 'group': grp, 'class': cls,
+                     'fpga_ball': ','.join(b), 'fpga_bank': ','.join(sorted({balls[x][0] for x in b if x in balls})), 'note': note})
+    fields = ['connector', 'contact', 'net', 'group', 'class', 'fpga_ball', 'fpga_bank', 'note']
+    if check:
+        cur = list(csv.DictReader(open(CSV))) if CSV.exists() else []
+        diffs = [(c, r) for c, r in zip(cur, rows) if {k: str(v) for k, v in r.items()} != c]
+        for c, r in diffs: print('csv:', c, '\nsch:', r, '\n')
+        print(len(diffs), 'rows differ' if diffs else 'rows differ: CSV matches the schematic')
+        return
+    with open(CSV, 'w', newline='') as f:
+        w = csv.DictWriter(f, fieldnames=fields); w.writeheader(); w.writerows(rows)
+    with open(ASSIGN, 'w', newline='') as f:
+        w = csv.writer(f); w.writerow(['ball', 'bank', 'pin_name', 'net'])
         for b in sorted(balls, key=lambda k: (k[0], int(k[1:]))):
-            a = fa.get(b, ('nc',))
-            w.writerow([b, balls[b][0], balls[b][1], a[1] if a[0] != 'nc' else ''])
-    print('wrote', out2)
+            w.writerow([b, balls[b][0], balls[b][1], net_of_ball.get(b, '')])
+    print('wrote', CSV, 'and', ASSIGN)
+    unwired = [n for _, _, n in contacts if n and n not in ball_of and not n.startswith(('+', 'GND'))]
+    print('contacts without an FPGA ball:', unwired)
 
 if __name__ == '__main__':
-    main()
+    main(check='--check' in sys.argv)

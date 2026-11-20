@@ -5641,8 +5641,8 @@
 			)
 		)
 	)
-	(global_label "TP_INT"
-		(shape input)
+	(global_label "TP_INT_N"
+		(shape output)
 		(at 77.47 116.84 0)
 		(fields_autoplaced yes)
 		(effects
@@ -7957,5 +7957,33 @@
 				)
 			)
 		)
+	)
+	(no_connect
+		(at 129.54 119.38)
+		(uuid "ca1fc90e-149c-510d-9826-bf2dbeea8bbf")
+	)
+	(no_connect
+		(at 129.54 124.46)
+		(uuid "398bd222-54a4-5657-b98b-638fcce3deb9")
+	)
+	(no_connect
+		(at 129.54 127)
+		(uuid "a9f352a0-0f2a-572c-a81d-2a89dc4d3393")
+	)
+	(no_connect
+		(at 154.94 144.78)
+		(uuid "9a5ba7ba-27f3-5e41-8266-abd6f51e24ac")
+	)
+	(no_connect
+		(at 72.39 81.28)
+		(uuid "bbb8711e-c80a-5b7f-9671-cd1ea3c11cd9")
+	)
+	(no_connect
+		(at 72.39 142.24)
+		(uuid "38ae411e-17be-5d8b-97e5-6bbe4d8c663a")
+	)
+	(no_connect
+		(at 72.39 144.78)
+		(uuid "f99d5a76-bb3a-5cf3-9c58-b60087abab42")
 	)
 )
