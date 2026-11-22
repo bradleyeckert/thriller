@@ -1,0 +1,247 @@
+(footprint "RTC_Epson_CE_SMD-10P_3.2x2.5mm_P0.7mm"
+	(version 20241229)
+	(generator "pcbnew")
+	(generator_version "9.0")
+	(layer "F.Cu")
+	(descr "Seiko Epson CE package (RX8130CE, RX8900CE, RX8804CE): 10 terminals on the two 3.2 mm sides, 0.7 mm pitch, body 3.2 x 2.5 x 1.0 mm max; land pattern per ETM50E figure 7 Type 1 (0.4 x 0.9 mm pads, 1.1 mm between the rows). LCSC package name SMD-10P,3.2x2.5mm. The crystal inspection pads on the short sides are not copper here: keep traces and vias off them."
+	(tags "RTC Epson CE RX8130CE SMD-10P 3.2x2.5")
+	(property "Reference" "REF**"
+		(at 0 -2.6 0)
+		(layer "F.SilkS")
+		(uuid "4c093720-6207-5c0a-a1d0-94da6ec8d7be")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Value" "RX8130CE"
+		(at 0 2.6 0)
+		(layer "F.Fab")
+		(uuid "7aa2c1c3-a5ed-5222-80bf-3e69a003c2ec")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Datasheet" "https://download.epsondevice.com/td/pdf/app/RX8130CE_en.pdf"
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "d68935e9-0aa5-5537-a0e3-94b8d7b01fb2")
+		(effects
+			(font
+				(size 1.27 1.27)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Description" "Real-time clock module, I2C, 3.2 x 2.5 mm 10-terminal CE package"
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "80a5e1fe-845e-5b4c-a21e-4321743a2f9e")
+		(effects
+			(font
+				(size 1.27 1.27)
+				(thickness 0.15)
+			)
+		)
+	)
+	(attr smd)
+	(fp_line
+		(start -0.3 -1.71)
+		(end 0.3 -1.71)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "86502a93-d6fa-57d6-938c-16f8a60c057a")
+	)
+	(fp_line
+		(start -0.3 1.71)
+		(end 0.3 1.71)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "4da4a074-8681-519d-b2df-5debe1693f61")
+	)
+	(fp_circle
+		(center -1 -1.9)
+		(end -0.9 -1.9)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(fill yes)
+		(layer "F.SilkS")
+		(uuid "4abd7bb4-6dcb-567f-b164-e3a8bc73fa89")
+	)
+	(fp_line
+		(start -0.85 -1.6)
+		(end 1.25 -1.6)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "05d1f44a-f197-530d-8731-d8898b2cc2d6")
+	)
+	(fp_line
+		(start 1.25 -1.6)
+		(end 1.25 1.6)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "49ca2f59-bc95-5868-8448-154c77482346")
+	)
+	(fp_line
+		(start 1.25 1.6)
+		(end -1.25 1.6)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "e7bf4abb-70c2-53be-987c-c4dd226b4395")
+	)
+	(fp_line
+		(start -1.25 1.6)
+		(end -1.25 -1.2)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "9b2621ec-0083-5125-ab5f-79652d8345ba")
+	)
+	(fp_line
+		(start -1.25 -1.2)
+		(end -0.85 -1.6)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "a5587bfc-c7c5-564e-963e-c7653c589907")
+	)
+	(fp_line
+		(start -1.7 -2)
+		(end 1.7 -2)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "7274dbd2-3011-51fd-9f8f-bd16e1629875")
+	)
+	(fp_line
+		(start 1.7 -2)
+		(end 1.7 2)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "5ccf938a-dee3-58e1-b4be-b48e5c606e99")
+	)
+	(fp_line
+		(start 1.7 2)
+		(end -1.7 2)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "06a3a419-abe5-54ae-9956-17951bea0288")
+	)
+	(fp_line
+		(start -1.7 2)
+		(end -1.7 -2)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "b09bdd9f-0808-5e03-8069-de8bf20c72a2")
+	)
+	(pad "1" smd roundrect
+		(at -1 -1.4)
+		(size 0.9 0.4)
+		(layers "F.Cu" "F.Paste" "F.Mask")
+		(roundrect_rratio 0.25)
+		(uuid "3458fbad-a30f-5fc3-8e05-a1362ba3a4cc")
+	)
+	(pad "2" smd roundrect
+		(at -1 -0.7)
+		(size 0.9 0.4)
+		(layers "F.Cu" "F.Paste" "F.Mask")
+		(roundrect_rratio 0.25)
+		(uuid "a1383226-f577-5742-b1fb-5345336846a0")
+	)
+	(pad "3" smd roundrect
+		(at -1 0)
+		(size 0.9 0.4)
+		(layers "F.Cu" "F.Paste" "F.Mask")
+		(roundrect_rratio 0.25)
+		(uuid "56356cb5-9284-5833-8397-79e310ee7fdf")
+	)
+	(pad "4" smd roundrect
+		(at -1 0.7)
+		(size 0.9 0.4)
+		(layers "F.Cu" "F.Paste" "F.Mask")
+		(roundrect_rratio 0.25)
+		(uuid "c9fa235c-daba-5846-afe8-e29f776203b1")
+	)
+	(pad "5" smd roundrect
+		(at -1 1.4)
+		(size 0.9 0.4)
+		(layers "F.Cu" "F.Paste" "F.Mask")
+		(roundrect_rratio 0.25)
+		(uuid "ddabd17d-59df-5679-9c9a-76849950c1f9")
+	)
+	(pad "6" smd roundrect
+		(at 1 1.4)
+		(size 0.9 0.4)
+		(layers "F.Cu" "F.Paste" "F.Mask")
+		(roundrect_rratio 0.25)
+		(uuid "bdcf5ae4-5148-5706-a485-4ee8a560a299")
+	)
+	(pad "7" smd roundrect
+		(at 1 0.7)
+		(size 0.9 0.4)
+		(layers "F.Cu" "F.Paste" "F.Mask")
+		(roundrect_rratio 0.25)
+		(uuid "69baba98-5a15-5244-b192-59b70166ecb0")
+	)
+	(pad "8" smd roundrect
+		(at 1 0)
+		(size 0.9 0.4)
+		(layers "F.Cu" "F.Paste" "F.Mask")
+		(roundrect_rratio 0.25)
+		(uuid "bec3f670-4b6f-54fb-9580-e5635d9f4e79")
+	)
+	(pad "9" smd roundrect
+		(at 1 -0.7)
+		(size 0.9 0.4)
+		(layers "F.Cu" "F.Paste" "F.Mask")
+		(roundrect_rratio 0.25)
+		(uuid "5aa36e11-aac0-5c4d-b124-effbd4fa055a")
+	)
+	(pad "10" smd roundrect
+		(at 1 -1.4)
+		(size 0.9 0.4)
+		(layers "F.Cu" "F.Paste" "F.Mask")
+		(roundrect_rratio 0.25)
+		(uuid "de456e9e-b231-5400-9861-952a00f37032")
+	)
+	(embedded_fonts no)
+)
