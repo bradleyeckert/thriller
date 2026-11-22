@@ -28,6 +28,8 @@ for exactly the role `thriller` gives the FPGA:
 | 7 | Ring-oscillator TRNG | To confirm; the system controller also offers a certified DRBG |
 | 8 | Enough logic | MPF100T class and up: ample |
 | 9 | QSPI and peripheral pins | General I/O |
+| 10 | Module placement held stable | Not assessed |
+| 11 | On-die monitor | **Partly.** The `PF_TVS` macro gives die temperature (−55 to 125 °C) and the VDD, VDD18 and VDD25 rails through a dedicated 4-channel ADC, with a temperature comparator in the system controller that raises an alarm on user thresholds; no external analog channels, so the 5 V early warning needs a supervisor IC |
 
 **Desirables met:** DPA-resistant configuration, on-die tamper detectors, a hardened PUF (which models the ASIC's key source directly: the key-source module becomes a read from sNVM), JTAG lockdown options.
 

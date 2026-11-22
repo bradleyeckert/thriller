@@ -15,6 +15,8 @@
 | 7 | Ring-oscillator TRNG | To confirm |
 | 8 | Enough logic | Ti60 is a 60K-logic-element class part; ample for the masked cores and the application |
 | 9 | QSPI and peripheral pins | General I/O. Security is unavailable with compressed bitstreams and on W64 packages |
+| 10 | Module placement held stable | Not assessed |
+| 11 | On-die monitor | **No.** The Ti60 data sheet lists no ADC, temperature sensor or voltage monitor (its hard blocks are SRAM, DSP, PLLs, an oscillator, HVIO/HSIO and SEU detection). Use the board-level substitutes: `PGOOD`, a 5 V supervisor, an I2C temperature sensor |
 
 ## How it would be used
 

@@ -16,6 +16,8 @@ against Lattice's *Advanced Configuration Security User Guide for Nexus Platform
 | 7 | Ring-oscillator TRNG | To confirm |
 | 8 | Enough logic | LIFCL-17 is a 17K-logic-cell part: too tight for three cores plus the masked cores. The LIFCL-40 is the realistic choice |
 | 9 | QSPI and peripheral pins | General I/O |
+| 10 | Module placement held stable | Not assessed |
+| 11 | On-die monitor | **Yes, with conditions.** The Nexus ADC (two 12-bit, 623 ksps ADCs; 16 dual-mode external pairs; internal VCC/VCCAUX/VCCIO sensing; a junction-temperature readout on ADC 1) exists on LIFCL-17 and LIFCL-40 but **not on LIFCL-33/33U**, and only in the −8/−9 speed grades of commercial/industrial parts (all automotive grades); channel availability varies by package (FPGA-TN-02129, table A.1) |
 
 ## Toolchain
 
