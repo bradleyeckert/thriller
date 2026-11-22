@@ -5,7 +5,7 @@ Sizes are proposals, to be confirmed against real bitstream, loader, supervisor 
 
 ## Assumptions
 
-- A 256 Mbit (32 MB) QSPI NOR flash, such as the MX25L25645G that LiteForth's `doc/hdl.md` uses for its prefetch estimates.
+- A 256 Mbit (32 MB) QSPI NOR flash: the **Winbond W25Q256JVEIQ** (WSON-8 8 × 6 mm, 3 V, 133 MHz, 4-byte addressing, erase and program suspend; `th_base`). It powers up in 3-byte address mode, which the FPGA's configuration engine uses, so both bitstream slots and the boot record sit in the first 16 MB; the XIP engine uses 4-byte read commands for everything above. 32 MB leaves room for both update slots and image backups.
 - 4 KB erase sectors and 64 KB erase blocks. Every region starts on a 64 KB boundary.
 - The FPGA configures itself from this flash in master SPI mode at power-up; afterwards the XIP engine owns the QSPI pins.
 - The flash holds only images and the boot record. Update packages are staged on the MicroSD card, except in UART recovery (see Staging).
