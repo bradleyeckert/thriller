@@ -7291,7 +7291,7 @@
 		(in_pos_files yes)
 		(dnp no)
 		(uuid "133c569b-5715-4e83-8314-6f06c8f7d535")
-		(property "Reference" "#PWR0118"
+		(property "Reference" "#PWR0203"
 			(at 74.93 44.45 0)
 			(hide yes)
 			(show_name no)
@@ -7351,7 +7351,7 @@
 		(instances
 			(project "thriller"
 				(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/f6c83907-71bb-54b9-bca2-dcd1c9a18fda"
-					(reference "#PWR0118")
+					(reference "#PWR0203")
 					(unit 1)
 				)
 			)
@@ -7368,7 +7368,7 @@
 		(in_pos_files yes)
 		(dnp no)
 		(uuid "1df0a5a7-9de0-54dd-9b23-3fdc6cc5d3fb")
-		(property "Reference" "#PWR"
+		(property "Reference" "#PWR0202"
 			(at 44.45 143.51 0)
 			(hide yes)
 			(show_name no)
@@ -7425,7 +7425,7 @@
 		(instances
 			(project "thriller"
 				(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/f6c83907-71bb-54b9-bca2-dcd1c9a18fda"
-					(reference "#PWR")
+					(reference "#PWR0202")
 					(unit 1)
 				)
 			)
@@ -7442,7 +7442,7 @@
 		(in_pos_files yes)
 		(dnp no)
 		(uuid "42b93b83-87c2-44d7-9b64-f6424cfe5e2b")
-		(property "Reference" "#PWR0124"
+		(property "Reference" "#PWR0206"
 			(at 157.48 143.51 0)
 			(hide yes)
 			(show_name no)
@@ -7499,7 +7499,7 @@
 		(instances
 			(project "thriller"
 				(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/f6c83907-71bb-54b9-bca2-dcd1c9a18fda"
-					(reference "#PWR0124")
+					(reference "#PWR0206")
 					(unit 1)
 				)
 			)
@@ -7516,7 +7516,7 @@
 		(in_pos_files yes)
 		(dnp no)
 		(uuid "616e72fb-0380-52e4-a953-9893072173bf")
-		(property "Reference" "#PWR"
+		(property "Reference" "#PWR0204"
 			(at 74.93 143.51 0)
 			(hide yes)
 			(show_name no)
@@ -7573,7 +7573,7 @@
 		(instances
 			(project "thriller"
 				(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/f6c83907-71bb-54b9-bca2-dcd1c9a18fda"
-					(reference "#PWR")
+					(reference "#PWR0204")
 					(unit 1)
 				)
 			)
@@ -7590,7 +7590,7 @@
 		(in_pos_files yes)
 		(dnp no)
 		(uuid "73866e00-f20c-48c1-8d00-5153857bfe58")
-		(property "Reference" "#PWR0117"
+		(property "Reference" "#PWR0201"
 			(at 44.45 44.45 0)
 			(hide yes)
 			(show_name no)
@@ -7650,7 +7650,7 @@
 		(instances
 			(project "thriller"
 				(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/f6c83907-71bb-54b9-bca2-dcd1c9a18fda"
-					(reference "#PWR0117")
+					(reference "#PWR0201")
 					(unit 1)
 				)
 			)
@@ -8333,7 +8333,7 @@
 		(in_pos_files yes)
 		(dnp no)
 		(uuid "e7e74e35-586b-4c74-a41e-6abf0b1902bd")
-		(property "Reference" "#PWR0119"
+		(property "Reference" "#PWR0205"
 			(at 127 143.51 0)
 			(hide yes)
 			(show_name no)
@@ -8390,7 +8390,7 @@
 		(instances
 			(project "thriller"
 				(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/f6c83907-71bb-54b9-bca2-dcd1c9a18fda"
-					(reference "#PWR0119")
+					(reference "#PWR0205")
 					(unit 1)
 				)
 			)
