@@ -1,7 +1,7 @@
 (kicad_sch
-	(version 20250114)
+	(version 20260306)
 	(generator "eeschema")
-	(generator_version "9.0")
+	(generator_version "10.0")
 	(uuid "02a4128e-5284-4df4-bd95-50d9619a72c4")
 	(paper "A4")
 	(title_block
@@ -35,11 +35,13 @@
 			(type solid)
 		)
 		(fill
-			(color 0 0 0 0.0000)
+			(color 0 0 0 0)
 		)
 		(uuid "33eda6da-34ec-54c6-aba0-63d9912705aa")
 		(property "Sheetname" "Ethernet PHY"
 			(at 120 88.98 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -49,6 +51,8 @@
 		)
 		(property "Sheetfile" "th_ext.kicad_sch"
 			(at 120 100.28 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -77,11 +81,13 @@
 			(type solid)
 		)
 		(fill
-			(color 0 0 0 0.0000)
+			(color 0 0 0 0)
 		)
 		(uuid "58405345-9681-4f24-98c2-a3fa690db3a4")
 		(property "Sheetname" "Power supplies, RTC, config"
 			(at 30 69.2884 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -91,6 +97,8 @@
 		)
 		(property "Sheetfile" "th_power.kicad_sch"
 			(at 30 80.5846 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -119,11 +127,13 @@
 			(type solid)
 		)
 		(fill
-			(color 0 0 0 0.0000)
+			(color 0 0 0 0)
 		)
 		(uuid "7c95428e-e923-4d38-91d5-bfe862deab42")
 		(property "Sheetname" "Flash. PSRAM"
 			(at 120 69.2884 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -133,6 +143,8 @@
 		)
 		(property "Sheetfile" "th_base.kicad_sch"
 			(at 120 80.5846 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -161,11 +173,13 @@
 			(type solid)
 		)
 		(fill
-			(color 0 0 0 0.0000)
+			(color 0 0 0 0)
 		)
 		(uuid "eb85ccc6-627b-46b1-b6d2-206fdf39b791")
 		(property "Sheetname" "FPGA banks"
 			(at 30 89.2884 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -175,6 +189,8 @@
 		)
 		(property "Sheetfile" "th_userA.kicad_sch"
 			(at 30 100.5846 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -203,11 +219,13 @@
 			(type solid)
 		)
 		(fill
-			(color 0 0 0 0.0000)
+			(color 0 0 0 0)
 		)
 		(uuid "f6c83907-71bb-54b9-bca2-dcd1c9a18fda")
 		(property "Sheetname" "Module connectors J1, J2"
 			(at 29.83 108.98 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -217,6 +235,8 @@
 		)
 		(property "Sheetfile" "th_conn.kicad_sch"
 			(at 29.83 120.28 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
