@@ -27,6 +27,7 @@ From the *Logos2 Family FPGAs Device Datasheet*:
 | 7 | Ring-oscillator TRNG | To confirm |
 | 8 | Enough logic | A 50K-class part: ample room for the three cores, the security blocks and the application. LUT size and block RAM to confirm |
 | 9 | QSPI and peripheral pins | General I/O; 324 balls, 210 user I/O |
+| 11 | On-die monitor | **Yes:** a 12-bit ADC hard block with external channels, internal rails and a temperature-sensing diode (`VCCADC`, `VREFADC`, `TSD`, `ADC_5V_MON` on the configuration unit of the 324 symbol) |
 | 10 | Module placement held stable | **Partly:** hierarchy isolation, a locked region and fixed pins in the physical constraints editor; no partition flow, so netlist locking and the build-to-build comparison are scripts to write (Keeping the module's partition stable, below) |
 
 ## Against the Ti60 fallback
