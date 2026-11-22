@@ -1,4 +1,4 @@
 (fp_lib_table
   (version 7)
-  (lib (name "thriller")(type "KiCad")(uri "${KIPRJMOD}/thriller.pretty")(options "")(descr "thriller module footprints"))
+  (lib (name "thriller")(type "KiCad")(uri "${KIPRJMOD}/../../../../hw/KiCAD_Lib/thriller.pretty")(options "")(descr "thriller module footprints"))
 )
