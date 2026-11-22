@@ -3,7 +3,7 @@
 	(generator "pcbnew")
 	(generator_version "9.0")
 	(layer "F.Cu")
-	(descr "Seiko Epson CE package (RX8130CE, RX8900CE, RX8804CE): 10 terminals on the two 3.2 mm sides, 0.7 mm pitch, body 3.2 x 2.5 x 1.0 mm max; land pattern per ETM50E figure 7 Type 1 (0.4 x 0.9 mm pads, 1.1 mm between the rows). LCSC package name SMD-10P,3.2x2.5mm. The crystal inspection pads on the short sides are not copper here: keep traces and vias off them."
+	(descr "Seiko Epson CE package (RX8130CE, RX8900CE, RX8804CE): 10 terminals on the two 3.2 mm sides, 0.7 mm pitch, body 3.2 x 2.5 x 1.0 mm max; land pattern per ETM50E figure 7 Type 1 (0.4 x 0.9 mm pads, 1.1 mm between the rows). LCSC package name SMD-10P,3.2x2.5mm. The crystal inspection pads on the short sides are not copper here: keep traces and vias off them.")
 	(tags "RTC Epson CE RX8130CE SMD-10P 3.2x2.5")
 	(property "Reference" "REF**"
 		(at 0 -2.6 0)
