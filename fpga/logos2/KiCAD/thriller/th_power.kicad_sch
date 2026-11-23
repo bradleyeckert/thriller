@@ -6097,6 +6097,363 @@
 			)
 			(embedded_fonts no)
 		)
+		(symbol "Transistor_FET:Q_Dual_NMOS_G1S2G2D2S1D1"
+			(pin_names
+				(offset 0)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "Q"
+				(at 5.08 1.905 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left)
+				)
+			)
+			(property "Value" "Q_Dual_NMOS_G1S2G2D2S1D1"
+				(at 5.08 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left)
+				)
+			)
+			(property "Footprint" ""
+				(at 5.08 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 5.08 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Dual NMOS transistor, 6 pin package"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "transistor NMOS N-MOS N-MOSFET"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "Q_Dual_NMOS_G1S2G2D2S1D1_0_1"
+				(polyline
+					(pts
+						(xy 0.254 1.905) (xy 0.254 -1.905)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0.254 0) (xy -2.54 0)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0.762 2.286) (xy 0.762 1.27)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0.762 0.508) (xy 0.762 -0.508)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0.762 -1.27) (xy 0.762 -2.286)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0.762 -1.778) (xy 3.302 -1.778) (xy 3.302 1.778) (xy 0.762 1.778)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 1.016 0) (xy 2.032 0.381) (xy 2.032 -0.381) (xy 1.016 0)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type outline)
+					)
+				)
+				(circle
+					(center 1.651 0)
+					(radius 2.794)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 2.54 2.54) (xy 2.54 1.778)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(circle
+					(center 2.54 1.778)
+					(radius 0.254)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type outline)
+					)
+				)
+				(circle
+					(center 2.54 -1.778)
+					(radius 0.254)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type outline)
+					)
+				)
+				(polyline
+					(pts
+						(xy 2.54 -2.54) (xy 2.54 0) (xy 0.762 0)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 2.921 0.381) (xy 3.683 0.381)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 3.302 0.381) (xy 2.921 -0.254) (xy 3.683 -0.254) (xy 3.302 0.381)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "Q_Dual_NMOS_G1S2G2D2S1D1_1_1"
+				(pin input line
+					(at -5.08 0 0)
+					(length 2.54)
+					(name "G"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 2.54 -5.08 90)
+					(length 2.54)
+					(name "S"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "5"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 2.54 5.08 270)
+					(length 2.54)
+					(name "D"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "6"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(symbol "Q_Dual_NMOS_G1S2G2D2S1D1_2_1"
+				(pin passive line
+					(at 2.54 -5.08 90)
+					(length 2.54)
+					(name "S"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin input line
+					(at -5.08 0 0)
+					(length 2.54)
+					(name "G"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "3"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 2.54 5.08 270)
+					(length 2.54)
+					(name "D"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "4"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
 		(symbol "thriller:+1V0"
 			(power global)
 			(pin_numbers
@@ -7564,232 +7921,6 @@
 			)
 			(embedded_fonts no)
 		)
-		(symbol "thriller:Q_NMOS_GSD"
-			(pin_names
-				(offset 0)
-				(hide yes)
-			)
-			(exclude_from_sim no)
-			(in_bom yes)
-			(on_board yes)
-			(in_pos_files yes)
-			(duplicate_pin_numbers_are_jumpers no)
-			(property "Reference" "Q"
-				(at -2.54 4.572 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "Value" "Q_NMOS_GSD"
-				(at -2.54 -4.572 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "Footprint" ""
-				(at 0 0 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "Datasheet" ""
-				(at 0 0 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "Description" "N-channel MOSFET, SOT-23 (1=G 2=S 3=D), drain on top"
-				(at 0 0 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(symbol "Q_NMOS_GSD_0_1"
-				(polyline
-					(pts
-						(xy -2.54 0) (xy -1.27 0)
-					)
-					(stroke
-						(width 0.254)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy -1.27 1.905) (xy -1.27 -1.905)
-					)
-					(stroke
-						(width 0.254)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy -0.635 2.032) (xy -0.635 -2.032)
-					)
-					(stroke
-						(width 0.4)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy -0.635 1.27) (xy 2.54 1.27) (xy 2.54 2.54)
-					)
-					(stroke
-						(width 0.254)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy -0.635 -1.27) (xy 2.54 -1.27) (xy 2.54 -2.54)
-					)
-					(stroke
-						(width 0.254)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy -0.508 0) (xy 0.762 0.5715) (xy 0.762 -0.5715) (xy -0.508 0)
-					)
-					(stroke
-						(width 0.254)
-						(type default)
-					)
-					(fill
-						(type outline)
-					)
-				)
-				(polyline
-					(pts
-						(xy 0.762 0) (xy 2.54 0) (xy 2.54 -1.27)
-					)
-					(stroke
-						(width 0.254)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(circle
-					(center 0.762 0)
-					(radius 3.302)
-					(stroke
-						(width 0.2)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(text "N"
-					(at 3.048 2.032 0)
-					(effects
-						(font
-							(size 0.9 0.9)
-						)
-					)
-				)
-			)
-			(symbol "Q_NMOS_GSD_1_1"
-				(pin passive line
-					(at -5.08 0 0)
-					(length 2.54)
-					(name "G"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "1"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin passive line
-					(at 2.54 -5.08 90)
-					(length 2.54)
-					(name "S"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "2"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin passive line
-					(at 2.54 5.08 270)
-					(length 2.54)
-					(name "D"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "3"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-			)
-			(embedded_fonts no)
-		)
 		(symbol "thriller:Q_PMOS_GSD"
 			(pin_names
 				(offset 0)
@@ -8981,6 +9112,12 @@
 		(uuid "07571bb9-6e63-58d3-a373-88e10eac2762")
 	)
 	(junction
+		(at 241.3 73.66)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "11988fda-edc7-4ca1-bd4e-7e4fcbd449a7")
+	)
+	(junction
 		(at 36.83 60.96)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -9371,6 +9508,12 @@
 		(uuid "89f56ba7-efde-56d3-b1fd-b8494883e393")
 	)
 	(junction
+		(at 241.3 71.12)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "919704b8-ce32-4a0f-9c59-fbab70f034d4")
+	)
+	(junction
 		(at 90.17 104.14)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -9447,6 +9590,12 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "b41a762c-b08d-4df9-aebd-2feeda97c66a")
+	)
+	(junction
+		(at 245.11 63.5)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "b57bd150-2258-4697-ae4f-f94dd50ad86f")
 	)
 	(junction
 		(at 337.82 101.6)
@@ -9683,18 +9832,6 @@
 		(uuid "fd22773c-f1d8-4359-8573-5c17021ab1f6")
 	)
 	(no_connect
-		(at 236.22 66.04)
-		(uuid "04271dd0-ea4d-49ac-a5fd-d0d275e271ed")
-	)
-	(no_connect
-		(at 236.22 71.12)
-		(uuid "0b32e913-96d8-4e78-9fe3-0e39ccbefaee")
-	)
-	(no_connect
-		(at 236.22 73.66)
-		(uuid "1d08dcc1-f081-4cf0-aef5-d5788d37f334")
-	)
-	(no_connect
 		(at 172.72 166.37)
 		(uuid "2aba920e-6603-484b-9c61-b75a129ff5b5")
 	)
@@ -9702,9 +9839,15 @@
 		(at 172.72 163.83)
 		(uuid "4e45d978-a7a7-4324-b4cf-09cff8e1ac42")
 	)
-	(no_connect
-		(at 236.22 63.5)
-		(uuid "e9b7477f-90a8-40d7-868a-5653902a132d")
+	(wire
+		(pts
+			(xy 248.92 66.04) (xy 248.92 63.5)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "003577d3-99e7-4e1f-bcea-64a56e66985a")
 	)
 	(wire
 		(pts
@@ -10148,6 +10291,16 @@
 	)
 	(wire
 		(pts
+			(xy 69.85 228.6) (xy 67.31 228.6)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "2988f39a-d11d-43a4-bc71-2a41d2f07d86")
+	)
+	(wire
+		(pts
 			(xy 342.9 63.5) (xy 337.82 63.5)
 		)
 		(stroke
@@ -10215,6 +10368,16 @@
 			(type default)
 		)
 		(uuid "2c07a8b6-538d-46db-9183-d9e91cc4eaf8")
+	)
+	(wire
+		(pts
+			(xy 241.3 66.04) (xy 241.3 71.12)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "2c21518a-6ecd-458b-9bef-c5e082c6a9de")
 	)
 	(wire
 		(pts
@@ -10315,6 +10478,16 @@
 			(type default)
 		)
 		(uuid "30aea8a7-4f0f-4548-be1b-b92c675b98e3")
+	)
+	(wire
+		(pts
+			(xy 248.92 63.5) (xy 245.11 63.5)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "318ae408-1fce-488b-99a5-b070100a851a")
 	)
 	(wire
 		(pts
@@ -10565,6 +10738,16 @@
 			(type default)
 		)
 		(uuid "3ff24160-9a27-44e3-a6f6-5cc8e50d4bab")
+	)
+	(wire
+		(pts
+			(xy 236.22 71.12) (xy 241.3 71.12)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "40bd58e3-1062-425f-9a81-06e6b16aa763")
 	)
 	(wire
 		(pts
@@ -11028,6 +11211,16 @@
 	)
 	(wire
 		(pts
+			(xy 241.3 71.12) (xy 241.3 73.66)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "66f35f9b-8d40-44dc-bdd1-b22cdca942cd")
+	)
+	(wire
+		(pts
 			(xy 171.45 217.17) (xy 171.45 218.44)
 		)
 		(stroke
@@ -11065,6 +11258,16 @@
 			(type default)
 		)
 		(uuid "6a1a676c-06de-4c73-abdd-051c6afd6dce")
+	)
+	(wire
+		(pts
+			(xy 236.22 66.04) (xy 241.3 66.04)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "6a2a0613-9a6d-4023-a1d1-743bbc12ff45")
 	)
 	(wire
 		(pts
@@ -11598,6 +11801,16 @@
 	)
 	(wire
 		(pts
+			(xy 245.11 63.5) (xy 245.11 83.82)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "8ea1d723-b3b4-4526-a4b9-dcf0d961b06b")
+	)
+	(wire
+		(pts
 			(xy 388.62 53.34) (xy 393.7 53.34)
 		)
 		(stroke
@@ -11978,13 +12191,23 @@
 	)
 	(wire
 		(pts
-			(xy 69.85 228.6) (xy 67.31 228.6)
+			(xy 236.22 63.5) (xy 245.11 63.5)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "b8f572bf-0c72-4f9e-8a47-ed515d9dc31a")
+		(uuid "b9e13595-6f34-4112-a78f-026bb42aa809")
+	)
+	(wire
+		(pts
+			(xy 236.22 73.66) (xy 241.3 73.66)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "ba280e18-6caf-49e2-870b-632343e7697c")
 	)
 	(wire
 		(pts
@@ -14122,99 +14345,6 @@
 		)
 	)
 	(symbol
-		(lib_id "thriller:Q_NMOS_GSD")
-		(at 74.93 209.55 0)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(uuid "025765a3-886f-54fb-a698-6b31d7a70367")
-		(property "Reference" "Q4"
-			(at 80.7974 208.28 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "BSS138"
-			(at 82.8802 210.82 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "Package_TO_SOT_SMD:SOT-23"
-			(at 74.93 209.55 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 74.93 209.55 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "N-MOSFET 50 V 0.2 A, Vgs(th) <= 1.5 V, SOT-23"
-			(at 74.93 209.55 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "MPN" "BSS138"
-			(at 74.93 209.55 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "a7058051-f8e1-59d5-a57f-73374bb59269")
-		)
-		(pin "3"
-			(uuid "2095699c-99aa-5575-affe-eaeb798b822e")
-		)
-		(pin "2"
-			(uuid "79cf83c6-461a-5d60-a96e-aefb7b2e8b87")
-		)
-		(instances
-			(project "thriller"
-				(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/58405345-9681-4f24-98c2-a3fa690db3a4"
-					(reference "Q4")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "thriller:GND")
 		(at 96.52 77.47 0)
 		(unit 1)
@@ -14383,7 +14513,7 @@
 	)
 	(symbol
 		(lib_id "thriller:GND")
-		(at 344.4 127 0)
+		(at 351.79 127 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -14393,7 +14523,7 @@
 		(dnp no)
 		(uuid "070c0b96-f300-42d2-b27a-63ad6d1381aa")
 		(property "Reference" "#PWR0115"
-			(at 344.4 124.46 0)
+			(at 351.79 124.46 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -14404,7 +14534,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 344.4 130.81 0)
+			(at 351.79 130.81 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -14414,7 +14544,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 344.4 127 0)
+			(at 351.79 127 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -14424,7 +14554,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 344.4 127 0)
+			(at 351.79 127 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -14434,7 +14564,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 344.4 127 0)
+			(at 351.79 127 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -14949,6 +15079,95 @@
 			(project "thriller"
 				(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/58405345-9681-4f24-98c2-a3fa690db3a4"
 					(reference "#PWR061")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "thriller:C")
+		(at 245.11 87.63 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "10df3c1c-14c3-4fed-aa34-f6208f1f5d25")
+		(property "Reference" "C85"
+			(at 242.316 85.598 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "470n"
+			(at 242.316 89.662 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Capacitor_SMD:C_0402_1005Metric"
+			(at 245.11 87.63 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 245.11 87.63 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Capacitor 470 nF 10 V X5R/X7R 0402 (UG040012 Table 2-6)"
+			(at 245.11 87.63 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" ""
+			(at 245.11 87.63 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "b42079ed-3900-4f6d-9924-0990c3a00936")
+		)
+		(pin "2"
+			(uuid "6515cbb7-c948-41da-a997-f2c116fa1094")
+		)
+		(instances
+			(project "thriller"
+				(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/58405345-9681-4f24-98c2-a3fa690db3a4"
+					(reference "C85")
 					(unit 1)
 				)
 			)
@@ -17587,7 +17806,7 @@
 	)
 	(symbol
 		(lib_id "thriller:GND")
-		(at 308.4 127 0)
+		(at 307.34 127 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -17597,7 +17816,7 @@
 		(dnp no)
 		(uuid "16d5c7e2-1cd1-4f7b-93a9-d8593662a372")
 		(property "Reference" "#PWR0106"
-			(at 308.4 124.46 0)
+			(at 307.34 124.46 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -17608,7 +17827,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 308.4 130.81 0)
+			(at 307.34 130.81 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -17618,7 +17837,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 308.4 127 0)
+			(at 307.34 127 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -17628,7 +17847,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 308.4 127 0)
+			(at 307.34 127 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -17638,7 +17857,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 308.4 127 0)
+			(at 307.34 127 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -17979,7 +18198,7 @@
 	)
 	(symbol
 		(lib_id "thriller:C")
-		(at 320.4 123.19 0)
+		(at 334.01 123.19 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -17989,7 +18208,7 @@
 		(dnp no)
 		(uuid "17dbc95c-f6ee-5911-896e-34cdf1549fe7")
 		(property "Reference" "C46"
-			(at 317.606 121.158 0)
+			(at 331.216 121.158 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -17999,7 +18218,7 @@
 			)
 		)
 		(property "Value" "4u7"
-			(at 317.606 125.222 0)
+			(at 331.216 125.222 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -18009,7 +18228,7 @@
 			)
 		)
 		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
-			(at 320.4 123.19 0)
+			(at 334.01 123.19 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -18020,7 +18239,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 320.4 123.19 0)
+			(at 334.01 123.19 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -18030,7 +18249,7 @@
 			)
 		)
 		(property "Description" "Capacitor 4.7 uF 10 V X5R 0603"
-			(at 320.4 123.19 0)
+			(at 334.01 123.19 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -18041,7 +18260,7 @@
 			)
 		)
 		(property "LCSC" "C19666"
-			(at 320.4 123.19 0)
+			(at 334.01 123.19 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -18704,6 +18923,184 @@
 		)
 	)
 	(symbol
+		(lib_id "thriller:GND")
+		(at 241.3 73.66 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom no)
+		(on_board no)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "24e357e4-2d63-448a-b9d1-41fd833b9ac1")
+		(property "Reference" "#PWR0211"
+			(at 241.3 71.12 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND"
+			(at 241.3 77.724 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 241.3 73.66 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 241.3 73.66 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 241.3 73.66 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "220cc462-89cb-4d05-a31b-80525598ade1")
+		)
+		(instances
+			(project "thriller"
+				(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/58405345-9681-4f24-98c2-a3fa690db3a4"
+					(reference "#PWR0211")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Transistor_FET:Q_Dual_NMOS_G1S2G2D2S1D1")
+		(at 31.75 209.55 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "26478493-ced3-4108-a2cf-44fbaf6a1266")
+		(property "Reference" "Q1"
+			(at 37.084 208.28 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "2N7002DW"
+			(at 37.084 210.82 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Package_TO_SOT_SMD:SOT-363_SC-70-6"
+			(at 36.83 209.55 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 36.83 209.55 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Dual NMOS transistor, 6 pin package"
+			(at 31.75 209.55 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "2N7002DW"
+			(at 31.75 209.55 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "4"
+			(uuid "96220f9d-e4c4-4c10-80f2-a27d661ba219")
+		)
+		(pin "5"
+			(uuid "c3ff070c-0c60-4dea-83e1-9f034e9c8b7d")
+		)
+		(pin "3"
+			(uuid "1b328b9d-11aa-4d7d-9c81-0ec94fbad342")
+		)
+		(pin "6"
+			(uuid "6251a45d-f1ef-449b-b56f-cba11cf9d978")
+		)
+		(pin "1"
+			(uuid "0cb77828-086d-4687-a705-b6c0f2de1a30")
+		)
+		(pin "2"
+			(uuid "0995ac00-d51b-4d75-ba0a-184cbeebfa0f")
+		)
+		(instances
+			(project "thriller"
+				(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/58405345-9681-4f24-98c2-a3fa690db3a4"
+					(reference "Q1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "thriller:R")
 		(at 83.82 250.19 90)
 		(unit 1)
@@ -18962,7 +19359,7 @@
 	)
 	(symbol
 		(lib_id "thriller:+1V8")
-		(at 368.4 119.38 0)
+		(at 369.57 119.38 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -18972,7 +19369,7 @@
 		(dnp no)
 		(uuid "2c1a437a-6d80-4ed7-babd-c98b12825cd8")
 		(property "Reference" "#PWR0118"
-			(at 368.4 116.84 0)
+			(at 369.57 116.84 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -18983,7 +19380,7 @@
 			)
 		)
 		(property "Value" "+1V8"
-			(at 368.43 115.57 0)
+			(at 369.6 115.57 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -18993,7 +19390,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 368.4 119.38 0)
+			(at 369.57 119.38 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -19003,7 +19400,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 368.4 119.38 0)
+			(at 369.57 119.38 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -19013,7 +19410,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 368.4 119.38 0)
+			(at 369.57 119.38 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -19584,7 +19981,7 @@
 	)
 	(symbol
 		(lib_id "thriller:C")
-		(at 392.4 123.19 0)
+		(at 387.85 123.19 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -19594,7 +19991,7 @@
 		(dnp no)
 		(uuid "3847f513-bb0c-52ad-96a9-dad6b7bf04ee")
 		(property "Reference" "C52"
-			(at 389.606 121.158 0)
+			(at 385.056 121.158 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -19604,7 +20001,7 @@
 			)
 		)
 		(property "Value" "100n"
-			(at 389.606 125.222 0)
+			(at 385.056 125.222 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -19614,7 +20011,7 @@
 			)
 		)
 		(property "Footprint" "Capacitor_SMD:C_0402_1005Metric"
-			(at 392.4 123.19 0)
+			(at 387.85 123.19 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -19625,7 +20022,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 392.4 123.19 0)
+			(at 387.85 123.19 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -19635,7 +20032,7 @@
 			)
 		)
 		(property "Description" "Capacitor 100 nF 16 V X7R 0402"
-			(at 392.4 123.19 0)
+			(at 387.85 123.19 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -19646,7 +20043,7 @@
 			)
 		)
 		(property "LCSC" "C1525"
-			(at 392.4 123.19 0)
+			(at 387.85 123.19 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -20000,6 +20397,80 @@
 		)
 	)
 	(symbol
+		(lib_id "thriller:GND")
+		(at 245.11 91.44 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom no)
+		(on_board no)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "3d4db927-202c-4eb3-9507-e405270a4b2b")
+		(property "Reference" "#PWR0212"
+			(at 245.11 88.9 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND"
+			(at 245.11 95.25 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 245.11 91.44 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 245.11 91.44 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 245.11 91.44 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "130132bf-43d5-48e0-9553-576a65f4ee20")
+		)
+		(instances
+			(project "thriller"
+				(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/58405345-9681-4f24-98c2-a3fa690db3a4"
+					(reference "#PWR0212")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "thriller:R")
 		(at 40.64 255.27 90)
 		(unit 1)
@@ -20181,7 +20652,7 @@
 	)
 	(symbol
 		(lib_id "thriller:GND")
-		(at 356.4 127 0)
+		(at 360.68 127 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -20191,7 +20662,7 @@
 		(dnp no)
 		(uuid "3f202e07-6c01-4c15-9ea0-fd5863f28e72")
 		(property "Reference" "#PWR0117"
-			(at 356.4 124.46 0)
+			(at 360.68 124.46 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -20202,7 +20673,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 356.4 130.81 0)
+			(at 360.68 130.81 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -20212,7 +20683,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 356.4 127 0)
+			(at 360.68 127 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -20222,7 +20693,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 356.4 127 0)
+			(at 360.68 127 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -20232,7 +20703,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 356.4 127 0)
+			(at 360.68 127 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -20753,7 +21224,7 @@
 	)
 	(symbol
 		(lib_id "thriller:C")
-		(at 368.4 123.19 0)
+		(at 369.57 123.19 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -20763,7 +21234,7 @@
 		(dnp no)
 		(uuid "42751fc3-4e6c-54c2-97b6-06809bb4f9ba")
 		(property "Reference" "C50"
-			(at 365.606 121.158 0)
+			(at 366.776 121.158 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -20773,7 +21244,7 @@
 			)
 		)
 		(property "Value" "100n"
-			(at 365.606 125.222 0)
+			(at 366.776 125.222 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -20783,7 +21254,7 @@
 			)
 		)
 		(property "Footprint" "Capacitor_SMD:C_0402_1005Metric"
-			(at 368.4 123.19 0)
+			(at 369.57 123.19 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -20794,7 +21265,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 368.4 123.19 0)
+			(at 369.57 123.19 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -20804,7 +21275,7 @@
 			)
 		)
 		(property "Description" "Capacitor 100 nF 16 V X7R 0402"
-			(at 368.4 123.19 0)
+			(at 369.57 123.19 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -20815,7 +21286,7 @@
 			)
 		)
 		(property "LCSC" "C1525"
-			(at 368.4 123.19 0)
+			(at 369.57 123.19 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -20912,83 +21383,6 @@
 			(project "thriller"
 				(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/58405345-9681-4f24-98c2-a3fa690db3a4"
 					(reference "#PWR05")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "thriller:+3V3")
-		(at 67.31 228.6 90)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom no)
-		(on_board no)
-		(in_pos_files yes)
-		(dnp no)
-		(uuid "43b0efb8-af95-417f-847e-a906b2c89f28")
-		(property "Reference" "#PWR025"
-			(at 67.31 228.6 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "+3V3"
-			(at 63.246 228.854 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" ""
-			(at 67.31 228.6 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 67.31 228.6 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Power symbol, global net +3V3"
-			(at 67.31 228.6 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "0aba2e13-09a2-4780-9534-0cc33b4a02c6")
-		)
-		(instances
-			(project "thriller"
-				(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/58405345-9681-4f24-98c2-a3fa690db3a4"
-					(reference "#PWR025")
 					(unit 1)
 				)
 			)
@@ -21317,7 +21711,7 @@
 	)
 	(symbol
 		(lib_id "thriller:C")
-		(at 332.4 123.19 0)
+		(at 342.9 123.19 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -21327,7 +21721,7 @@
 		(dnp no)
 		(uuid "4795be43-69bf-5849-8aa3-309cb53db7a4")
 		(property "Reference" "C47"
-			(at 329.606 121.158 0)
+			(at 340.106 121.158 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -21337,7 +21731,7 @@
 			)
 		)
 		(property "Value" "4u7"
-			(at 329.606 125.222 0)
+			(at 340.106 125.222 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -21347,7 +21741,7 @@
 			)
 		)
 		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
-			(at 332.4 123.19 0)
+			(at 342.9 123.19 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -21358,7 +21752,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 332.4 123.19 0)
+			(at 342.9 123.19 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -21368,7 +21762,7 @@
 			)
 		)
 		(property "Description" "Capacitor 4.7 uF 10 V X5R 0603"
-			(at 332.4 123.19 0)
+			(at 342.9 123.19 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -21379,7 +21773,7 @@
 			)
 		)
 		(property "LCSC" "C19666"
-			(at 332.4 123.19 0)
+			(at 342.9 123.19 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -22472,7 +22866,7 @@
 	)
 	(symbol
 		(lib_id "thriller:+1V8")
-		(at 320.4 119.38 0)
+		(at 334.01 119.38 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -22482,7 +22876,7 @@
 		(dnp no)
 		(uuid "4a345a44-7a30-45ca-98d2-46e4c876de62")
 		(property "Reference" "#PWR0107"
-			(at 320.4 116.84 0)
+			(at 334.01 116.84 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -22493,7 +22887,7 @@
 			)
 		)
 		(property "Value" "+1V8"
-			(at 320.43 115.57 0)
+			(at 334.04 115.57 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -22503,7 +22897,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 320.4 119.38 0)
+			(at 334.01 119.38 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -22513,7 +22907,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 320.4 119.38 0)
+			(at 334.01 119.38 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -22523,7 +22917,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 320.4 119.38 0)
+			(at 334.01 119.38 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -22803,7 +23197,7 @@
 	)
 	(symbol
 		(lib_id "thriller:GND")
-		(at 380.4 127 0)
+		(at 378.46 127 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -22813,7 +23207,7 @@
 		(dnp no)
 		(uuid "51acc5af-8622-4cfc-93a2-cf604766ae5f")
 		(property "Reference" "#PWR0121"
-			(at 380.4 124.46 0)
+			(at 378.46 124.46 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -22824,7 +23218,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 380.4 130.81 0)
+			(at 378.46 130.81 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -22834,7 +23228,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 380.4 127 0)
+			(at 378.46 127 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -22844,7 +23238,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 380.4 127 0)
+			(at 378.46 127 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -22854,7 +23248,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 380.4 127 0)
+			(at 378.46 127 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -23798,7 +24192,7 @@
 	)
 	(symbol
 		(lib_id "thriller:+1V8")
-		(at 392.4 119.38 0)
+		(at 387.85 119.38 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -23808,7 +24202,7 @@
 		(dnp no)
 		(uuid "5d09dd27-33f8-46a8-a81d-e65702024d79")
 		(property "Reference" "#PWR0122"
-			(at 392.4 116.84 0)
+			(at 387.85 116.84 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -23819,7 +24213,7 @@
 			)
 		)
 		(property "Value" "+1V8"
-			(at 392.43 115.57 0)
+			(at 387.88 115.57 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -23829,7 +24223,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 392.4 119.38 0)
+			(at 387.85 119.38 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -23839,7 +24233,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 392.4 119.38 0)
+			(at 387.85 119.38 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -23849,7 +24243,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 392.4 119.38 0)
+			(at 387.85 119.38 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -23945,38 +24339,40 @@
 		)
 	)
 	(symbol
-		(lib_id "thriller:Q_NMOS_GSD")
-		(at 31.75 209.55 0)
-		(unit 1)
+		(lib_id "Transistor_FET:Q_Dual_NMOS_G1S2G2D2S1D1")
+		(at 74.93 209.55 0)
+		(unit 2)
 		(body_style 1)
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "600c6257-c71b-52ea-9430-02dbaedd6817")
+		(uuid "60733708-a2a1-4375-a937-fcf358bdb77a")
 		(property "Reference" "Q1"
-			(at 37.6174 208.28 0)
+			(at 80.264 208.28 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
+				(justify left)
 			)
 		)
-		(property "Value" "BSS138"
-			(at 39.7002 210.82 0)
+		(property "Value" "2N7002DW"
+			(at 80.264 210.82 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
+				(justify left)
 			)
 		)
-		(property "Footprint" "Package_TO_SOT_SMD:SOT-23"
-			(at 31.75 209.55 0)
+		(property "Footprint" "Package_TO_SOT_SMD:SOT-363_SC-70-6"
+			(at 80.01 209.55 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -23987,7 +24383,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 31.75 209.55 0)
+			(at 80.01 209.55 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -23997,8 +24393,8 @@
 				)
 			)
 		)
-		(property "Description" "N-MOSFET 50 V 0.2 A, Vgs(th) <= 1.5 V, SOT-23"
-			(at 31.75 209.55 0)
+		(property "Description" "Dual NMOS transistor, 6 pin package"
+			(at 74.93 209.55 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -24008,8 +24404,8 @@
 				)
 			)
 		)
-		(property "MPN" "BSS138"
-			(at 31.75 209.55 0)
+		(property "MPN" "2N7002DW"
+			(at 74.93 209.55 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -24019,27 +24415,36 @@
 				)
 			)
 		)
-		(pin "1"
-			(uuid "90d5f2c9-85a2-5c1c-93a8-2e546d7bfe2b")
+		(pin "4"
+			(uuid "96220f9d-e4c4-4c10-80f2-a27d661ba21a")
+		)
+		(pin "5"
+			(uuid "c3ff070c-0c60-4dea-83e1-9f034e9c8b7e")
 		)
 		(pin "3"
-			(uuid "0c542cfa-d225-5b47-9a7a-3ad42de60763")
+			(uuid "1b328b9d-11aa-4d7d-9c81-0ec94fbad343")
+		)
+		(pin "6"
+			(uuid "6251a45d-f1ef-449b-b56f-cba11cf9d979")
+		)
+		(pin "1"
+			(uuid "0cb77828-086d-4687-a705-b6c0f2de1a31")
 		)
 		(pin "2"
-			(uuid "226a44b1-89b3-52ce-bca6-68a888c6971c")
+			(uuid "0995ac00-d51b-4d75-ba0a-184cbeebfa10")
 		)
 		(instances
 			(project "thriller"
 				(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/58405345-9681-4f24-98c2-a3fa690db3a4"
 					(reference "Q1")
-					(unit 1)
+					(unit 2)
 				)
 			)
 		)
 	)
 	(symbol
 		(lib_id "thriller:+1V0")
-		(at 308.4 119.38 0)
+		(at 307.34 119.38 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -24049,7 +24454,7 @@
 		(dnp no)
 		(uuid "6095b324-1b2b-4427-856a-bef0ea98ccc5")
 		(property "Reference" "#PWR0105"
-			(at 308.4 116.84 0)
+			(at 307.34 116.84 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -24060,7 +24465,7 @@
 			)
 		)
 		(property "Value" "+1V0"
-			(at 308.43 115.57 0)
+			(at 307.37 115.57 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -24070,7 +24475,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 308.4 119.38 0)
+			(at 307.34 119.38 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -24080,7 +24485,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 308.4 119.38 0)
+			(at 307.34 119.38 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -24090,7 +24495,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 308.4 119.38 0)
+			(at 307.34 119.38 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -24932,99 +25337,6 @@
 		)
 	)
 	(symbol
-		(lib_id "thriller:Q_NMOS_GSD")
-		(at 74.93 228.6 0)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(uuid "6acc97c8-82a1-5da1-9998-5952fce00046")
-		(property "Reference" "Q5"
-			(at 81.3181 227.33 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "BSS138"
-			(at 82.8802 229.87 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "Package_TO_SOT_SMD:SOT-23"
-			(at 74.93 228.6 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 74.93 228.6 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "N-MOSFET 50 V 0.2 A, Vgs(th) <= 1.5 V, SOT-23"
-			(at 74.93 228.6 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "MPN" "BSS138"
-			(at 74.93 228.6 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "1d4b0c38-06c1-5e6f-a16a-104df151f663")
-		)
-		(pin "3"
-			(uuid "52d3ee74-abbe-529e-9119-4c4ac400b8f5")
-		)
-		(pin "2"
-			(uuid "91702a35-dea6-5b15-ac49-e16cfaf5aee9")
-		)
-		(instances
-			(project "thriller"
-				(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/58405345-9681-4f24-98c2-a3fa690db3a4"
-					(reference "Q5")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "thriller:GND")
 		(at 236.4 127 0)
 		(unit 1)
@@ -25100,7 +25412,7 @@
 	)
 	(symbol
 		(lib_id "thriller:+1V8")
-		(at 380.4 119.38 0)
+		(at 378.46 119.38 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -25110,7 +25422,7 @@
 		(dnp no)
 		(uuid "6b8a7ff4-545a-41eb-a91e-85b67e809c40")
 		(property "Reference" "#PWR0120"
-			(at 380.4 116.84 0)
+			(at 378.46 116.84 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -25121,7 +25433,7 @@
 			)
 		)
 		(property "Value" "+1V8"
-			(at 380.43 115.57 0)
+			(at 378.49 115.57 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -25131,7 +25443,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 380.4 119.38 0)
+			(at 378.46 119.38 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -25141,7 +25453,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 380.4 119.38 0)
+			(at 378.46 119.38 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -25151,7 +25463,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 380.4 119.38 0)
+			(at 378.46 119.38 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -25913,7 +26225,7 @@
 	)
 	(symbol
 		(lib_id "thriller:GND")
-		(at 320.4 127 0)
+		(at 334.01 127 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -25923,7 +26235,7 @@
 		(dnp no)
 		(uuid "7b44dde2-8655-444d-998d-5d7f25f1e0ac")
 		(property "Reference" "#PWR0108"
-			(at 320.4 124.46 0)
+			(at 334.01 124.46 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -25934,7 +26246,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 320.4 130.81 0)
+			(at 334.01 130.81 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -25944,7 +26256,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 320.4 127 0)
+			(at 334.01 127 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -25954,7 +26266,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 320.4 127 0)
+			(at 334.01 127 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -25964,7 +26276,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 320.4 127 0)
+			(at 334.01 127 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -26708,7 +27020,7 @@
 	)
 	(symbol
 		(lib_id "thriller:C")
-		(at 308.4 123.19 0)
+		(at 307.34 123.19 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -26718,7 +27030,7 @@
 		(dnp no)
 		(uuid "86bacbdb-3035-5371-bcac-91182a57ab99")
 		(property "Reference" "C45"
-			(at 305.606 121.158 0)
+			(at 304.546 121.158 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -26728,7 +27040,7 @@
 			)
 		)
 		(property "Value" "100n"
-			(at 305.606 125.222 0)
+			(at 304.546 125.222 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -26738,7 +27050,7 @@
 			)
 		)
 		(property "Footprint" "Capacitor_SMD:C_0402_1005Metric"
-			(at 308.4 123.19 0)
+			(at 307.34 123.19 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -26749,7 +27061,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 308.4 123.19 0)
+			(at 307.34 123.19 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -26759,7 +27071,7 @@
 			)
 		)
 		(property "Description" "Capacitor 100 nF 16 V X7R 0402"
-			(at 308.4 123.19 0)
+			(at 307.34 123.19 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -26770,7 +27082,7 @@
 			)
 		)
 		(property "LCSC" "C1525"
-			(at 308.4 123.19 0)
+			(at 307.34 123.19 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -27734,6 +28046,83 @@
 			(project "thriller"
 				(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/58405345-9681-4f24-98c2-a3fa690db3a4"
 					(reference "C10")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "thriller:+3V3")
+		(at 67.31 228.6 90)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom no)
+		(on_board no)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "90300c80-00f7-4305-bb6a-049932399c2e")
+		(property "Reference" "#PWR025"
+			(at 67.31 228.6 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "+3V3"
+			(at 63.246 228.854 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 67.31 228.6 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 67.31 228.6 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol, global net +3V3"
+			(at 67.31 228.6 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "1e15bc05-0e11-4ce5-9301-f5e47923a5a1")
+		)
+		(instances
+			(project "thriller"
+				(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/58405345-9681-4f24-98c2-a3fa690db3a4"
+					(reference "#PWR025")
 					(unit 1)
 				)
 			)
@@ -28785,7 +29174,7 @@
 	)
 	(symbol
 		(lib_id "thriller:+1V8")
-		(at 344.4 119.38 0)
+		(at 351.79 119.38 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -28795,7 +29184,7 @@
 		(dnp no)
 		(uuid "a0176ac7-6805-404f-9c19-137ecfb19102")
 		(property "Reference" "#PWR0114"
-			(at 344.4 116.84 0)
+			(at 351.79 116.84 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -28806,7 +29195,7 @@
 			)
 		)
 		(property "Value" "+1V8"
-			(at 344.43 115.57 0)
+			(at 351.82 115.57 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -28816,7 +29205,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 344.4 119.38 0)
+			(at 351.79 119.38 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -28826,7 +29215,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 344.4 119.38 0)
+			(at 351.79 119.38 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -28836,7 +29225,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 344.4 119.38 0)
+			(at 351.79 119.38 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -29316,7 +29705,7 @@
 	)
 	(symbol
 		(lib_id "thriller:GND")
-		(at 392.4 127 0)
+		(at 387.85 127 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -29326,7 +29715,7 @@
 		(dnp no)
 		(uuid "a5734127-a984-4220-84e6-fbf82985c180")
 		(property "Reference" "#PWR0123"
-			(at 392.4 124.46 0)
+			(at 387.85 124.46 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -29337,7 +29726,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 392.4 130.81 0)
+			(at 387.85 130.81 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -29347,7 +29736,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 392.4 127 0)
+			(at 387.85 127 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -29357,7 +29746,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 392.4 127 0)
+			(at 387.85 127 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -29367,7 +29756,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 392.4 127 0)
+			(at 387.85 127 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -29888,7 +30277,7 @@
 	)
 	(symbol
 		(lib_id "thriller:GND")
-		(at 332.4 127 0)
+		(at 342.9 127 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -29898,7 +30287,7 @@
 		(dnp no)
 		(uuid "aa51c8f7-a5da-4efa-923a-82357804cb5f")
 		(property "Reference" "#PWR0112"
-			(at 332.4 124.46 0)
+			(at 342.9 124.46 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -29909,7 +30298,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 332.4 130.81 0)
+			(at 342.9 130.81 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -29919,7 +30308,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 332.4 127 0)
+			(at 342.9 127 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -29929,7 +30318,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 332.4 127 0)
+			(at 342.9 127 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -29939,7 +30328,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 332.4 127 0)
+			(at 342.9 127 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -29955,99 +30344,6 @@
 			(project "thriller"
 				(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/58405345-9681-4f24-98c2-a3fa690db3a4"
 					(reference "#PWR0112")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "thriller:Q_NMOS_GSD")
-		(at 31.75 228.6 0)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(uuid "aa835b38-9b3a-5725-9973-99d5298eae74")
-		(property "Reference" "Q2"
-			(at 38.1381 227.33 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "BSS138"
-			(at 39.7002 229.87 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "Package_TO_SOT_SMD:SOT-23"
-			(at 31.75 228.6 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 31.75 228.6 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "N-MOSFET 50 V 0.2 A, Vgs(th) <= 1.5 V, SOT-23"
-			(at 31.75 228.6 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "MPN" "BSS138"
-			(at 31.75 228.6 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "873b2125-4242-5b43-b67d-a4567750a072")
-		)
-		(pin "3"
-			(uuid "1d34fcb4-c658-5c1d-89fb-647983272bf0")
-		)
-		(pin "2"
-			(uuid "681178f1-725c-5d73-b81c-b8caf7497a7d")
-		)
-		(instances
-			(project "thriller"
-				(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/58405345-9681-4f24-98c2-a3fa690db3a4"
-					(reference "Q2")
 					(unit 1)
 				)
 			)
@@ -31343,7 +31639,7 @@
 	)
 	(symbol
 		(lib_id "thriller:C")
-		(at 380.4 123.19 0)
+		(at 378.46 123.19 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -31353,7 +31649,7 @@
 		(dnp no)
 		(uuid "c0f1cf0c-408d-5dc9-b828-3c1fa666cfd8")
 		(property "Reference" "C51"
-			(at 377.606 121.158 0)
+			(at 375.666 121.158 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -31363,7 +31659,7 @@
 			)
 		)
 		(property "Value" "100n"
-			(at 377.606 125.222 0)
+			(at 375.666 125.222 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -31373,7 +31669,7 @@
 			)
 		)
 		(property "Footprint" "Capacitor_SMD:C_0402_1005Metric"
-			(at 380.4 123.19 0)
+			(at 378.46 123.19 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -31384,7 +31680,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 380.4 123.19 0)
+			(at 378.46 123.19 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -31394,7 +31690,7 @@
 			)
 		)
 		(property "Description" "Capacitor 100 nF 16 V X7R 0402"
-			(at 380.4 123.19 0)
+			(at 378.46 123.19 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -31405,7 +31701,7 @@
 			)
 		)
 		(property "LCSC" "C1525"
-			(at 380.4 123.19 0)
+			(at 378.46 123.19 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -33098,6 +33394,110 @@
 		)
 	)
 	(symbol
+		(lib_id "Transistor_FET:Q_Dual_NMOS_G1S2G2D2S1D1")
+		(at 74.93 228.6 0)
+		(unit 2)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "d09d2def-6812-423d-a8ed-2455b66a48d7")
+		(property "Reference" "Q2"
+			(at 80.264 227.33 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "2N7002DW"
+			(at 80.264 229.87 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Package_TO_SOT_SMD:SOT-363_SC-70-6"
+			(at 80.01 228.6 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 80.01 228.6 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Dual NMOS transistor, 6 pin package"
+			(at 74.93 228.6 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "2N7002DW"
+			(at 74.93 228.6 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "4"
+			(uuid "e8f59d0f-6544-4db2-a69b-6e41632c9c47")
+		)
+		(pin "5"
+			(uuid "c3ff070c-0c60-4dea-83e1-9f034e9c8b7f")
+		)
+		(pin "3"
+			(uuid "911200ba-d027-4793-98ac-585f5857411c")
+		)
+		(pin "6"
+			(uuid "6251a45d-f1ef-449b-b56f-cba11cf9d97a")
+		)
+		(pin "1"
+			(uuid "0cb77828-086d-4687-a705-b6c0f2de1a32")
+		)
+		(pin "2"
+			(uuid "003b324a-2102-432b-906f-87e87484ce8a")
+		)
+		(instances
+			(project "thriller"
+				(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/58405345-9681-4f24-98c2-a3fa690db3a4"
+					(reference "Q2")
+					(unit 2)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "thriller:GND")
 		(at 99.06 140.97 0)
 		(unit 1)
@@ -33176,7 +33576,7 @@
 	)
 	(symbol
 		(lib_id "thriller:C")
-		(at 356.4 123.19 0)
+		(at 360.68 123.19 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -33186,7 +33586,7 @@
 		(dnp no)
 		(uuid "d16b9917-9b3d-5cb5-9e48-64ad676e3007")
 		(property "Reference" "C49"
-			(at 353.606 121.158 0)
+			(at 357.886 121.158 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -33196,7 +33596,7 @@
 			)
 		)
 		(property "Value" "470n"
-			(at 353.606 125.222 0)
+			(at 357.886 125.222 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -33206,7 +33606,7 @@
 			)
 		)
 		(property "Footprint" "Capacitor_SMD:C_0402_1005Metric"
-			(at 356.4 123.19 0)
+			(at 360.68 123.19 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -33217,7 +33617,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 356.4 123.19 0)
+			(at 360.68 123.19 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -33227,7 +33627,7 @@
 			)
 		)
 		(property "Description" "Capacitor 470 nF 10 V X5R/X7R 0402 (UG040012 Table 2-6)"
-			(at 356.4 123.19 0)
+			(at 360.68 123.19 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -33238,7 +33638,7 @@
 			)
 		)
 		(property "LCSC" ""
-			(at 356.4 123.19 0)
+			(at 360.68 123.19 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -33355,7 +33755,7 @@
 	)
 	(symbol
 		(lib_id "thriller:GND")
-		(at 368.4 127 0)
+		(at 369.57 127 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -33365,7 +33765,7 @@
 		(dnp no)
 		(uuid "d58c83df-2007-4418-ba3a-b992833c30cb")
 		(property "Reference" "#PWR0119"
-			(at 368.4 124.46 0)
+			(at 369.57 124.46 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -33376,7 +33776,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 368.4 130.81 0)
+			(at 369.57 130.81 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -33386,7 +33786,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 368.4 127 0)
+			(at 369.57 127 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -33396,7 +33796,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 368.4 127 0)
+			(at 369.57 127 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -33406,7 +33806,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 368.4 127 0)
+			(at 369.57 127 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -33962,8 +34362,98 @@
 		)
 	)
 	(symbol
+		(lib_id "thriller:R")
+		(at 248.92 69.85 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "e22e3a57-4dcd-4529-b153-52a8e7741831")
+		(property "Reference" "R63"
+			(at 252.7681 68.58 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "10k"
+			(at 252.7681 71.12 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Resistor_SMD:R_0402_1005Metric"
+			(at 248.92 69.85 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 248.92 69.85 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Resistor 10k 1% 0402"
+			(at 248.92 69.85 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C25744"
+			(at 248.92 69.85 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "0abfc366-694e-49e5-a6b6-121f1b6fae36")
+		)
+		(pin "2"
+			(uuid "ae719469-3980-41fa-93f5-bf9cf624f81a")
+		)
+		(instances
+			(project "thriller"
+				(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/58405345-9681-4f24-98c2-a3fa690db3a4"
+					(reference "R63")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "thriller:+1V8")
-		(at 356.4 119.38 0)
+		(at 360.68 119.38 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -33973,7 +34463,7 @@
 		(dnp no)
 		(uuid "e22fa051-f929-437c-9072-7b1bb6199575")
 		(property "Reference" "#PWR0116"
-			(at 356.4 116.84 0)
+			(at 360.68 116.84 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -33984,7 +34474,7 @@
 			)
 		)
 		(property "Value" "+1V8"
-			(at 356.43 115.57 0)
+			(at 360.71 115.57 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -33994,7 +34484,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 356.4 119.38 0)
+			(at 360.68 119.38 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -34004,7 +34494,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 356.4 119.38 0)
+			(at 360.68 119.38 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -34014,7 +34504,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 356.4 119.38 0)
+			(at 360.68 119.38 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -34428,6 +34918,83 @@
 		)
 	)
 	(symbol
+		(lib_id "thriller:GND")
+		(at 248.92 73.66 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom no)
+		(on_board no)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "eb7b496d-f635-445f-81c8-0b11fa1ad028")
+		(property "Reference" "#PWR0213"
+			(at 248.92 73.66 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND"
+			(at 248.92 77.47 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 248.92 73.66 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 248.92 73.66 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol, global net GND"
+			(at 248.92 73.66 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "cb245752-8634-4a8a-b7a7-aa08a9732272")
+		)
+		(instances
+			(project "thriller"
+				(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/58405345-9681-4f24-98c2-a3fa690db3a4"
+					(reference "#PWR0213")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "thriller:+1V0")
 		(at 164.4 119.38 0)
 		(unit 1)
@@ -34759,7 +35326,7 @@
 	)
 	(symbol
 		(lib_id "thriller:C")
-		(at 344.4 123.19 0)
+		(at 351.79 123.19 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -34769,7 +35336,7 @@
 		(dnp no)
 		(uuid "f0da9bfa-79aa-56ba-a089-6301a75ea4f0")
 		(property "Reference" "C48"
-			(at 341.606 121.158 0)
+			(at 348.996 121.158 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -34779,7 +35346,7 @@
 			)
 		)
 		(property "Value" "470n"
-			(at 341.606 125.222 0)
+			(at 348.996 125.222 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -34789,7 +35356,7 @@
 			)
 		)
 		(property "Footprint" "Capacitor_SMD:C_0402_1005Metric"
-			(at 344.4 123.19 0)
+			(at 351.79 123.19 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -34800,7 +35367,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 344.4 123.19 0)
+			(at 351.79 123.19 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -34810,7 +35377,7 @@
 			)
 		)
 		(property "Description" "Capacitor 470 nF 10 V X5R/X7R 0402 (UG040012 Table 2-6)"
-			(at 344.4 123.19 0)
+			(at 351.79 123.19 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -34821,7 +35388,7 @@
 			)
 		)
 		(property "LCSC" ""
-			(at 344.4 123.19 0)
+			(at 351.79 123.19 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -35496,7 +36063,7 @@
 	)
 	(symbol
 		(lib_id "thriller:+1V8")
-		(at 332.4 119.38 0)
+		(at 342.9 119.38 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -35506,7 +36073,7 @@
 		(dnp no)
 		(uuid "fa39a25b-36cf-4e4d-b4b1-c51595588761")
 		(property "Reference" "#PWR0111"
-			(at 332.4 116.84 0)
+			(at 342.9 116.84 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -35517,7 +36084,7 @@
 			)
 		)
 		(property "Value" "+1V8"
-			(at 332.43 115.57 0)
+			(at 342.93 115.57 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -35527,7 +36094,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 332.4 119.38 0)
+			(at 342.9 119.38 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -35537,7 +36104,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 332.4 119.38 0)
+			(at 342.9 119.38 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -35547,7 +36114,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 332.4 119.38 0)
+			(at 342.9 119.38 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -35730,6 +36297,110 @@
 			(project "thriller"
 				(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/58405345-9681-4f24-98c2-a3fa690db3a4"
 					(reference "#PWR023")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Transistor_FET:Q_Dual_NMOS_G1S2G2D2S1D1")
+		(at 31.75 228.6 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "fe3e1502-81f8-4176-9331-cb4a79724cff")
+		(property "Reference" "Q2"
+			(at 37.084 227.33 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "2N7002DW"
+			(at 37.084 229.87 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Package_TO_SOT_SMD:SOT-363_SC-70-6"
+			(at 36.83 228.6 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 36.83 228.6 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Dual NMOS transistor, 6 pin package"
+			(at 31.75 228.6 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "2N7002DW"
+			(at 31.75 228.6 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "4"
+			(uuid "96220f9d-e4c4-4c10-80f2-a27d661ba21b")
+		)
+		(pin "5"
+			(uuid "989058e7-5cc4-4ec7-be34-1407090cf648")
+		)
+		(pin "3"
+			(uuid "1b328b9d-11aa-4d7d-9c81-0ec94fbad344")
+		)
+		(pin "6"
+			(uuid "5c51f45d-c0a8-4ad1-bfb4-a996ac32df35")
+		)
+		(pin "1"
+			(uuid "6cfd3801-31c4-4f3a-a4a8-39d83cdfdf82")
+		)
+		(pin "2"
+			(uuid "0995ac00-d51b-4d75-ba0a-184cbeebfa11")
+		)
+		(instances
+			(project "thriller"
+				(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/58405345-9681-4f24-98c2-a3fa690db3a4"
+					(reference "Q2")
 					(unit 1)
 				)
 			)
