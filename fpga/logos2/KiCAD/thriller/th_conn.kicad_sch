@@ -6774,7 +6774,7 @@
 	)
 	(global_label "ETH_RXP"
 		(shape output)
-		(at 41.91 134.62 180)
+		(at 41.91 137.16 180)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -6784,7 +6784,7 @@
 		)
 		(uuid "7c9ac466-12a3-522d-be82-61cbde8c625f")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 41.91 134.62 0)
+			(at 41.91 137.16 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6807,7 +6807,7 @@
 		)
 		(uuid "82bd87b7-4208-4c5b-8155-e18842cba2f0")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 72.9539 116.84 0)
+			(at 75.0222 116.84 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6868,7 +6868,7 @@
 	)
 	(global_label "ETH_TXP"
 		(shape input)
-		(at 41.91 127 180)
+		(at 41.91 129.54 180)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -6878,7 +6878,7 @@
 		)
 		(uuid "83b2dc51-a5f7-5c14-9ad6-e4fbf8bb6072")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 41.91 127 0)
+			(at 41.91 129.54 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -7850,7 +7850,7 @@
 	)
 	(global_label "ETH_TXN"
 		(shape input)
-		(at 41.91 129.54 180)
+		(at 41.91 127 180)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -7860,7 +7860,7 @@
 		)
 		(uuid "e3d54627-4505-59aa-94a8-f477e66d1f03")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 41.91 129.54 0)
+			(at 41.91 127 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -8177,7 +8177,7 @@
 	)
 	(global_label "ETH_RXN"
 		(shape output)
-		(at 41.91 137.16 180)
+		(at 41.91 134.62 180)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -8187,7 +8187,7 @@
 		)
 		(uuid "fe89d129-d6ac-5714-843b-8209c067a94d")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 41.91 137.16 0)
+			(at 41.91 134.62 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)

@@ -4210,6 +4210,80 @@
 		)
 	)
 	(symbol
+		(lib_id "thriller:+3V3")
+		(at 71.12 38.1 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom no)
+		(on_board no)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "5d1965c3-64a0-4101-870f-7c25a8791674")
+		(property "Reference" "#PWR0219"
+			(at 71.12 35.56 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "+3V3"
+			(at 70.984 34.544 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 71.12 38.1 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 71.12 38.1 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 71.12 38.1 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "0bc53854-7458-45ea-b32e-6b3c79f205d4")
+		)
+		(instances
+			(project "thriller"
+				(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/33eda6da-34ec-54c6-aba0-63d9912705aa"
+					(reference "#PWR0219")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "thriller:LAN8742A")
 		(at 105.41 90.17 0)
 		(unit 1)
@@ -5080,6 +5154,95 @@
 		)
 	)
 	(symbol
+		(lib_id "thriller:C")
+		(at 71.12 41.91 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "87ed65de-304f-4fe9-99d3-79ae4f8b6597")
+		(property "Reference" "C88"
+			(at 68.27 39.878 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "100n"
+			(at 68.27 43.688 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Capacitor_SMD:C_0402_1005Metric"
+			(at 71.12 41.91 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 71.12 41.91 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Capacitor 100 nF 16 V X7R 0402"
+			(at 71.12 41.91 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C1525"
+			(at 71.12 41.91 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "8ea86c79-057b-4f45-931f-d6b645b95eb6")
+		)
+		(pin "2"
+			(uuid "9a360baa-9a64-41a5-bc77-94b47e0fe708")
+		)
+		(instances
+			(project "thriller"
+				(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/33eda6da-34ec-54c6-aba0-63d9912705aa"
+					(reference "C88")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "thriller:+3V3")
 		(at 85.09 38.1 0)
 		(mirror y)
@@ -5242,6 +5405,80 @@
 			(project "thriller"
 				(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/33eda6da-34ec-54c6-aba0-63d9912705aa"
 					(reference "R52")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "thriller:GND")
+		(at 71.12 45.72 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom no)
+		(on_board no)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "9cb8a275-c534-43a5-8579-0efd497038b6")
+		(property "Reference" "#PWR0220"
+			(at 71.12 43.18 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND"
+			(at 71.176 49.53 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 71.12 45.72 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 71.12 45.72 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 71.12 45.72 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "5dfa5a36-6cb1-4fe1-a84e-71b04a4e5677")
+		)
+		(instances
+			(project "thriller"
+				(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/33eda6da-34ec-54c6-aba0-63d9912705aa"
+					(reference "#PWR0220")
 					(unit 1)
 				)
 			)
@@ -5577,6 +5814,95 @@
 			(project "thriller"
 				(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/33eda6da-34ec-54c6-aba0-63d9912705aa"
 					(reference "#PWR0199")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "thriller:C")
+		(at 19.05 100.33 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "b38cddf1-a033-438d-a29a-3e7089d353c4")
+		(property "Reference" "C89"
+			(at 16.2 98.298 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "100n"
+			(at 16.2 102.108 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Capacitor_SMD:C_0402_1005Metric"
+			(at 19.05 100.33 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 19.05 100.33 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Capacitor 100 nF 16 V X7R 0402"
+			(at 19.05 100.33 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C1525"
+			(at 19.05 100.33 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "730667c2-b189-4b06-a0ed-2265f13d5714")
+		)
+		(pin "2"
+			(uuid "cb0ef245-a11a-4172-b247-405aa7862b2e")
+		)
+		(instances
+			(project "thriller"
+				(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/33eda6da-34ec-54c6-aba0-63d9912705aa"
+					(reference "C89")
 					(unit 1)
 				)
 			)
@@ -6188,6 +6514,80 @@
 		)
 	)
 	(symbol
+		(lib_id "thriller:GND")
+		(at 19.05 104.14 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom no)
+		(on_board no)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "e310704f-c66a-4ff7-b009-d5300950f166")
+		(property "Reference" "#PWR0222"
+			(at 19.05 101.6 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND"
+			(at 19.106 107.95 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 19.05 104.14 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 19.05 104.14 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 19.05 104.14 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "63fa797d-4ea4-4b36-a5c1-626ac6863eb0")
+		)
+		(instances
+			(project "thriller"
+				(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/33eda6da-34ec-54c6-aba0-63d9912705aa"
+					(reference "#PWR0222")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "thriller:R")
 		(at 113.03 39.37 270)
 		(mirror x)
@@ -6273,6 +6673,80 @@
 			(project "thriller"
 				(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/33eda6da-34ec-54c6-aba0-63d9912705aa"
 					(reference "R58")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "thriller:+3V3")
+		(at 19.05 96.52 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom no)
+		(on_board no)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "e691a108-807d-4f4e-a7d8-0c57147977e7")
+		(property "Reference" "#PWR0221"
+			(at 19.05 93.98 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "+3V3"
+			(at 18.914 92.964 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 19.05 96.52 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 19.05 96.52 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 19.05 96.52 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "9535e4a5-d942-4d98-92ae-20b7800bf53c")
+		)
+		(instances
+			(project "thriller"
+				(path "/02a4128e-5284-4df4-bd95-50d9619a72c4/33eda6da-34ec-54c6-aba0-63d9912705aa"
+					(reference "#PWR0221")
 					(unit 1)
 				)
 			)
